@@ -1,6 +1,7 @@
 package es.ugr.murat.agent;
 
 import es.ugr.murat.constant.TrafficLightConstant;
+import jade.core.Agent;
 
 /**
  * Class representing a Traffic Light agent.
@@ -8,7 +9,7 @@ import es.ugr.murat.constant.TrafficLightConstant;
  * @author Ramón García Verjaga
  * @version v0.0.1
  */
-public class TrafficLight {
+public class TrafficLight extends Agent {
 
     /**
      * Status of the Traffic Light agent.
@@ -24,10 +25,12 @@ public class TrafficLight {
      */
     Integer light;
 
-    public TrafficLight() {
+    @Override
+    protected void setup() {
+        super.setup();
         this.status = TrafficLightConstant.STATUS;
         this.light = TrafficLightConstant.OFF;
-        System.out.println("TrafficLight agent created!");
+        System.out.println("Created||" + this.getClass().getSimpleName() + "::" + this.getAID().getName());
     }
 
     /**

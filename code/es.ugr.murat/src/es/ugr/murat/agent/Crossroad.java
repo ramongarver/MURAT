@@ -1,6 +1,8 @@
 package es.ugr.murat.agent;
 
 import es.ugr.murat.constant.CrossroadConstant;
+import es.ugr.murat.constant.TrafficLightConstant;
+import jade.core.Agent;
 
 /**
  * Class representing a Crossroad agent.
@@ -8,7 +10,7 @@ import es.ugr.murat.constant.CrossroadConstant;
  * @author Ramón García Verjaga
  * @version v0.0.1
  */
-public class Crossroad {
+public class Crossroad extends Agent {
 
     /**
      * Status of the Crossroad agent.
@@ -17,10 +19,11 @@ public class Crossroad {
      */
     Integer status;
 
-    public Crossroad() {
+    @Override
+    protected void setup() {
+        super.setup();
         this.status = CrossroadConstant.STATUS;
-        System.out.println("Crossroad agent created!");
+        System.out.println("Created||" + this.getClass().getSimpleName() + "::" + this.getAID().getName());
     }
-
 
 }

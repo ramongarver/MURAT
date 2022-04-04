@@ -8,6 +8,8 @@ package es.ugr.murat.constant;
  */
 public class CrossroadConstant {
 
+    public static final String AGENT_NAME = "C";
+
     /**
      * Status constant values: TODO...
      */

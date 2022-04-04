@@ -8,6 +8,8 @@ package es.ugr.murat.constant;
  */
 public class TrafficLightConstant {
 
+    public static final String AGENT_NAME = "TL";
+
     /**
      * Status constant values: TODO...
      */
