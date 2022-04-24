@@ -10,4 +10,11 @@ public class TrafficLightModel {
         this.name = name;
     }
 
+    public Integer getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
 }

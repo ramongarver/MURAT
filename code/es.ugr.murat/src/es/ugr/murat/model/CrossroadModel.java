@@ -16,4 +16,20 @@ public class CrossroadModel {
         this.cycleTime = cycleTime;
     }
 
+    public Integer getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Duration getMinimumStateTime() {
+        return minimumStateTime;
+    }
+
+    public Duration getCycleTime() {
+        return cycleTime;
+    }
+
 }
