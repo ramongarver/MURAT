@@ -13,14 +13,14 @@ public class TrafficLightConstant {
     /**
      * Status constant values: TODO...
      */
-    public static final Integer STATUS = 0;
+    public static final int EXIT = 0;
+    public static final int LOAD_DATA = 1;
+    public static final int LISTEN_CROSSROAD = 2;
 
     /**
-     * Light constant values: OFF, GREEN, AMBER and RED
+     * Light constant values: RED and GREEN
      */
-    public static Integer OFF = 0;
-    public static Integer GREEN = 1;
-    public static Integer AMBER = 2;
-    public static Integer RED = 3;
+    public static final Integer RED = 0;
+    public static final Integer GREEN = 1;
 
 }
