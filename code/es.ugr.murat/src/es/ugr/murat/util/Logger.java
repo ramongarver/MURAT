@@ -1,4 +1,4 @@
-package es.ugr.murat.utils;
+package es.ugr.murat.util;
 
 public class Logger {
 

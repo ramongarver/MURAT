@@ -1,35 +1,27 @@
 package es.ugr.murat.agent;
 
+import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
+import jade.lang.acl.ACLMessage;
 
 /**
- * Class representing a Traffic Light agent.
+ * Clase representando al agente semáforo (TrafficLight).
  *
  * @author Ramón García Verjaga
  * @version v0.0.1
  */
 public class TrafficLight extends MURATBaseAgent {
 
-    /**
-     * Status of the Traffic Light agent.
-     * The following values are possible:
-     * TODO...
-     */
-    Integer status;
-
-    /**
-     * Light of the Traffic Light agent.
-     * The following values are possible:
-     * OFF, GREEN, AMBER or RED.
-     */
-    Integer light; // TODO: check if changing type to an enum or string or something it would be better...
+    private Integer status;
+    private Integer light;
 
     @Override
     protected void setup() {
         super.setup();
-        System.out.println("Created||" + this.getClass().getSimpleName() + "::" + this.getAID().getName());
         status = TrafficLightConstant.LOAD_DATA;
-        execute();
+        light = TrafficLightConstant.RED;
+        message = null;
+        System.out.println("||Launched||" + this.getClass().getSimpleName() + "::" + this.getAID().getLocalName());
     }
 
     @Override
@@ -42,32 +34,52 @@ public class TrafficLight extends MURATBaseAgent {
     }
 
     protected void loadData() {
-        System.out.println("Estado de carga de datos");
+        System.out.println("||--Estado de carga de datos");
+        System.out.println("||--Datos cargados");
         status = TrafficLightConstant.LISTEN_CROSSROAD;
+
     }
 
     protected void listenCrossroad() {
-        System.out.println("Estado de escucha al cruce");
-        status = TrafficLightConstant.EXIT;
+        System.out.println("||--Estado de escucha al cruce");
+
+        message = blockingReceive();
+        switch (message.getPerformative()) {
+            case ACLMessage.REQUEST -> {
+                if (MessageConstant.CHANGE_LIGHT.equals(message.getContent())) {
+                    light = light == TrafficLightConstant.RED ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
+                    // TODO: INFORM
+                }
+                else if (MessageConstant.SET_LIGHT_TO_RED.equals(message.getContent())) {
+                    light = TrafficLightConstant.RED;
+                    // TODO: INFORM
+                }
+                else if (MessageConstant.SET_LIGHT_TO_GREEN.equals(message.getContent())) {
+                    light = TrafficLightConstant.GREEN;
+                    // TODO: INFORM
+                }
+                else if (MessageConstant.FINALIZE.equals(message.getContent())) {
+                    status = TrafficLightConstant.EXIT;
+                    // TODO: INFORM
+                }
+                else {
+                    System.out.println("Mensaje no conocido"); // TODO: pensar si manejar esto de otra forma
+                }
+            }
+        }
+
         try {
             //Ponemos a "Dormir" el programa durante los ms que queremos
             Thread.sleep(3*1000);
         } catch (Exception e) {
             System.out.println(e);
         }
+
+        System.out.println("||--" + this.getName() + "::light::" + light);
     }
 
     protected void exit() {
-        System.out.println("Estado de escucha al cruce");
         exit = true;
-    }
-
-
-    @Override
-    protected void takeDown() {
-        super.takeDown();
-        status = TrafficLightConstant.EXIT;
-        System.out.println("Eliminando agente " + this.getName());
     }
 
     /**

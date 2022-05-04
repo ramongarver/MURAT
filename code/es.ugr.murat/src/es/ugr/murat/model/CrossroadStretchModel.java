@@ -23,4 +23,24 @@ public class CrossroadStretchModel {
         this.carsPercentageFromOriginToDestination = carsPercentageFromOriginToDestination;
     }
 
+    public Integer getCrossroadId() {
+        return crossroadId;
+    }
+
+    public String getRoadStretchOrigin() {
+        return roadStretchOrigin;
+    }
+
+    public String getRoadStretchDestination() {
+        return roadStretchDestination;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getCarsPercentageFromOriginToDestination() {
+        return carsPercentageFromOriginToDestination;
+    }
+
 }

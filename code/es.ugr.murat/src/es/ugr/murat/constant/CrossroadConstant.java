@@ -10,9 +10,6 @@ public class CrossroadConstant {
 
     public static final String AGENT_NAME = "C"; // Parte principal del nombre de los agentes
 
-    /**
-     * Status constant values: TODO...
-     */
     public static final Integer STATUS = 0;
 
 }

@@ -10,10 +10,12 @@ public class TrafficLightModel {
 
     private final Integer id; // Id del semáforo
     private final String name; // Nombre del semáforo
+    private final String roadStretchIn; // Calle que entra al cruce que regula el semáforo
 
-    public TrafficLightModel(Integer id, String name) {
+    public TrafficLightModel(Integer id, String name, String roadStretchIn) {
         this.id = id;
         this.name = name;
+        this.roadStretchIn = roadStretchIn;
     }
 
     public Integer getId() {
@@ -22,5 +24,9 @@ public class TrafficLightModel {
 
     public String getName() {
         return name;
+    }
+
+    public String getRoadStretchIn() {
+        return roadStretchIn;
     }
 }

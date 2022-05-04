@@ -43,7 +43,7 @@ public class JADEBoot {
     }
 
     public void launchAgent(String name, Class clazz) {
-        System.out.println("Launching agent " + clazz.getSimpleName() + "::" + name);
+        System.out.println("||Launching||Agent-" + clazz.getSimpleName() + "::" + name);
         try {
             AgentController agentController;
             agentController = containerController.createNewAgent(name, clazz.getName(), null);

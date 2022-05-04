@@ -2,20 +2,22 @@ package es.ugr.murat.agent;
 
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.lang.acl.ACLMessage;
 
 /**
- * Based on LARVABaseAgent.java by Anatoli-Grishenko
+ * Basado en LARVABaseAgent.java por Anatoli-Grishenko.
  * https://github.com/Anatoli-Grishenko/es.ugr.larva.core/blob/master/src/agents/LARVABaseAgent.java
  */
 public class MURATBaseAgent extends Agent {
 
-    public Behaviour defaultBehaviour;
+    protected Behaviour defaultBehaviour;
     protected Boolean exit;
+    protected ACLMessage message;
 
     @Override
     protected void setup() {
         super.setup();
-        exit = true;
+        exit = false;
         this.behaviourDefaultSetup();
     }
 
@@ -45,6 +47,7 @@ public class MURATBaseAgent extends Agent {
     @Override
     protected void takeDown() {
         super.takeDown();
+        System.out.println("Eliminando agente " + this.getName());
     }
 
 }
