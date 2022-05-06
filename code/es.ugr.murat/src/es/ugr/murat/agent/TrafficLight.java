@@ -1,7 +1,9 @@
 package es.ugr.murat.agent;
 
+import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
+import es.ugr.murat.util.Logger;
 import jade.lang.acl.ACLMessage;
 
 /**
@@ -14,14 +16,15 @@ public class TrafficLight extends MURATBaseAgent {
 
     private Integer status;
     private Integer light;
+    private String roadStretchInName;
 
     @Override
     protected void setup() {
         super.setup();
         status = TrafficLightConstant.LOAD_DATA;
         light = TrafficLightConstant.RED;
-        message = null;
-        System.out.println("||Launched||" + this.getClass().getSimpleName() + "::" + this.getAID().getLocalName());
+        roadStretchInName = null;
+        Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
     @Override
@@ -34,31 +37,32 @@ public class TrafficLight extends MURATBaseAgent {
     }
 
     protected void loadData() {
-        System.out.println("||--Estado de carga de datos");
-        System.out.println("||--Datos cargados");
+        Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
+        // TODO: Cargar datos del semáforo
+        Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = TrafficLightConstant.LISTEN_CROSSROAD;
-
     }
 
     protected void listenCrossroad() {
         System.out.println("||--Estado de escucha al cruce");
 
-        message = blockingReceive();
-        switch (message.getPerformative()) {
+        incomingMessage = this.blockingReceive();
+        switch (incomingMessage.getPerformative()) {
             case ACLMessage.REQUEST -> {
-                if (MessageConstant.CHANGE_LIGHT.equals(message.getContent())) {
-                    light = light == TrafficLightConstant.RED ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
+                if (MessageConstant.CHANGE_LIGHT.equals(incomingMessage.getContent())) {
+                    light = TrafficLightConstant.RED.equals(light) ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
+                    System.out.println("||Light changed||Agent-" + this.getClass().getSimpleName() + "::" + this.getAID().getLocalName() + "||Light::" + light);
                     // TODO: INFORM
                 }
-                else if (MessageConstant.SET_LIGHT_TO_RED.equals(message.getContent())) {
+                else if (MessageConstant.SET_LIGHT_TO_RED.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED;
                     // TODO: INFORM
                 }
-                else if (MessageConstant.SET_LIGHT_TO_GREEN.equals(message.getContent())) {
+                else if (MessageConstant.SET_LIGHT_TO_GREEN.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.GREEN;
                     // TODO: INFORM
                 }
-                else if (MessageConstant.FINALIZE.equals(message.getContent())) {
+                else if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = TrafficLightConstant.EXIT;
                     // TODO: INFORM
                 }
@@ -72,7 +76,7 @@ public class TrafficLight extends MURATBaseAgent {
             //Ponemos a "Dormir" el programa durante los ms que queremos
             Thread.sleep(3*1000);
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
 
         System.out.println("||--" + this.getName() + "::light::" + light);

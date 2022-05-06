@@ -1,5 +1,7 @@
 package es.ugr.murat.agent;
 
+import es.ugr.murat.constant.ActionConstant;
+import es.ugr.murat.util.Logger;
 import jade.core.Agent;
 
 /**
@@ -13,7 +15,7 @@ public class City extends Agent {
     @Override
     protected void setup() {
         super.setup();
-        System.out.println("||Launched||" + this.getClass().getSimpleName() + "::" + this.getAID().getLocalName());
+        Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
 }

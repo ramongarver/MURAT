@@ -1,5 +1,7 @@
 package es.ugr.murat.agent;
 
+import es.ugr.murat.constant.ActionConstant;
+import es.ugr.murat.util.Logger;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
@@ -10,15 +12,18 @@ import jade.lang.acl.ACLMessage;
  */
 public class MURATBaseAgent extends Agent {
 
-    protected Behaviour defaultBehaviour;
     protected Boolean exit;
-    protected ACLMessage message;
+    protected Behaviour defaultBehaviour;
+    protected ACLMessage incomingMessage;
+    protected ACLMessage outgoingMessage;
 
     @Override
     protected void setup() {
         super.setup();
         exit = false;
         this.behaviourDefaultSetup();
+        incomingMessage = null;
+        outgoingMessage = null;
     }
 
     protected void behaviourDefaultSetup() {
@@ -47,7 +52,7 @@ public class MURATBaseAgent extends Agent {
     @Override
     protected void takeDown() {
         super.takeDown();
-        System.out.println("Eliminando agente " + this.getName());
+        Logger.info(ActionConstant.REMOVING_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
 }

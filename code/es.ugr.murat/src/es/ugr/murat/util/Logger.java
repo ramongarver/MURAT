@@ -12,8 +12,12 @@ public class Logger {
         LOGGER.warning(msg);
     }
 
-    public static void info(String msg) {
-        LOGGER.info(msg);
+//    public static void info(String msg) {
+//        LOGGER.info(msg);
+//    }
+
+    public static void info(String action, String agentType, String agentLocalName) {
+        System.out.println("||" + action + "||Agent-" + agentType + "::" + agentLocalName);
     }
 
     public static void config(String msg) {

@@ -1,6 +1,8 @@
 package es.ugr.murat.appboot;
 
+import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.JADEBootConstant;
+import es.ugr.murat.util.Logger;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
 import jade.core.Runtime;
@@ -42,8 +44,8 @@ public class JADEBoot {
         this.containerController = runtime.createAgentContainer(profile);
     }
 
-    public void launchAgent(String name, Class clazz) {
-        System.out.println("||Launching||Agent-" + clazz.getSimpleName() + "::" + name);
+    public void launchAgent(String name, Class<?> clazz) {
+        Logger.info(ActionConstant.LAUNCHING_AGENT, clazz.getSimpleName(), name);
         try {
             AgentController agentController;
             agentController = containerController.createNewAgent(name, clazz.getName(), null);

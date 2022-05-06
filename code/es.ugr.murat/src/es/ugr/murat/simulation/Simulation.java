@@ -54,7 +54,7 @@ public class Simulation {
         Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
         crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
         cityConfigurationModel = new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
-                LocalTime.of(06, 00), LocalTime.of(21, 00), Duration.ofSeconds(15), "linear", crossroadsInitialState);
+                LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState);
 
         // Cruces de la ciudad
         crossroads = new HashMap<>();
@@ -131,7 +131,7 @@ public class Simulation {
         crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
 
 
-        /*** CITY1: Simple cross city
+        /* CITY1: Simple cross city
         // Información de la ciudad
         cityModel = new CityModel("CITY1", "Simple cross city");
 
@@ -314,14 +314,14 @@ public class Simulation {
         trafficLightsCrossroadStretchesNames.put(3, crossroadStretchesNames);
         statesTrafficLightsCrossroadStretchesNames.put(6, trafficLightsCrossroadStretchesNames);
         crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
-        ***/
+        */
 
         initAgents();
     }
 
     private void initAgents() {
-        System.out.println("¡Hello MURAT!");
         JADEBoot connection = new JADEBoot();
+        System.out.println("¡Hello MURAT!");
         connection.launchAgent(cityModel.getName(), City.class);
         crossroads.forEach((crossroadId, crossroadModel) -> connection.launchAgent(crossroadModel.getName(), Crossroad.class));
         crossroadTrafficLights.forEach((crossroadId, trafficLights) -> trafficLights.
