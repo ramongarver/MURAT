@@ -20,6 +20,12 @@ public class Logger {
         System.out.println("||" + action + "||Agent-" + agentType + "::" + agentLocalName);
     }
 
+    public static void info(String action, String agentType, String agentLocalName, String extra) {
+        String str = "||" + action + "||Agent-" + agentType + "::" + agentLocalName;
+        if (extra != null) str += "||" + extra;
+        System.out.println(str);
+    }
+
     public static void config(String msg) {
         LOGGER.config(msg);
     }

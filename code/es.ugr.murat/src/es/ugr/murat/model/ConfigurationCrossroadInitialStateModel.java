@@ -4,7 +4,6 @@ package es.ugr.murat.model;
  * Clase representando el modelo del estado inicial de un cruce.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class ConfigurationCrossroadInitialStateModel {
 

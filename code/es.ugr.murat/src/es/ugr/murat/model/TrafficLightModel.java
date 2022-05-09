@@ -4,7 +4,6 @@ package es.ugr.murat.model;
  * Clase representando el modelo de un semáforo.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class TrafficLightModel {
 

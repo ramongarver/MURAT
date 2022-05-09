@@ -8,7 +8,6 @@ import java.util.Map;
  * Clase representando el modelo de la configuración de la ciudad/escenario/simulación.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class CityConfigurationModel {
 
@@ -37,6 +36,46 @@ public class CityConfigurationModel {
         this.sampleTime = sampleTime;
         this.mode = mode;
         this.crossroadsInitialState = crossroadsInitialState;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public Double getVehicleLength() {
+        return vehicleLength;
+    }
+
+    public Double getInputRatio() {
+        return inputRatio;
+    }
+
+    public Double getInputInnerRatio() {
+        return inputInnerRatio;
+    }
+
+    public Double getOutputInnerRatio() {
+        return outputInnerRatio;
+    }
+
+    public LocalTime getInitialTime() {
+        return initialTime;
+    }
+
+    public LocalTime getFinalTime() {
+        return finalTime;
+    }
+
+    public Duration getSampleTime() {
+        return sampleTime;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public Map<Integer, ConfigurationCrossroadInitialStateModel> getCrossroadsInitialState() {
+        return crossroadsInitialState;
     }
 
 }

@@ -6,7 +6,6 @@ import java.time.Duration;
  * Clase representando el modelo de un estado.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class StateModel {
 

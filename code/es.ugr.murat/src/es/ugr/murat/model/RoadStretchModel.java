@@ -8,7 +8,6 @@ package es.ugr.murat.model;
  *  - tramo de calle intermedio entre dos cruces si se tiene tanto origen como destino.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class RoadStretchModel {
 

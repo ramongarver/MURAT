@@ -1,7 +1,9 @@
 package es.ugr.murat.agent;
 
 import es.ugr.murat.constant.ActionConstant;
+import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.util.Logger;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
@@ -53,6 +55,21 @@ public class MURATBaseAgent extends Agent {
     protected void takeDown() {
         super.takeDown();
         Logger.info(ActionConstant.REMOVING_AGENT, this.getClass().getSimpleName(), this.getLocalName());
+    }
+
+    protected final void sendACLMessage(int performative, AID sender, AID receiver, String content) {
+        ACLMessage message = new ACLMessage(performative);
+        message.setSender(sender);
+        message.addReceiver(receiver);
+        message.setContent(content);
+        this.send(message);
+        outgoingMessage = message;
+        Logger.info(ActionConstant.MESSAGE_SENT, this.getClass().getSimpleName(), this.getLocalName(), outgoingMessage.toString());
+    }
+
+    protected final void receiveACLMessage() {
+        incomingMessage = this.blockingReceive();
+        Logger.info(ActionConstant.MESSAGE_RECEIVED, this.getClass().getSimpleName(), this.getLocalName(), incomingMessage.toString());
     }
 
 }

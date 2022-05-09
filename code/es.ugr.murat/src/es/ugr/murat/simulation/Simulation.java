@@ -24,11 +24,10 @@ import java.util.Map;
  * Clase representando a una simulación, encargada de obtener todos los datos y lanzar los agentes.
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class Simulation {
 
-    private static Simulation simulation = null;
+    public static Simulation simulation = null;
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
     private final CityConfigurationModel cityConfigurationModel; // Configuración de la ciudad
@@ -43,10 +42,12 @@ public class Simulation {
     public static void start() {
         if (simulation == null) {
             simulation = new Simulation();
+            simulation.initAgents();
         }
     }
 
     private Simulation() {
+        // CITY2: Very simple cross city
         // Información de la ciudad
         cityModel = new CityModel("CITY2", "Very simple cross");
 
@@ -129,6 +130,7 @@ public class Simulation {
         trafficLightsCrossroadStretchesNames.put(2, crossroadStretchesNames);
         statesTrafficLightsCrossroadStretchesNames.put(2, trafficLightsCrossroadStretchesNames);
         crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
+
 
 
         /* CITY1: Simple cross city
@@ -315,8 +317,6 @@ public class Simulation {
         statesTrafficLightsCrossroadStretchesNames.put(6, trafficLightsCrossroadStretchesNames);
         crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
         */
-
-        initAgents();
     }
 
     private void initAgents() {
@@ -326,6 +326,26 @@ public class Simulation {
         crossroads.forEach((crossroadId, crossroadModel) -> connection.launchAgent(crossroadModel.getName(), Crossroad.class));
         crossroadTrafficLights.forEach((crossroadId, trafficLights) -> trafficLights.
                 forEach((trafficLightId, trafficLightModel) -> connection.launchAgent(trafficLightModel.getName(), TrafficLight.class)));
+    }
+
+    public CrossroadModel getCrossroadModel(Integer crossroadId) {
+        return crossroads.get(crossroadId);
+    }
+
+    public Map<Integer, TrafficLightModel> getCrossroadTrafficLights(Integer crossroadId) {
+        return crossroadTrafficLights.get(crossroadId);
+    }
+
+    public Map<Integer, StateModel> getCrossroadStates(Integer crossroadId) {
+        return crossroadStates.get(crossroadId);
+    }
+
+    public Integer getCrossroadInitialState(Integer crossroadId) {
+        return cityConfigurationModel.getCrossroadsInitialState().get(crossroadId).getStateId();
+    }
+
+    public Map<Integer, Map<Integer, String>> getCrossroadTrafficLightsColorsPerCrossroadState(Integer crossroadId) {
+        return trafficLightsColorsPerCrossroadsStates.get(crossroadId);
     }
 
 }

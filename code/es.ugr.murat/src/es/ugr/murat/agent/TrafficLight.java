@@ -10,19 +10,20 @@ import jade.lang.acl.ACLMessage;
  * Clase representando al agente semáforo (TrafficLight).
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class TrafficLight extends MURATBaseAgent {
 
+    private Integer id;
     private Integer status;
-    private Integer light;
+    private String light;
     private String roadStretchInName;
 
     @Override
     protected void setup() {
         super.setup();
+        id = Integer.parseInt(this.getLocalName().split(TrafficLightConstant.AGENT_NAME)[1]);
         status = TrafficLightConstant.LOAD_DATA;
-        light = TrafficLightConstant.RED;
+        light = null;
         roadStretchInName = null;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
@@ -44,28 +45,34 @@ public class TrafficLight extends MURATBaseAgent {
     }
 
     protected void listenCrossroad() {
-        System.out.println("||--Estado de escucha al cruce");
-
-        incomingMessage = this.blockingReceive();
+        Logger.info("Estado de escucha al cruce", this.getClass().getSimpleName(), this.getLocalName());
+        this.receiveACLMessage();
         switch (incomingMessage.getPerformative()) {
             case ACLMessage.REQUEST -> {
+                // Cambiamos el color del semáforo
                 if (MessageConstant.CHANGE_LIGHT.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED.equals(light) ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
-                    System.out.println("||Light changed||Agent-" + this.getClass().getSimpleName() + "::" + this.getAID().getLocalName() + "||Light::" + light);
+                    Logger.info(ActionConstant.LIGHT_CHANGED, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
                     // TODO: INFORM
                 }
+                // Ponemos el semáforo en rojo
                 else if (MessageConstant.SET_LIGHT_TO_RED.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED;
+                    Logger.info(ActionConstant.LIGHT_SET_TO_RED, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
                     // TODO: INFORM
                 }
+                // Ponemos el semáforo en verde
                 else if (MessageConstant.SET_LIGHT_TO_GREEN.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.GREEN;
+                    Logger.info(ActionConstant.LIGHT_SET_TO_GREEN, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
                     // TODO: INFORM
                 }
+                // Finalizamos el agente
                 else if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = TrafficLightConstant.EXIT;
                     // TODO: INFORM
                 }
+                // Manejamos mensajes no conocidos
                 else {
                     System.out.println("Mensaje no conocido"); // TODO: pensar si manejar esto de otra forma
                 }
@@ -73,33 +80,15 @@ public class TrafficLight extends MURATBaseAgent {
         }
 
         try {
-            //Ponemos a "Dormir" el programa durante los ms que queremos
+            //TODO: Ponemos a "Dormir" el programa durante los ms que queremos
             Thread.sleep(3*1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        System.out.println("||--" + this.getName() + "::light::" + light);
     }
 
     protected void exit() {
         exit = true;
-    }
-
-    /**
-     * {@link TrafficLight#status}
-     * @return status
-     */
-    public Integer getStatus() {
-        return status;
-    }
-
-    /**
-     * {@link TrafficLight#light}
-     * @return light
-     */
-    public Integer getLight() {
-        return light;
     }
 
 }

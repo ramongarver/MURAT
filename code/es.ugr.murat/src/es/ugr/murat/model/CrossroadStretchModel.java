@@ -5,7 +5,6 @@ package es.ugr.murat.model;
  * Es un router que indica en qué cruce (Crossroad) se va desde qué calle (RoadStretchOrigin) hasta qué otra calle (RoadStretchDestination).
  *
  * @author Ramón García Verjaga
- * @version v0.0.1
  */
 public class CrossroadStretchModel {
 
