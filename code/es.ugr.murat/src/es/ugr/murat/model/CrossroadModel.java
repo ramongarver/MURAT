@@ -9,20 +9,20 @@ import java.time.Duration;
  */
 public class CrossroadModel {
 
-    private Integer id; // Id del cruce
+    private Integer crossroadId; // Id del cruce
     private String name; // Nombre del cruce
     private Duration minimumStateTime; // Mínima duración de tiempo que puede permanecer el cruce en el mismo estado
     private Duration cycleTime; // Duración de tiempo que tarda el cruce en pasar por todos sus estados de forma completa
 
-    public CrossroadModel(Integer id, String name, Duration minimumStateTime, Duration cycleTime) {
-        this.id = id;
+    public CrossroadModel(Integer crossroadId, String name, Duration minimumStateTime, Duration cycleTime) {
+        this.crossroadId = crossroadId;
         this.name = name;
         this.minimumStateTime = minimumStateTime;
         this.cycleTime = cycleTime;
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getCrossroadId() {
+        return crossroadId;
     }
 
     public String getName() {
@@ -37,8 +37,8 @@ public class CrossroadModel {
         return cycleTime;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setCrossroadId(Integer crossroadId) {
+        this.crossroadId = crossroadId;
     }
 
     public void setName(String name) {

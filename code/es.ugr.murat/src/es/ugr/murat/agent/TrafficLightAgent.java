@@ -16,7 +16,6 @@ public class TrafficLightAgent extends MURATBaseAgent {
 
     private Integer trafficLightId;
     private Integer crossroadId;
-    private Integer status;
     private String light;
     private String roadStretchInName;
 
@@ -24,9 +23,9 @@ public class TrafficLightAgent extends MURATBaseAgent {
     @Override
     protected void setup() {
         super.setup();
+        status = TrafficLightConstant.LOAD_DATA;
         trafficLightId = Integer.parseInt(this.getLocalName().split(TrafficLightConstant.AGENT_NAME)[1]);
         crossroadId = null;
-        status = TrafficLightConstant.LOAD_DATA;
         light = null;
         roadStretchInName = null;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());

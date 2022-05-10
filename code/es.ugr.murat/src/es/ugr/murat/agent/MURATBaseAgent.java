@@ -16,6 +16,7 @@ public class MURATBaseAgent extends Agent {
 
     protected Boolean exit;
     protected Behaviour defaultBehaviour;
+    protected Integer status;
     protected ACLMessage incomingMessage;
     protected ACLMessage outgoingMessage;
 

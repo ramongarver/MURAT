@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class CityConfigurationModel {
 
-    private final Integer id; // Id de la configuración
+    private final Integer configurationId; // Id de la configuración
     private final Double vehicleLength; // Longitud de un vehículo (en metros)
     private final Double inputRatio; // Relación de entrada de tráfico al sistema: Cantidad de vehículos que se entran a la simulación por vía y segundo
     private final Double inputInnerRatio; // Relación de entrada interna de tráfico: Cantidad de vehículos que entran a calles interiores (RoadStretch) por vía y segundo
@@ -22,11 +22,11 @@ public class CityConfigurationModel {
     private final String mode; // Modo de entrada de vehículos en la simulación (linear, single peak, double peak)
     private final Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState; // Estados iniciales de los cruces (crossroadId -> configurationCrossroadInitialStateModel)
 
-    public CityConfigurationModel(Integer id, Double vehicleLength,
+    public CityConfigurationModel(Integer configurationId, Double vehicleLength,
                                   Double inputRatio, Double inputInnerRatio, Double outputInnerRatio,
                                   LocalTime initialTime, LocalTime finalTime, Duration sampleTime,
                                   String mode, Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState) {
-        this.id = id;
+        this.configurationId = configurationId;
         this.vehicleLength = vehicleLength;
         this.inputRatio = inputRatio;
         this.inputInnerRatio = inputInnerRatio;
@@ -38,8 +38,8 @@ public class CityConfigurationModel {
         this.crossroadsInitialState = crossroadsInitialState;
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getConfigurationId() {
+        return configurationId;
     }
 
     public Double getVehicleLength() {

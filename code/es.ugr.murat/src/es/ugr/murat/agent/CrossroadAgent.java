@@ -5,6 +5,8 @@ import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
 import es.ugr.murat.model.CrossroadModel;
+import es.ugr.murat.model.CrossroadStretchModel;
+import es.ugr.murat.model.RoadStretchModel;
 import es.ugr.murat.model.StateModel;
 import es.ugr.murat.model.TrafficLightModel;
 import es.ugr.murat.simulation.Simulation;
@@ -24,25 +26,33 @@ import java.util.Set;
 public class CrossroadAgent extends MURATBaseAgent {
 
     private Integer crossroadId;
-    private Integer status;
     private CrossroadModel crossroadModel;
     private Map<Integer, TrafficLightModel> trafficLights;
     private Map<Integer, StateModel> states;
     private Integer initialState;
     private Integer currentState;
     private Map<Integer, Map<Integer, String>> trafficLightsColorsPerState;
+    private Map<String, RoadStretchModel> roadStretchesIn;
+    private Map<String, RoadStretchModel> roadStretchesOut;
+    private Map<String, CrossroadStretchModel> crossroadsStretches;
+    private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches;
 
     //*************** Ciclo de vida del agente ***************//
     @Override
     protected void setup() {
         super.setup();
-        crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         status = CrossroadConstant.LOAD_DATA;
+        crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         crossroadModel = null;
         trafficLights = null;
         states = null;
         initialState = null;
         currentState = null;
+        trafficLightsColorsPerState = null;
+        roadStretchesIn = null;
+        roadStretchesOut = null;
+        crossroadsStretches = null;
+        statesTrafficLightsCrossroadStretches = null;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -70,6 +80,14 @@ public class CrossroadAgent extends MURATBaseAgent {
         initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
             // Obtenemos los colores de semáforos para cada estado del cruce
         trafficLightsColorsPerState = Simulation.simulation.getCrossroadTrafficLightsColorsPerCrossroadState(crossroadId);
+            // Obtenemos los tramos de calle tanto de entrada al cruce
+        roadStretchesIn = Simulation.simulation.getCrossroadRoadStretchesIn(crossroadId);
+            // Obtenemos los tramos de calle tanto de salida del cruce
+        roadStretchesOut = Simulation.simulation.getCrossroadRoadStretchesOut(crossroadId);
+            // Obtenemos los tramos de cruce del cruce
+        crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
+            // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
+        statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
@@ -86,7 +104,7 @@ public class CrossroadAgent extends MURATBaseAgent {
 
     protected void controlTraffic() {
         this.changeToTheNextState();
-        status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
+        this.listenMessages();
     }
 
     protected void finalizeTrafficLights() {
@@ -104,6 +122,26 @@ public class CrossroadAgent extends MURATBaseAgent {
     //**************************************************//
 
     //*************** Utilidades y otros ***************//
+    // Escuchamos mensajes
+    private void listenMessages() {
+        this.receiveACLMessage();
+        switch (incomingMessage.getPerformative()) {
+            case ACLMessage.INFORM -> { // Si la performativa es INFORM
+            }
+            case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
+                // Finalizamos el agente
+                if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
+                    status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
+                    // TODO: INFORM
+                }
+                // Manejamos mensajes no conocidos
+                else {
+                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName()); // TODO: pensar si manejar esto de otra forma
+                }
+            }
+        }
+    }
+
     // Cambiamos al siguiente estado del cruce
     private void changeToTheNextState() {
         this.changeToState(currentState == states.size() ? 1 : currentState + 1);
@@ -133,5 +171,4 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
     }
     //**************************************************//
-
 }

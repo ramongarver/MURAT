@@ -37,4 +37,49 @@ public class RoadStretchModel {
         this.output = output;
         this.type = type;
     }
+
+    public Integer getCrossroadOriginId() {
+        return crossroadOriginId;
+    }
+
+    public Integer getCrossroadDestinationId() {
+        return crossroadDestinationId;
+    }
+
+    public String getDirection() {
+        return direction;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public Integer getLanes() {
+        return lanes;
+    }
+
+    public Double getOccupancyPercentage() {
+        return occupancyPercentage;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public Double getInput() {
+        return input;
+    }
+
+    public Double getOutput() {
+        return output;
+    }
+
+    public String getType() {
+        return type;
+    }
+
 }
