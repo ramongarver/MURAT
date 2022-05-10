@@ -3,25 +3,29 @@ package es.ugr.murat.agent;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
+import es.ugr.murat.simulation.Simulation;
 import es.ugr.murat.util.Logger;
 import jade.lang.acl.ACLMessage;
 
 /**
- * Clase representando al agente semáforo (TrafficLight).
+ * Clase representando al agente semáforo (TrafficLightAgent).
  *
  * @author Ramón García Verjaga
  */
-public class TrafficLight extends MURATBaseAgent {
+public class TrafficLightAgent extends MURATBaseAgent {
 
-    private Integer id;
+    private Integer trafficLightId;
+    private Integer crossroadId;
     private Integer status;
     private String light;
     private String roadStretchInName;
 
+    //*************** Ciclo de vida del agente ***************//
     @Override
     protected void setup() {
         super.setup();
-        id = Integer.parseInt(this.getLocalName().split(TrafficLightConstant.AGENT_NAME)[1]);
+        trafficLightId = Integer.parseInt(this.getLocalName().split(TrafficLightConstant.AGENT_NAME)[1]);
+        crossroadId = null;
         status = TrafficLightConstant.LOAD_DATA;
         light = null;
         roadStretchInName = null;
@@ -39,16 +43,46 @@ public class TrafficLight extends MURATBaseAgent {
 
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
-        // TODO: Cargar datos del semáforo
+        // Cargamos datos del semáforo
+            // Obtenemos datos del cruce al que pertenece
+        crossroadId = Simulation.simulation.getTrafficLightCrossroadId(trafficLightId);
+            // Obtenemos el nombre del tramo de calle que regula
+        roadStretchInName = Simulation.simulation.getTrafficLightRoadStretchInName(crossroadId, trafficLightId);
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = TrafficLightConstant.LISTEN_CROSSROAD;
     }
 
     protected void listenCrossroad() {
         Logger.info("Estado de escucha al cruce", this.getClass().getSimpleName(), this.getLocalName());
+        this.listenMessages();
+
+        try {
+            //TODO: Ponemos a "Dormir" el programa durante los ms que queremos
+            Thread.sleep(3*1000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void exit() {
+        exit = true;
+    }
+    //**************************************************//
+
+    //*************** Utilidades y otros ***************//
+    // Escuchamos mensajes
+    private void listenMessages() {
         this.receiveACLMessage();
         switch (incomingMessage.getPerformative()) {
-            case ACLMessage.REQUEST -> {
+            case ACLMessage.INFORM -> { // Si la performativa es INFORM
+                // Saludamos al cruce TODO: Valorar si al final se implementa
+                if (MessageConstant.HELLO.equals(incomingMessage.getContent())) {
+                    Logger.info(ActionConstant.HELLO_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), MessageConstant.HELLO);
+                    Logger.info(ActionConstant.HELLO_SENT, this.getClass().getSimpleName(), this.getLocalName());
+                }
+            }
+            case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
                 // Cambiamos el color del semáforo
                 if (MessageConstant.CHANGE_LIGHT.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED.equals(light) ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
@@ -74,21 +108,11 @@ public class TrafficLight extends MURATBaseAgent {
                 }
                 // Manejamos mensajes no conocidos
                 else {
-                    System.out.println("Mensaje no conocido"); // TODO: pensar si manejar esto de otra forma
+                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName()); // TODO: pensar si manejar esto de otra forma
                 }
             }
         }
-
-        try {
-            //TODO: Ponemos a "Dormir" el programa durante los ms que queremos
-            Thread.sleep(3*1000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
-
-    protected void exit() {
-        exit = true;
-    }
+    //**************************************************//
 
 }

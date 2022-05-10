@@ -57,14 +57,23 @@ public class MURATBaseAgent extends Agent {
         Logger.info(ActionConstant.REMOVING_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
-    protected final void sendACLMessage(int performative, AID sender, AID receiver, String content) {
+    protected ACLMessage buildACLMessage(int performative, AID sender, AID receiver, String content) {
         ACLMessage message = new ACLMessage(performative);
         message.setSender(sender);
         message.addReceiver(receiver);
         message.setContent(content);
+        return message;
+    }
+
+    protected final void sendACLMessage(ACLMessage message) {
         this.send(message);
         outgoingMessage = message;
         Logger.info(ActionConstant.MESSAGE_SENT, this.getClass().getSimpleName(), this.getLocalName(), outgoingMessage.toString());
+    }
+
+    protected final void sendACLMessage(int performative, AID sender, AID receiver, String content) {
+        ACLMessage message = this.buildACLMessage(performative, sender, receiver, content);
+        this.sendACLMessage(message);
     }
 
     protected final void receiveACLMessage() {

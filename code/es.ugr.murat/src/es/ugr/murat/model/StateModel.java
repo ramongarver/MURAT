@@ -9,12 +9,12 @@ import java.time.Duration;
  */
 public class StateModel {
 
-    Integer id; // Id del estado
-    String name; // Nombre del estado
-    Duration durationTime; // Duración de tiempo del estado
+    private Integer stateId; // Id del estado
+    private String name; // Nombre del estado
+    private Duration durationTime; // Duración de tiempo del estado
 
-    public StateModel(Integer id, String name, Duration durationTime) {
-        this.id = id;
+    public StateModel(Integer stateId, String name, Duration durationTime) {
+        this.stateId = stateId;
         this.name = name;
         this.durationTime = durationTime;
     }

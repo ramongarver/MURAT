@@ -7,18 +7,18 @@ package es.ugr.murat.model;
  */
 public class TrafficLightModel {
 
-    private final Integer id; // Id del semáforo
+    private final Integer trafficLightId; // Id del semáforo
     private final String name; // Nombre del semáforo
     private final String roadStretchIn; // Calle que entra al cruce que regula el semáforo
 
-    public TrafficLightModel(Integer id, String name, String roadStretchIn) {
-        this.id = id;
+    public TrafficLightModel(Integer trafficLightId, String name, String roadStretchIn) {
+        this.trafficLightId = trafficLightId;
         this.name = name;
         this.roadStretchIn = roadStretchIn;
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getTrafficLightId() {
+        return trafficLightId;
     }
 
     public String getName() {

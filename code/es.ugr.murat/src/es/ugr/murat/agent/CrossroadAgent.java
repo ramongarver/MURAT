@@ -17,13 +17,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Clase representando al agente cruce (Crossroad).
+ * Clase representando al agente cruce (CrossroadAgent).
  *
  * @author Ramón García Verjaga
  */
-public class Crossroad extends MURATBaseAgent {
+public class CrossroadAgent extends MURATBaseAgent {
 
-    private Integer id;
+    private Integer crossroadId;
     private Integer status;
     private CrossroadModel crossroadModel;
     private Map<Integer, TrafficLightModel> trafficLights;
@@ -36,7 +36,7 @@ public class Crossroad extends MURATBaseAgent {
     @Override
     protected void setup() {
         super.setup();
-        id = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
+        crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         status = CrossroadConstant.LOAD_DATA;
         crossroadModel = null;
         trafficLights = null;
@@ -60,16 +60,16 @@ public class Crossroad extends MURATBaseAgent {
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
         // Cargamos datos del cruce
-        // Obtenemos datos generales del cruce
-        crossroadModel = Simulation.simulation.getCrossroadModel(id);
-        // Obtenemos datos de los semáforos del cruce
-        trafficLights = Simulation.simulation.getCrossroadTrafficLights(id);
-        // Obtenemos datos de los estados del cruce
-        states = Simulation.simulation.getCrossroadStates(id);
-        // Obtenemos el estado inicial del cruce
-        initialState = Simulation.simulation.getCrossroadInitialState(id);
-        // Obtenemos los colores de semáforos para cada estado del cruce
-        trafficLightsColorsPerState = Simulation.simulation.getCrossroadTrafficLightsColorsPerCrossroadState(id);
+            // Obtenemos datos generales del cruce
+        crossroadModel = Simulation.simulation.getCrossroadModel(crossroadId);
+            // Obtenemos datos de los semáforos del cruce
+        trafficLights = Simulation.simulation.getCrossroadTrafficLights(crossroadId);
+            // Obtenemos datos de los estados del cruce
+        states = Simulation.simulation.getCrossroadStates(crossroadId);
+            // Obtenemos el estado inicial del cruce
+        initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
+            // Obtenemos los colores de semáforos para cada estado del cruce
+        trafficLightsColorsPerState = Simulation.simulation.getCrossroadTrafficLightsColorsPerCrossroadState(crossroadId);
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
@@ -101,9 +101,9 @@ public class Crossroad extends MURATBaseAgent {
     protected void exit() {
         exit = true;
     }
-    //******************************************************//
+    //**************************************************//
 
-    // Utilidades y otros
+    //*************** Utilidades y otros ***************//
     // Cambiamos al siguiente estado del cruce
     private void changeToTheNextState() {
         this.changeToState(currentState == states.size() ? 1 : currentState + 1);
@@ -132,5 +132,6 @@ public class Crossroad extends MURATBaseAgent {
             currentState = newState;
         }
     }
+    //**************************************************//
 
 }

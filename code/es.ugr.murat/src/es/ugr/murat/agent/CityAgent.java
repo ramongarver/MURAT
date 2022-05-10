@@ -5,11 +5,11 @@ import es.ugr.murat.util.Logger;
 import jade.core.Agent;
 
 /**
- * Clase representando al agente ciudad (City).
+ * Clase representando al agente ciudad (CityAgent).
  *
  * @author Ramón García Verjaga
  */
-public class City extends Agent {
+public class CityAgent extends Agent {
 
     @Override
     protected void setup() {
