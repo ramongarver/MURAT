@@ -32,11 +32,10 @@ public class  RoadStretchModel {
         this.length = length;
         this.lanes = lanes;
         this.vehicles = vehicles;
-        // TODO: Son atributos calculados --> Programar el cálculo
         this.maxVehicles = (int) (this.length * this.lanes / vehicleLength);
         this.occupancyPercentage = (double) this.vehicles / (double) this.maxVehicles * 100.0;
         this.type = this.crossroadOriginId == null && this.crossroadDestinationId != null ? "ROOT" : // Si no tiene cruce origen y tiene cruce destino (calle de entrada al sistema)
-                        this.crossroadOriginId != null && this.crossroadDestinationId == null ? "LEFT" : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
+                        this.crossroadOriginId != null && this.crossroadDestinationId == null ? "LEAF" : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
                             this.crossroadOriginId != null && this.crossroadDestinationId != null ? "INNER" : // Si tiene cruce origen y cruce destino (calle interna)
                                     null;   // Nada de lo anterior
         this.input = "ROOT".equals(this.type) ? this.lanes * inputRatio : this.lanes * inputInnerRatio;
