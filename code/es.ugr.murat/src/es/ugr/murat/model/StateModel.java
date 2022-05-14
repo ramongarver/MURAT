@@ -11,12 +11,24 @@ public class StateModel {
 
     private Integer stateId; // Id del estado
     private String name; // Nombre del estado
-    private Duration durationTime; // Duración de tiempo del estado
+    private Integer durationTime; // Duración de tiempo del estado
 
-    public StateModel(Integer stateId, String name, Duration durationTime) {
+    public StateModel(Integer stateId, String name, Integer durationTime) {
         this.stateId = stateId;
         this.name = name;
         this.durationTime = durationTime;
+    }
+
+    public Integer getStateId() {
+        return stateId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Integer getDurationTime() {
+        return durationTime;
     }
 
 }

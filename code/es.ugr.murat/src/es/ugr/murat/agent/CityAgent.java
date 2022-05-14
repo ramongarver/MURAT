@@ -4,9 +4,7 @@ import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CityConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
-import es.ugr.murat.constant.TrafficLightConstant;
 import es.ugr.murat.model.CrossroadModel;
-import es.ugr.murat.model.TrafficLightModel;
 import es.ugr.murat.simulation.Simulation;
 import es.ugr.murat.util.Logger;
 import jade.core.AID;
@@ -59,10 +57,10 @@ public class CityAgent extends MURATBaseAgent {
         }
 
         // Enviamos un mensaje a cada semáforo para pedirle que finalice
-        crossroads.forEach((crossroadId, crossroadModel) ->
-                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
-                        new AID(CrossroadConstant.AGENT_NAME + crossroadId, AID.ISLOCALNAME),
-                        MessageConstant.FINALIZE));
+//        crossroads.forEach((crossroadId, crossroadModel) ->
+//                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
+//                        new AID(CrossroadConstant.AGENT_NAME + crossroadId, AID.ISLOCALNAME),
+//                        MessageConstant.FINALIZE));
         status = CityConstant.EXIT;
     }
 

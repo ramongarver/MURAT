@@ -29,10 +29,11 @@ public class Simulation {
 
     public static Simulation simulation = null;
 
-    private final Integer city = 2;
+    private final Integer cityId = 1;
+    private final Integer cityConfigurationId = 1;
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
-    private final CityConfigurationModel cityConfigurationModel; // Configuración de la ciudad
+    private final Map<Integer, CityConfigurationModel> cityConfiguration; // Configuración de la ciudad | (cityConfigurationId -> cityConfigurationModel)
     private final Map<Integer, CrossroadModel> crossroads; // Cruces de la ciudad | (crossroadId -> crossroadModel)
     private final Map<Integer, Map<Integer, TrafficLightModel>> crossroadTrafficLights; // Semáforos de la ciudad | (crossroadId -> trafficLightId -> trafficLightModel)
     private final Map<Integer, Map<Integer, StateModel>> crossroadStates; // Estados por cruce de la ciudad | (crossroadId -> stateId -> stateModel)
@@ -49,16 +50,23 @@ public class Simulation {
     }
 
     private Simulation() {
-        if (city.equals(1)) {
+        if (cityId.equals(1)) {
             // CITY2: Very simple cross city
             // Información de la ciudad
             cityModel = new CityModel("CITY2", "Very simple cross");
 
             // Configuración de la ciudad
+            cityConfiguration = new HashMap<>();
+                // Configuración 1
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
-            cityConfigurationModel = new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
-                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState);
+            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
+                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState));
+                // Configuración 2
+            crossroadsInitialState = new HashMap<>();
+            crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 3));
+            cityConfiguration.put(2, new CityConfigurationModel(2, 4.0, 0.1, 2.0, 1.0,
+                    LocalTime.of(4, 0), LocalTime.of(22, 0), Duration.ofSeconds(10), "single_peak", crossroadsInitialState));
 
             // Cruces de la ciudad
             crossroads = new HashMap<>();
@@ -74,8 +82,8 @@ public class Simulation {
             // Estados por cruce de la ciudad
             crossroadStates = new HashMap<>();
             Map<Integer, StateModel> states = new HashMap<>();
-            states.put(1, new StateModel(1, "S1", Duration.ofSeconds(45)));
-            states.put(2, new StateModel(2, "S2", Duration.ofSeconds(45)));
+            states.put(1, new StateModel(1, "S1", 45));
+            states.put(2, new StateModel(2, "S2", 45));
             crossroadStates.put(1, states);
 
             // Colores de semáforos para cada estado de un cruce
@@ -95,14 +103,18 @@ public class Simulation {
 
             // Tramos de calle de la ciudad
             roadStretches = new HashMap<>();
+            Double vehicleLength = cityConfiguration.get(cityConfigurationId).getVehicleLength();
+            Double inputRatio = cityConfiguration.get(cityConfigurationId).getInputRatio();
+            Double inputInnerRatio = cityConfiguration.get(cityConfigurationId).getInputInnerRatio();
+            Double outputInnerRatio = cityConfiguration.get(cityConfigurationId).getOutputInnerRatio();
             roadStretches.put("RS1", new RoadStretchModel(1,null, "E", "RS1",
-                    100.0, 1, 0.0, 25, 0.05, 2.0, "left"));
+                    100.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS2", new RoadStretchModel(null, 1, "S", "RS2",
-                    500.0, 1, 0.0, 125, 2.0, 2.0, "root"));
+                    500.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS3", new RoadStretchModel(1, null, "E", "RS3",
-                    100.0, 1, 0.0, 25, 0.05, 2.0, "left"));
+                    100.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS4", new RoadStretchModel(null, 1, "S", "RS4",
-                    500.0, 1, 0.0, 125, 2.0, 2.0, "root"));
+                    500.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
 
             // Tramos de cruce por cruce de la ciudad
             crossroadsStretches = new HashMap<>();
@@ -139,10 +151,12 @@ public class Simulation {
             cityModel = new CityModel("CITY1", "Simple cross city");
 
             // Configuración de la ciudad
+            cityConfiguration = new HashMap<>();
+                // Configuración 1
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
-            cityConfigurationModel = new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
-                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState);
+            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
+                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState));
 
             // Cruces de la ciudad
             crossroads = new HashMap<>();
@@ -160,12 +174,12 @@ public class Simulation {
             // Estados por cruce de la ciudad
             crossroadStates = new HashMap<>();
             Map<Integer, StateModel> states = new HashMap<>();
-            states.put(1, new StateModel(1, "S1", Duration.ofSeconds(120)));
-            states.put(2, new StateModel(2, "S2", Duration.ofSeconds(120)));
-            states.put(3, new StateModel(3, "S3", Duration.ofSeconds(120)));
-            states.put(4, new StateModel(4, "S4", Duration.ofSeconds(60)));
-            states.put(5, new StateModel(5, "S5", Duration.ofSeconds(60)));
-            states.put(6, new StateModel(6, "S6", Duration.ofSeconds(60)));
+            states.put(1, new StateModel(1, "S1", 120));
+            states.put(2, new StateModel(2, "S2", 120));
+            states.put(3, new StateModel(3, "S3", 120));
+            states.put(4, new StateModel(4, "S4", 60));
+            states.put(5, new StateModel(5, "S5", 60));
+            states.put(6, new StateModel(6, "S6", 60));
             crossroadStates.put(1, states);
 
             // Colores de semáforos para cada estado de un cruce
@@ -217,22 +231,26 @@ public class Simulation {
 
             // Tramos de calle de la ciudad
             roadStretches = new HashMap<>();
+            Double vehicleLength = cityConfiguration.get(cityConfigurationId).getVehicleLength();
+            Double inputRatio = cityConfiguration.get(cityConfigurationId).getInputRatio();
+            Double inputInnerRatio = cityConfiguration.get(cityConfigurationId).getInputInnerRatio();
+            Double outputInnerRatio = cityConfiguration.get(cityConfigurationId).getOutputInnerRatio();
             roadStretches.put("RS1", new RoadStretchModel(null, 1, "W", "RS1",
-                    600.0, 2, 0.0, 300, 0.1, 4.0, "root"));
+                    600.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS2", new RoadStretchModel(1, null, "N", "RS2",
-                    200.0, 2, 0.0, 100, 4.0, 4.0, "left"));
+                    200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS3", new RoadStretchModel(null, 1, "S", "RS3",
-                    600.0, 2, 0.0, 300, 0.1, 4.0, "root"));
+                    600.0, 2, 223, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS4", new RoadStretchModel(1, null, "W", "RS4",
-                    200.0, 2, 0.0, 100, 4.0, 4.0, "left"));
+                    200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS5", new RoadStretchModel(null, 1, "E", "RS5",
-                    600.0, 2, 0.0, 300, 0.1, 4.0, "root"));
+                    600.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS6", new RoadStretchModel(1, null, "S", "RS6",
-                    200.0, 2, 0.0, 100, 4.0, 4.0, "left"));
+                    200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS7", new RoadStretchModel(null, 1, "N", "RS7",
-                    600.0, 2, 0.0, 300, 0.1, 4.0, "root"));
+                    600.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS8", new RoadStretchModel(1, null, "E", "RS8",
-                    200.0, 2, 0.0, 100, 4.0, 4.0, "left"));
+                    200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
 
             // Tramos de cruce por cruce de la ciudad
             crossroadsStretches = new HashMap<>();
@@ -342,7 +360,7 @@ public class Simulation {
     }
 
     public Integer getCrossroadInitialState(Integer crossroadId) {
-        return cityConfigurationModel.getCrossroadsInitialState().get(crossroadId).getStateId();
+        return cityConfiguration.get(cityConfigurationId).getCrossroadsInitialState().get(crossroadId).getStateId();
     }
 
     public Map<Integer, Map<Integer, String>> getCrossroadTrafficLightsColorsPerCrossroadState(Integer crossroadId) {

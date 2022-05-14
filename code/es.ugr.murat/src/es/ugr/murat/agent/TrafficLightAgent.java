@@ -85,20 +85,21 @@ public class TrafficLightAgent extends MURATBaseAgent {
                 // Cambiamos el color del semáforo
                 if (MessageConstant.CHANGE_LIGHT.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED.equals(light) ? TrafficLightConstant.GREEN : TrafficLightConstant.RED;
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(),
+                            TrafficLightConstant.RED.equals(light) ? MessageConstant.SET_LIGHT_TO_RED : MessageConstant.SET_LIGHT_TO_GREEN);
                     Logger.info(ActionConstant.LIGHT_CHANGED, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
-                    // TODO: INFORM
                 }
                 // Ponemos el semáforo en rojo
                 else if (MessageConstant.SET_LIGHT_TO_RED.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.RED;
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), MessageConstant.SET_LIGHT_TO_RED);
                     Logger.info(ActionConstant.LIGHT_SET_TO_RED, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
-                    // TODO: INFORM
                 }
                 // Ponemos el semáforo en verde
                 else if (MessageConstant.SET_LIGHT_TO_GREEN.equals(incomingMessage.getContent())) {
                     light = TrafficLightConstant.GREEN;
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), MessageConstant.SET_LIGHT_TO_GREEN);
                     Logger.info(ActionConstant.LIGHT_SET_TO_GREEN, this.getClass().getSimpleName(), this.getLocalName(), "||Light::" + light);
-                    // TODO: INFORM
                 }
                 // Finalizamos el agente
                 else if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
@@ -107,7 +108,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
                 }
                 // Manejamos mensajes no conocidos
                 else {
-                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName()); // TODO: pensar si manejar esto de otra forma
+                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
                 }
             }
         }
