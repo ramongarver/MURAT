@@ -14,10 +14,10 @@ import jade.lang.acl.ACLMessage;
  */
 public class TrafficLightAgent extends MURATBaseAgent {
 
-    private Integer trafficLightId;
-    private Integer crossroadId;
-    private String light;
-    private String roadStretchInName;
+    private Integer trafficLightId; // Identificador del semáforo
+    private Integer crossroadId; // Identificador del cruce al que está asociado el semáforo
+    private String light; // Color de la luz del semáforo
+    private String roadStretchInName; // Tramo de calle de entrada al cruce que regula el semáforo
 
     //*************** Ciclo de vida del agente ***************//
     @Override

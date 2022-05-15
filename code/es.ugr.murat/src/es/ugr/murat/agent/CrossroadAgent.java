@@ -27,22 +27,26 @@ import java.util.Set;
  */
 public class CrossroadAgent extends MURATBaseAgent {
 
-    private Integer crossroadId;
-    private CrossroadModel crossroadModel;
-    private Map<Integer, TrafficLightModel> trafficLights;
-    private Map<Integer, StateModel> states;
-    private Integer initialState;
-    private Integer currentState;
-    private Map<Integer, Map<Integer, String>> trafficLightsColorsPerState;
-    private Map<String, RoadStretchModel> roadStretchesIn;
-    private Map<String, RoadStretchModel> roadStretchesOut;
-    private Map<String, CrossroadStretchModel> crossroadsStretches;
-    private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches;
+    private Integer crossroadId; // Identificador del cruce
+    private CrossroadModel crossroadModel; // Información del cruce
+    private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
+    private Map<Integer, StateModel> states; // Estados del cruce | (stateId -> stateModel)
+    private Integer initialState; // Estado inicial del cruce
+    private Integer currentState; // Estado actual del cruce
+    private Map<Integer, Map<Integer, String>> trafficLightsColorsPerState; // Colores de semáforos para cada estado | (stateId -> trafficLightId -> color)
+    private Map<String, RoadStretchModel> roadStretchesIn; // Tramos de calle que entran al cruce | (roadStretchInName -> roadStretchModel)
+    private Map<String, RoadStretchModel> roadStretchesOut; // Tramos de calle que salen del cruce | (roadStretchOutName -> roadStretchModel)
+    private Map<String, CrossroadStretchModel> crossroadsStretches; // Tramos de cruce | (name -> crossroadStretchModel)
+    private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
 
     // Simulación
-    private Integer currentTicks;
-    private Integer stateTicks;
-    private Integer totalTicks;
+    private Integer currentTicks; // Número de ticks realizados en la simulación
+    private Integer stateTicks; // Número de ticks realizados en el estado actual
+    private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
+
+    // Contadores de vehículos;
+    private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
+    private Integer totalVehiclesOut; // Número total de vehículos que han salido del cruce
 
 
     //*************** Ciclo de vida del agente ***************//
@@ -64,6 +68,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         currentTicks = 0;
         stateTicks = 0;
         totalTicks = 580;
+        totalVehiclesIn = 0;
+        totalVehiclesOut = 0;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -263,7 +269,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     private void addTraffic() {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
             Integer roadStretchVehicles = roadStretchInModel.getVehicles();
-            if (this.isRoadStretchFull(roadStretchInModel)) {
+            if (!this.isRoadStretchFull(roadStretchInModel)) {
                 roadStretchInModel.setVehicles(roadStretchVehicles + 1);
             }
         });

@@ -19,7 +19,7 @@ import java.util.Map;
  */
 public class CityAgent extends MURATBaseAgent {
 
-    private Map<Integer, CrossroadModel> crossroads;
+    private Map<Integer, CrossroadModel> crossroads; // Cruces de la ciudad | (crossroadId -> crossroadModel)
 
     //*************** Ciclo de vida del agente ***************//
     @Override
