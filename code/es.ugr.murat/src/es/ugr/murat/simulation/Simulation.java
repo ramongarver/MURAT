@@ -60,7 +60,7 @@ public class Simulation {
                 // Configuración 1
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
-            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
+            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 4.0, 2.0, 2.0,
                     LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState));
                 // Configuración 2
             crossroadsInitialState = new HashMap<>();
@@ -240,7 +240,7 @@ public class Simulation {
             roadStretches.put("RS2", new RoadStretchModel(1, null, "N", "RS2",
                     200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS3", new RoadStretchModel(null, 1, "S", "RS3",
-                    600.0, 2, 223, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
+                    600.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS4", new RoadStretchModel(1, null, "W", "RS4",
                     200.0, 2, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS5", new RoadStretchModel(null, 1, "E", "RS5",

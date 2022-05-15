@@ -139,7 +139,7 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         // Añadimos tráfico a la simulación
         this.addTraffic();
-        // this.moveVehicles();
+
         // this.inform();
 
         currentTicks++;
@@ -191,6 +191,35 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         // Obtenemos los coches que van a cruzar y hacia qué calle va cada coche
         Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
+
+        //
+        roadStretchesOut.forEach((roadStretchOutName, roadStretchesOutModel) -> {
+            if (roadStretchesOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
+                Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue();
+                Integer roadStretchVehicles = roadStretchesOutModel.getVehicles();
+                Integer vehiclesToOutSystem = roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
+                roadStretchesOutModel.setVehicles(roadStretchVehicles - vehiclesToOutSystem);
+                totalVehiclesOut += vehiclesToOutSystem;
+            }
+        });
+
+        crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
+            roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
+                if (vehicles > 0) {
+                    Integer roadStretchOriginVehicles = roadStretchesIn.get(roadStretchOriginName).getVehicles();
+                    Integer roadStretchOriginToDestinationVehicles = roadStretchOriginVehicles < vehicles ? roadStretchOriginVehicles : vehicles;
+                    Integer roadStretchDestinationVehicles = roadStretchesOut.get(roadStretchDestinationName).getVehicles();
+                    Integer roadStretchDestinationMaxVehicles = roadStretchesOut.get(roadStretchDestinationName).getMaxVehicles();
+                    Integer roadStretchDestinationFreeSpaces = roadStretchDestinationMaxVehicles - roadStretchDestinationVehicles;
+                    Integer vehiclesToDestination = roadStretchDestinationFreeSpaces < roadStretchOriginToDestinationVehicles ? roadStretchDestinationFreeSpaces : roadStretchOriginToDestinationVehicles;
+                    roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchOriginVehicles - vehiclesToDestination);
+                    roadStretchesOut.get(roadStretchDestinationName).setVehicles(roadStretchDestinationVehicles + vehiclesToDestination);
+                    if (roadStretchesOut.get(roadStretchDestinationName).getCrossroadDestinationId() != null) { // Si no es salida del sistema de tráfico
+                        totalVehiclesOut += vehiclesToDestination;
+                    }
+                }
+            });
+        });
     }
 
     // Obtenemos los ids de los semáforos en verde
@@ -225,7 +254,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         Map<String, Map<String, Integer>> crossroadStretchesVehicles = new HashMap<>();
         Random random = new Random();
         crossroadStretches.forEach((originRoadStretchName, destinationRoadStretchNameAndPercentage) -> {
-            Integer vehicles = roadStretchesIn.get(originRoadStretchName).getOutput().intValue();
+            Integer originRoadStretchOutputVehicles = roadStretchesIn.get(originRoadStretchName).getOutput().intValue();
+            Integer originRoadStretchVehicles = roadStretchesIn.get(originRoadStretchName).getVehicles();
+            Integer vehicles = originRoadStretchVehicles < originRoadStretchOutputVehicles ? originRoadStretchVehicles : originRoadStretchOutputVehicles;
             Integer percentagesSum = 0;
             Map <String, Integer> destinationVehicles = new HashMap<>();
             for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) {
@@ -268,9 +299,16 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Añadimos tráfico a la simulación
     private void addTraffic() {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
-            Integer roadStretchVehicles = roadStretchInModel.getVehicles();
-            if (!this.isRoadStretchFull(roadStretchInModel)) {
-                roadStretchInModel.setVehicles(roadStretchVehicles + 1);
+            if (roadStretchInModel.getCrossroadOriginId() == null) {
+                Integer roadStretchInputVehicles = roadStretchInModel.getInput().intValue(); // Vehículos por segundo
+                Integer roadStretchVehicles = roadStretchInModel.getVehicles();
+                Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles();
+                Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles;
+                Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles;
+                if (!this.isRoadStretchFull(roadStretchInModel)) {
+                    roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
+                    totalVehiclesIn += roadStretchIncomingVehicles;
+                }
             }
         });
     }
@@ -355,6 +393,27 @@ public class CrossroadAgent extends MURATBaseAgent {
         if ((!"||".equals(str))) {
             state += str;
         }
+
+        var ref3 = new Object() {
+            String str = "||";
+        };
+        roadStretchesOut.forEach((roadStretchInName, roadStretchInModel) -> {
+            if (roadStretchInModel.getCrossroadDestinationId() == null) {
+                ref3.str = ref3.str + roadStretchInName + ":" + roadStretchInModel.getVehicles() + "/" + roadStretchInModel.getMaxVehicles() + "(" + String.format("%.2f", roadStretchInModel.getOccupancyPercentage()) + "%)" + " ";
+            }
+        });
+        str = ref3.str;
+        if (str.endsWith(" ")) {
+            str = str.substring(0, str.length()-1);
+        }
+
+        if ((!"||".equals(str))) {
+            state += str;
+        }
+
+        state += "" +
+                "||Vin:" + totalVehiclesIn +
+                " Vout:" + totalVehiclesOut;
 
         state += "||";
 
