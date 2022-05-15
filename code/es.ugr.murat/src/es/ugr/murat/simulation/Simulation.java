@@ -111,9 +111,9 @@ public class Simulation {
                     100.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
             roadStretches.put("RS2", new RoadStretchModel(null, 1, "S", "RS2",
                     500.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
-            roadStretches.put("RS3", new RoadStretchModel(1, null, "E", "RS3",
+            roadStretches.put("RS3", new RoadStretchModel(null, 1, "E", "RS3",
                     100.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
-            roadStretches.put("RS4", new RoadStretchModel(null, 1, "S", "RS4",
+            roadStretches.put("RS4", new RoadStretchModel(1, null, "S", "RS4",
                     500.0, 1, 0, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio));
 
             // Tramos de cruce por cruce de la ciudad
@@ -371,10 +371,8 @@ public class Simulation {
         Map<String, RoadStretchModel> roadStretchesIn = new HashMap<>();
         roadStretches.forEach((roadStretchName, roadStretchModel) -> {
             Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
-            if (crossroadDestinationId != null) {
-                if (crossroadDestinationId.equals(crossroadId)) {
-                    roadStretchesIn.put(roadStretchName, roadStretchModel);
-                }
+            if (crossroadDestinationId != null && crossroadDestinationId.equals(crossroadId)) {
+                roadStretchesIn.put(roadStretchName, roadStretchModel);
             }
         });
         return roadStretchesIn;
@@ -384,10 +382,8 @@ public class Simulation {
         Map<String, RoadStretchModel> roadStretchesOut = new HashMap<>();
         roadStretches.forEach((roadStretchName, roadStretchModel) -> {
             Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
-            if (crossroadOriginId != null) {
-                if (crossroadOriginId.equals(crossroadId)) {
-                    roadStretchesOut.put(roadStretchName, roadStretchModel);
-                }
+            if (crossroadOriginId != null && crossroadOriginId.equals(crossroadId)) {
+                roadStretchesOut.put(roadStretchName, roadStretchModel);
             }
         });
         return roadStretchesOut;

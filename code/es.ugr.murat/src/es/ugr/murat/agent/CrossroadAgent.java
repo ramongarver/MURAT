@@ -17,6 +17,7 @@ import jade.lang.acl.ACLMessage;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -82,9 +83,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Cargamos datos del cruce
             // Obtenemos datos generales del cruce
         crossroadModel = Simulation.simulation.getCrossroadModel(crossroadId);
-            // Obtenemos datos de los semáforos del cruce
+            // Obtenemos los semáforos del cruce
         trafficLights = Simulation.simulation.getCrossroadTrafficLights(crossroadId);
-            // Obtenemos datos de los estados del cruce
+            // Obtenemos los estados del cruce
         states = Simulation.simulation.getCrossroadStates(crossroadId);
             // Obtenemos el estado inicial del cruce
         initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
@@ -179,17 +180,11 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Obtenemos los ids de los semáforos en verde
         Set<Integer> greenTrafficLightsIds = this.getGreenTrafficLightsIds();
 
-        Map<String, Map<String, Double>> crossroadStretches = new HashMap<>(); // (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
-        Map<String, Double> destinationRoadStretch = new HashMap<>(); // (roadStretchDestinationName -> carsPercentageFromOriginToDestination)
-        greenTrafficLightsIds.forEach((trafficLightId) -> { // Para cada semáforo en verde
-            String originRoadStretchName = trafficLights.get(trafficLightId).getRoadStretchIn(); // Obtenemos la calle que regula, calle origen del cruce asociada al semáforo
-            statesTrafficLightsCrossroadStretches.get(currentState).get(trafficLightId).forEach((crossroadStretchName) -> { // Obtenemos el conjunto de cruces que habilita estando en verde
-                String destinationRoadStretchName = getCrossroadStretchDestination(crossroadStretchName); // Obtenemos la calle de destino
-                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de coches interesados a ir a ese destino
-                destinationRoadStretch.put(destinationRoadStretchName, carsPercentageFromOriginToDestination); // Añadimos el destino con el porcentaje asociado
-            });
-            crossroadStretches.put(originRoadStretchName, destinationRoadStretch); // Añadimos el origen con todos los destinos asociados para ese estado y semáforo
-        });
+        // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de coches interesados en ir por cada uno
+        Map<String, Map<String, Double>> crossroadStretches = this.getCrossroadStretches(greenTrafficLightsIds);
+
+        // Obtenemos los coches que van a cruzar y hacia qué calle va cada coche
+        Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
     }
 
     // Obtenemos los ids de los semáforos en verde
@@ -203,10 +198,63 @@ public class CrossroadAgent extends MURATBaseAgent {
         return greenTrafficLightsIds;
     }
 
+    // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de coches interesados en ir por cada uno para un conjunto de semáforos | ()
+    private Map<String, Map<String, Double>> getCrossroadStretches(Set<Integer> greenTrafficLightsIds) {
+        Map<String, Map<String, Double>> crossroadStretches = new HashMap<>(); // (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
+        greenTrafficLightsIds.forEach((trafficLightId) -> { // Para cada semáforo en verde
+            Map<String, Double> destinationRoadStretch = new HashMap<>(); // (roadStretchDestinationName -> carsPercentageFromOriginToDestination)
+            String originRoadStretchName = trafficLights.get(trafficLightId).getRoadStretchIn(); // Obtenemos la calle que regula, calle origen del cruce asociada al semáforo
+            statesTrafficLightsCrossroadStretches.get(currentState).get(trafficLightId).forEach((crossroadStretchName) -> { // Obtenemos el conjunto de cruces que habilita estando en verde
+                String destinationRoadStretchName = getCrossroadStretchDestination(crossroadStretchName); // Obtenemos la calle de destino
+                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de coches interesados a ir a ese destino
+                destinationRoadStretch.put(destinationRoadStretchName, carsPercentageFromOriginToDestination); // Añadimos el destino con el porcentaje asociado
+            });
+            crossroadStretches.put(originRoadStretchName, destinationRoadStretch); // Añadimos el origen con todos los destinos asociados para ese estado y semáforo
+        });
+        return crossroadStretches;
+    }
+
+    // Obtenemos los coches que van a cruzar y hacia qué calle va cada coche | ()
+    private Map<String, Map<String, Integer>> getCrossroadStretchesVehicles(Map<String, Map<String, Double>> crossroadStretches) {
+        Map<String, Map<String, Integer>> crossroadStretchesVehicles = new HashMap<>();
+        Random random = new Random();
+        crossroadStretches.forEach((originRoadStretchName, destinationRoadStretchNameAndPercentage) -> {
+            Integer vehicles = roadStretchesIn.get(originRoadStretchName).getOutput().intValue();
+            Integer percentagesSum = 0;
+            Map <String, Integer> destinationVehicles = new HashMap<>();
+            for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) {
+                percentagesSum += entry.getValue().intValue();
+                destinationVehicles.put(entry.getKey(), 0);
+            }
+            // Obtenemos a donde debe ir cada uno de los vehículos
+            for (int i = 0; i < vehicles; i++) {
+                int randomNum = !percentagesSum.equals(0) ? 1 + random.nextInt(percentagesSum) : 0;
+                Integer previousPercentage = null;
+                Integer lowerIntervalValue = 0;
+                Integer upperIntervalValue = 0;
+                for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) { // Para cada calle de destino
+                    String destinationRoadStretchName = entry.getKey(); // Calle de destino
+                    Integer currentPercentage = entry.getValue().intValue(); // Porcentaje de coches que van hacia esa calle de destino
+                    Integer vehiclesToDestination = destinationVehicles.get(destinationRoadStretchName); // Vehículos que por ahora van hacia esa calle de destino
+                    lowerIntervalValue += previousPercentage == null ? 1 : previousPercentage;
+                    upperIntervalValue += currentPercentage;
+                    if (lowerIntervalValue <= randomNum && randomNum <= upperIntervalValue) {
+                        destinationVehicles.put(destinationRoadStretchName, vehiclesToDestination + 1); // Añadimos un coche para que vaya a la calle de destino
+                    }
+                    previousPercentage = currentPercentage;
+                }
+            }
+            crossroadStretchesVehicles.put(originRoadStretchName, destinationVehicles);
+        });
+        return crossroadStretchesVehicles;
+    }
+
+    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN
     private String getCrossroadStretchOrigin(String crossroadStretchName) {
         return crossroadStretchName.split("-")[0];
     }
 
+    // Obtenemos el destino del cruce | Para la forma RSN-RSM obtenemos RSM
     private String getCrossroadStretchDestination(String crossroadStretchName) {
         return crossroadStretchName.split("-")[1];
     }
@@ -255,16 +303,19 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
     }
 
+    // Evaluamos si la simulación ha llegado a su fin
     private Boolean isSimulationFinished() {
         return currentTicks > totalTicks;
     }
 
+    // Evaluamos si una calle está llena de coches
     private Boolean isRoadStretchFull (RoadStretchModel roadStretchModel) {
         Integer roadStretchVehicles = roadStretchModel.getVehicles();
         Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles();
         return !(roadStretchVehicles < roadStretchMaxVehicles);
     }
 
+    // Escribimos el estado actual del cruce
     private String writeCurrentState() {
         String state = "" +
                 "||" + "currentTicks:" + currentTicks +
