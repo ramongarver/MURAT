@@ -1,5 +1,6 @@
 package es.ugr.murat.agent;
 
+import com.eclipsesource.json.JsonObject;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
@@ -27,6 +28,7 @@ import java.util.Set;
  */
 public class CrossroadAgent extends MURATBaseAgent {
 
+    private String cityName; // Nombre de la ciudad
     private Integer crossroadId; // Identificador del cruce
     private CrossroadModel crossroadModel; // Información del cruce
     private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
@@ -43,6 +45,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Integer currentTicks; // Número de ticks realizados en la simulación
     private Integer stateTicks; // Número de ticks realizados en el estado actual
     private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
+    private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; //  (tick -> roadStretchName -> occupation)
 
     // Contadores de vehículos;
     private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
@@ -54,6 +57,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     protected void setup() {
         super.setup();
         status = CrossroadConstant.LOAD_DATA;
+        cityName = null;
         crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         crossroadModel = null;
         trafficLights = null;
@@ -67,7 +71,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         statesTrafficLightsCrossroadStretches = null;
         currentTicks = 0;
         stateTicks = 0;
-        totalTicks = 580;
+        totalTicks = 0;
+        tickRoadStretchOccupation = new HashMap<>();
         totalVehiclesIn = 0;
         totalVehiclesOut = 0;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
@@ -87,6 +92,8 @@ public class CrossroadAgent extends MURATBaseAgent {
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
         // Cargamos datos del cruce
+            // Obtenemos datos el nombre de la ciudad;
+        cityName = Simulation.simulation.getCityName();
             // Obtenemos datos generales del cruce
         crossroadModel = Simulation.simulation.getCrossroadModel(crossroadId);
             // Obtenemos los semáforos del cruce
@@ -105,6 +112,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
+            // Obtenemos los ticks totales de la simulación
+        totalTicks = 3600; // Simulation.simulation.getSimulationSeconds();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
@@ -122,6 +131,9 @@ public class CrossroadAgent extends MURATBaseAgent {
     protected void controlTraffic() {
         // Mostramos el estado actual del cruce
         Logger.info(this.writeCurrentState());
+
+        // Informamos del estado actual del cruce
+        this.reportCurrentState(false);
 
         // Comprobamos si ha finalizado la simulación
         if (this.isSimulationFinished()) {
@@ -417,7 +429,41 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         state += "||";
 
+        this.storeCurrentState();
+
         return state;
+    }
+
+    private void storeCurrentState() {
+        Map<String, Double> roadStretchOccupation = new HashMap<>();
+        roadStretchesIn.forEach((roadStretchName, roadStretchModel) -> roadStretchOccupation.put(roadStretchName, roadStretchModel.getOccupancyPercentage()));
+        roadStretchesOut.forEach((roadStretchName, roadStretchModel) -> roadStretchOccupation.put(roadStretchName, roadStretchModel.getOccupancyPercentage()));
+        tickRoadStretchOccupation.put(currentTicks, roadStretchOccupation);
+    }
+
+    // Informamos del estado actual del cruce
+    private void reportCurrentState(Boolean isBulk) {
+        if (!isBulk || isSimulationFinished()) {
+            Map<Integer, Map<String, Double>> currentTickRoadStretchOccupation = new HashMap<>();
+            currentTickRoadStretchOccupation.put(currentTicks, new HashMap<>(tickRoadStretchOccupation.get(currentTicks)));
+            Map<Integer, Map<String, Double>> tickRoadStretchOccupationSingle = currentTickRoadStretchOccupation; // Información de ocupación de calle en el tick actual
+            Map<Integer, Map<String, Double>> tickRoadStretchOccupationBulk = tickRoadStretchOccupation; // Información de ocupación de calles en todos los ticks de la simulación
+            Map<Integer, Map<String, Double>> tickRoadStretchOccupationData = isBulk ? tickRoadStretchOccupationBulk : tickRoadStretchOccupationSingle;
+
+            // Construimos el objeto JSON con la información
+            JsonObject jsonReport = new JsonObject();
+            tickRoadStretchOccupationData.forEach((tick, roadStretchOccupation) -> {
+                JsonObject tickInformation = new JsonObject();
+                roadStretchOccupation.forEach((roadStretchName, occupation) -> tickInformation.add(roadStretchName, String.format("%.2f", occupation)));
+                tickInformation.add("vehiclesIn", String.format("%s", totalVehiclesIn));
+                tickInformation.add("vehiclesOut", String.format("%s", totalVehiclesOut));
+                jsonReport.add(tick.toString(), tickInformation);
+            });
+
+            // Enviamos el mensaje al agente ciudad
+            String report = MessageConstant.REPORT + " " + jsonReport;
+            this.sendACLMessage(ACLMessage.INFORM, this.getAID(), new AID(cityName, AID.ISLOCALNAME), report);
+        }
     }
     //**************************************************//
 }

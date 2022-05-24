@@ -11,6 +11,8 @@ public class CityConstant {
 
     public static final int EXIT = 0;
     public static final int LOAD_DATA = 1;
-    public static final int FINALIZE_CROSSROADS = 2;
+    public static final int WAIT_CROSSROADS_REPORTS = 2;
+    public static final int GENERATE_SIMULATION_REPORT = 3;
+    public static final int FINALIZE_CROSSROADS = 4;
 
 }

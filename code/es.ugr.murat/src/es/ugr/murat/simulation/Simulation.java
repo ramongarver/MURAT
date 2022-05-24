@@ -4,6 +4,7 @@ import es.ugr.murat.agent.CityAgent;
 import es.ugr.murat.agent.CrossroadAgent;
 import es.ugr.murat.agent.TrafficLightAgent;
 import es.ugr.murat.appboot.JADEBoot;
+import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.model.CityConfigurationModel;
 import es.ugr.murat.model.CityModel;
 import es.ugr.murat.model.ConfigurationCrossroadInitialStateModel;
@@ -15,8 +16,11 @@ import es.ugr.murat.model.TrafficLightModel;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -411,7 +415,53 @@ public class Simulation {
         return crossroadTrafficLights.get(crossroadId).get(trafficLightId).getRoadStretchIn();
     }
 
+    public String getCityName() {
+        return cityModel.getName();
+    }
+
+    public LocalTime getCityConfigurationInitialTime() {
+        return cityConfiguration.get(cityConfigurationId).getInitialTime();
+    }
+
+    public Integer getCityConfigurationSampleTime() {
+        return (Integer) (int) cityConfiguration.get(cityConfigurationId).getSampleTime().getSeconds();
+    }
+
     public Map<Integer, CrossroadModel> getCityCrossroads() {
         return crossroads;
+    }
+
+    public LocalTime getSimulationInitialTime() {
+        return cityConfiguration.get(cityConfigurationId).getInitialTime();
+    }
+
+    public LocalTime getSimulationFinalTime() {
+        return cityConfiguration.get(cityConfigurationId).getInitialTime();
+    }
+
+    public Integer getSimulationSeconds() {
+        LocalTime initialTime = cityConfiguration.get(cityConfigurationId).getInitialTime();
+        LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
+        Duration duration = Duration.between(initialTime, finalTime);
+        Integer seconds = (Integer) (int) duration.getSeconds();
+        return seconds;
+    }
+
+    public List<String> getCityRoadStretchesNames() {
+        List<String> roadStretchesNames = new ArrayList<>();
+        roadStretches.forEach((roadStretchId, roadStretchModel) -> {
+            roadStretchesNames.add(roadStretchModel.getName());
+        });
+        Collections.sort(roadStretchesNames);
+        return roadStretchesNames;
+    }
+
+    public List<String> getCityCrossroadsNames() {
+        List<String> crossroadNames = new ArrayList<>();
+        crossroads.forEach((crossroadId, crossroadModel) -> {
+            crossroadNames.add(CrossroadConstant.AGENT_NAME + crossroadId);
+        });
+        Collections.sort(crossroadNames);
+        return crossroadNames;
     }
 }
