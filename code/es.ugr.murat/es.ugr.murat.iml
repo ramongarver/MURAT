@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jade" level="project" />
     <orderEntry type="library" name="minimal-json-0.9.5" level="project" />
+    <orderEntry type="library" name="commons-csv-1.9.0" level="project" />
   </component>
 </module>
