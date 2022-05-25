@@ -54,13 +54,6 @@ public class TrafficLightAgent extends MURATBaseAgent {
     protected void listenCrossroad() {
         Logger.info("Estado de escucha al cruce", this.getClass().getSimpleName(), this.getLocalName());
         this.listenMessages();
-
-        try {
-            //TODO: Ponemos a "Dormir" el programa durante los ms que queremos
-            Thread.sleep(3*1000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     protected void exit() {

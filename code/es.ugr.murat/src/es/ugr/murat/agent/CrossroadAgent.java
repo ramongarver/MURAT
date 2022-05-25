@@ -113,7 +113,7 @@ public class CrossroadAgent extends MURATBaseAgent {
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
             // Obtenemos los ticks totales de la simulación
-        totalTicks = 3600; // Simulation.simulation.getSimulationSeconds();
+        totalTicks = Simulation.simulation.getSimulationSeconds();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
@@ -151,8 +151,6 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         // Añadimos tráfico a la simulación
         this.addTraffic();
-
-        // this.inform();
 
         currentTicks++;
         stateTicks++;
@@ -311,11 +309,11 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Añadimos tráfico a la simulación
     private void addTraffic() {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
-            if (roadStretchInModel.getCrossroadOriginId() == null) {
-                Integer roadStretchInputVehicles = roadStretchInModel.getInput().intValue(); // Vehículos por segundo
+            if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de origen)
+                Integer roadStretchInputVehicles = roadStretchInModel.getInput().intValue(); // Cantidad de coches que entran al tramo de calle por segundo
                 Integer roadStretchVehicles = roadStretchInModel.getVehicles();
                 Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles();
-                Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles;
+                Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres que hay en el tramo de calle (máximo número de vehículos que pueden entrar)
                 Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles;
                 if (!this.isRoadStretchFull(roadStretchInModel)) {
                     roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);

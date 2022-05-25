@@ -3,10 +3,12 @@ package es.ugr.murat.agent;
 import com.eclipsesource.json.Json;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CityConstant;
+import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.model.CrossroadModel;
 import es.ugr.murat.simulation.Simulation;
 import es.ugr.murat.util.Logger;
+import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -17,7 +19,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +40,7 @@ public class CityAgent extends MURATBaseAgent {
     private Integer sampleTime;
     private Map<Integer, Map<String, Double>> tickRoadStretchOccupation;
     private LocalTime initialTime; // Hora de inicio de la simulación
+    private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
 
     //*************** Ciclo de vida del agente ***************//
     @Override
@@ -50,6 +52,7 @@ public class CityAgent extends MURATBaseAgent {
         sampleTime = null;
         tickRoadStretchOccupation = new HashMap<>();
         initialTime = null;
+        totalTicks = null;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -77,6 +80,8 @@ public class CityAgent extends MURATBaseAgent {
         sampleTime = Simulation.simulation.getCityConfigurationSampleTime();
             // Obtenemos datos del tiempo de inicio de la simulación
         initialTime = Simulation.simulation.getCityConfigurationInitialTime();
+            // Obtenemos los ticks totales de la simulación
+        totalTicks = Simulation.simulation.getSimulationSeconds();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CityConstant.WAIT_CROSSROADS_REPORTS;
     }
@@ -95,18 +100,11 @@ public class CityAgent extends MURATBaseAgent {
     }
 
     protected void finalizeCrossroads() {
-        try {
-            //TODO: Ponemos a "Dormir" el programa durante los ms que queremos
-            Thread.sleep(6*1000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         // Enviamos un mensaje a cada semáforo para pedirle que finalice
-//        crossroads.forEach((crossroadId, crossroadModel) ->
-//                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
-//                        new AID(CrossroadConstant.AGENT_NAME + crossroadId, AID.ISLOCALNAME),
-//                        MessageConstant.FINALIZE));
+        crossroads.forEach((crossroadId, crossroadModel) ->
+                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
+                        new AID(CrossroadConstant.AGENT_NAME + crossroadId, AID.ISLOCALNAME),
+                        MessageConstant.FINALIZE));
         status = CityConstant.EXIT;
     }
 
@@ -143,7 +141,8 @@ public class CityAgent extends MURATBaseAgent {
                                 );
 
                         tickRoadStretchOccupation.put(Integer.parseInt(tick.getName()), roadStretchOccupationSorted);
-                        if (Integer.parseInt(tick.getName()) == 3600) {
+                        Integer currentTick = Integer.parseInt(tick.getName());
+                        if (currentTick.equals(totalTicks)) {
                             status = CityConstant.GENERATE_SIMULATION_REPORT;
                         }
                     });

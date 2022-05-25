@@ -4,6 +4,7 @@ import es.ugr.murat.agent.CityAgent;
 import es.ugr.murat.agent.CrossroadAgent;
 import es.ugr.murat.agent.TrafficLightAgent;
 import es.ugr.murat.appboot.JADEBoot;
+import es.ugr.murat.constant.CityConfigurationConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.model.CityConfigurationModel;
 import es.ugr.murat.model.CityModel;
@@ -33,7 +34,7 @@ public class Simulation {
 
     public static Simulation simulation = null;
 
-    private final Integer cityId = 1;
+    private final Integer cityId = 2;
     private final Integer cityConfigurationId = 1;
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
@@ -65,12 +66,12 @@ public class Simulation {
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
             cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 4.0, 2.0, 2.0,
-                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState));
+                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), CityConfigurationConstant.LINEAR, crossroadsInitialState));
                 // Configuración 2
             crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 3));
             cityConfiguration.put(2, new CityConfigurationModel(2, 4.0, 0.1, 2.0, 1.0,
-                    LocalTime.of(4, 0), LocalTime.of(22, 0), Duration.ofSeconds(10), "single_peak", crossroadsInitialState));
+                    LocalTime.of(4, 0), LocalTime.of(22, 0), Duration.ofSeconds(10), CityConfigurationConstant.SINGLE_PEAK, crossroadsInitialState));
 
             // Cruces de la ciudad
             crossroads = new HashMap<>();
@@ -159,8 +160,8 @@ public class Simulation {
                 // Configuración 1
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
-            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.05, 2.0, 2.0,
-                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), "linear", crossroadsInitialState));
+            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.5, 2.0, 2.0,
+                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), CityConfigurationConstant.LINEAR, crossroadsInitialState));
 
             // Cruces de la ciudad
             crossroads = new HashMap<>();
