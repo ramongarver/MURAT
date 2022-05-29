@@ -2,6 +2,7 @@ package es.ugr.murat.agent;
 
 import com.eclipsesource.json.JsonObject;
 import es.ugr.murat.constant.ActionConstant;
+import es.ugr.murat.constant.CityConfigurationConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
@@ -15,6 +16,7 @@ import es.ugr.murat.util.Logger;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,6 +31,7 @@ import java.util.Set;
 public class CrossroadAgent extends MURATBaseAgent {
 
     private String cityName; // Nombre de la ciudad
+    private String cityInputMode; // Modo de entrada de vehículos en la simulación (LINEAR, SINGLE PEAK, DOUBLE PEAK)
     private Integer crossroadId; // Identificador del cruce
     private CrossroadModel crossroadModel; // Información del cruce
     private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
@@ -42,6 +45,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
 
     // Simulación
+    private LocalTime initialTime; // Hora de inicio de la simulación
     private Integer currentTicks; // Número de ticks realizados en la simulación
     private Integer stateTicks; // Número de ticks realizados en el estado actual
     private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
@@ -58,6 +62,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         super.setup();
         status = CrossroadConstant.LOAD_DATA;
         cityName = null;
+        cityInputMode = null;
         crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         crossroadModel = null;
         trafficLights = null;
@@ -69,6 +74,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesOut = null;
         crossroadsStretches = null;
         statesTrafficLightsCrossroadStretches = null;
+        initialTime = null;
         currentTicks = 0;
         stateTicks = 0;
         totalTicks = 0;
@@ -92,8 +98,10 @@ public class CrossroadAgent extends MURATBaseAgent {
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
         // Cargamos datos del cruce
-            // Obtenemos datos el nombre de la ciudad;
+            // Obtenemos el nombre de la ciudad;
         cityName = Simulation.simulation.getCityName();
+            // Obtenemos el modo de entrada de vehículos a la simulación
+        cityInputMode = Simulation.simulation.getCityConfigurationMode();
             // Obtenemos datos generales del cruce
         crossroadModel = Simulation.simulation.getCrossroadModel(crossroadId);
             // Obtenemos los semáforos del cruce
@@ -112,6 +120,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
+            // Obtenemos la hora de inicio de la simulación
+        initialTime = Simulation.simulation.getSimulationInitialTime();
             // Obtenemos los ticks totales de la simulación
         totalTicks = Simulation.simulation.getSimulationSeconds();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
@@ -268,7 +278,7 @@ public class CrossroadAgent extends MURATBaseAgent {
             Integer originRoadStretchVehicles = roadStretchesIn.get(originRoadStretchName).getVehicles();
             Integer vehicles = originRoadStretchVehicles < originRoadStretchOutputVehicles ? originRoadStretchVehicles : originRoadStretchOutputVehicles;
             Integer percentagesSum = 0;
-            Map <String, Integer> destinationVehicles = new HashMap<>();
+            Map<String, Integer> destinationVehicles = new HashMap<>();
             for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) {
                 percentagesSum += entry.getValue().intValue();
                 destinationVehicles.put(entry.getKey(), 0);
@@ -311,6 +321,13 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
             if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de origen)
                 Integer roadStretchInputVehicles = roadStretchInModel.getInput().intValue(); // Cantidad de coches que entran al tramo de calle por segundo
+                if (cityInputMode.equals(CityConfigurationConstant.SINGLE_PEAK) || cityInputMode.equals(CityConfigurationConstant.DOUBLE_PEAK)) {
+                    // Modificamos la cantidad de entrada de coches si estamos en hora peak | De 08:00 a 09:00
+                    if (isPeakHour(8, 9) || cityInputMode.equals(CityConfigurationConstant.DOUBLE_PEAK) && isPeakHour(14, 15)) {
+                        Random random = new Random();
+                        roadStretchInputVehicles += 5 + random.nextInt(5);
+                    }
+                }
                 Integer roadStretchVehicles = roadStretchInModel.getVehicles();
                 Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles();
                 Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres que hay en el tramo de calle (máximo número de vehículos que pueden entrar)
@@ -321,6 +338,13 @@ public class CrossroadAgent extends MURATBaseAgent {
                 }
             }
         });
+    }
+
+    private Boolean isPeakHour(Integer startHour, Integer endHour) {
+        LocalTime currentHour = initialTime.plusSeconds(currentTicks);
+        LocalTime startPeakHour = LocalTime.of(startHour, 0, 0);
+        LocalTime endPeakHour = LocalTime.of(endHour, 0, 0);
+        return (currentHour.isAfter(startPeakHour) && currentHour.isBefore(endPeakHour)) || currentHour.equals(startPeakHour) || currentHour.equals(endPeakHour);
     }
 
     // Cambiamos al siguiente estado del cruce
@@ -363,7 +387,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     }
 
     // Evaluamos si una calle está llena de coches
-    private Boolean isRoadStretchFull (RoadStretchModel roadStretchModel) {
+    private Boolean isRoadStretchFull(RoadStretchModel roadStretchModel) {
         Integer roadStretchVehicles = roadStretchModel.getVehicles();
         Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles();
         return !(roadStretchVehicles < roadStretchMaxVehicles);
@@ -383,7 +407,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                 ref1.str = ref1.str + "TL" + trafficLightId + ":" + color + " ");
         String str = ref1.str;
         if (str.endsWith(" ")) {
-            str = str.substring(0, str.length()-1);
+            str = str.substring(0, str.length() - 1);
         }
 
         if ((!"||".equals(str))) {
@@ -397,7 +421,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                 ref2.str = ref2.str + roadStretchInName + ":" + roadStretchInModel.getVehicles() + "/" + roadStretchInModel.getMaxVehicles() + "(" + String.format("%.2f", roadStretchInModel.getOccupancyPercentage()) + "%)" + " ");
         str = ref2.str;
         if (str.endsWith(" ")) {
-            str = str.substring(0, str.length()-1);
+            str = str.substring(0, str.length() - 1);
         }
 
         if ((!"||".equals(str))) {
@@ -414,7 +438,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         });
         str = ref3.str;
         if (str.endsWith(" ")) {
-            str = str.substring(0, str.length()-1);
+            str = str.substring(0, str.length() - 1);
         }
 
         if ((!"||".equals(str))) {

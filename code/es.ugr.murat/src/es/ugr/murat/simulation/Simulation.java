@@ -161,7 +161,7 @@ public class Simulation {
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
             cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.5, 2.0, 2.0,
-                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), CityConfigurationConstant.LINEAR, crossroadsInitialState));
+                    LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), CityConfigurationConstant.DOUBLE_PEAK, crossroadsInitialState));
 
             // Cruces de la ciudad
             crossroads = new HashMap<>();
@@ -422,6 +422,10 @@ public class Simulation {
 
     public LocalTime getCityConfigurationInitialTime() {
         return cityConfiguration.get(cityConfigurationId).getInitialTime();
+    }
+
+    public String getCityConfigurationMode() {
+        return cityConfiguration.get(cityConfigurationId).getMode();
     }
 
     public Integer getCityConfigurationSampleTime() {

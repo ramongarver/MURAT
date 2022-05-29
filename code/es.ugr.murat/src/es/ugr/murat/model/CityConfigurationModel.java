@@ -19,7 +19,7 @@ public class CityConfigurationModel {
     private final LocalTime initialTime; // Hora de inicio de la simulación
     private final LocalTime finalTime; // Hora de fin de la simulación
     private final Duration sampleTime; // Tiempo de muestreo de la simulación
-    private final String mode; // Modo de entrada de vehículos en la simulación (linear, single peak, double peak)
+    private final String mode; // Modo de entrada de vehículos en la simulación (LINEAR, SINGLE PEAK, DOUBLE PEAK)
     private final Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState; // Estados iniciales de los cruces (crossroadId -> configurationCrossroadInitialStateModel)
 
     public CityConfigurationModel(Integer configurationId, Double vehicleLength,
