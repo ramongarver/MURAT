@@ -319,32 +319,68 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Añadimos tráfico a la simulación
     private void addTraffic() {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
-            if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de origen)
-                Integer roadStretchInputVehicles = roadStretchInModel.getInput().intValue(); // Cantidad de coches que entran al tramo de calle por segundo
-                if (cityInputMode.equals(CityConfigurationConstant.SINGLE_PEAK) || cityInputMode.equals(CityConfigurationConstant.DOUBLE_PEAK)) {
-                    // Modificamos la cantidad de entrada de coches si estamos en hora peak | De 08:00 a 09:00
-                    if (isPeakHour(8, 9) || cityInputMode.equals(CityConfigurationConstant.DOUBLE_PEAK) && isPeakHour(14, 15)) {
-                        Random random = new Random();
-                        roadStretchInputVehicles += 5 + random.nextInt(5);
-                    }
+            if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de calle de origen)
+                Double vehiclesPerSecond = roadStretchInModel.getInput(); // Vehículos por segundo que puede entrar al tramo de calle
+                Double secondsPerVehicle = 1 / roadStretchInModel.getInput(); // Segundos que tarda un vehículo en poder entrar al tramo de calle
+
+                // Comprobamos si la simulación está en alguno de los modos pico y si está en alguna de las horas pico
+                if (this.isOnPeakModeAndInPeakHour()) { // Modificamos la cantidad de vehículos por hora pico
+                    vehiclesPerSecond *= 5.0;
+                    secondsPerVehicle /= 5.0;
                 }
-                Integer roadStretchVehicles = roadStretchInModel.getVehicles();
-                Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles();
-                Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres que hay en el tramo de calle (máximo número de vehículos que pueden entrar)
-                Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles;
-                if (!this.isRoadStretchFull(roadStretchInModel)) {
-                    roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
-                    totalVehiclesIn += roadStretchIncomingVehicles;
+
+                // Comprobamos si se añaden uno o más vehículos por segundo al tramo de calle
+                Boolean oneOrMoreVehiclesPerSecond = secondsPerVehicle <= 1.0;
+                // Calculamos la cantidad de vehículos que quieren entrar al tramo de calle:
+                    // --> Si el número de vehículos por segundo es mayor o igual a uno se quiere añadir esa cantidad. Se añade en cada tick.
+                    // --> Si el número de vehículos por segundo es menor que uno se quiere añadir uno cada N número de segundos. Se añade cada determinados ticks.
+                Integer roadStretchInputVehicles = oneOrMoreVehiclesPerSecond ? vehiclesPerSecond.intValue() : 1; // Cantidad de coches que quieren entrar al tramo de calle
+                // Comprobamos si en este tick hay que añadir vehículos
+                if (this.isTimeToAddTraffic(secondsPerVehicle.intValue())) {
+                    this.addVehiclesIfPossible(roadStretchInputVehicles, roadStretchInModel);
                 }
             }
         });
     }
 
+    // Comprobamos si estamos en alguno de los modos peak y si estamos en alguna de las horas peak
+    private Boolean isOnPeakModeAndInPeakHour() {
+        return  CityConfigurationConstant.SINGLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
+                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
+                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(14, 15);
+    }
+
+    // Comprobamos si el instante actual pertenece a la hora pico en intervalo cerrado
     private Boolean isPeakHour(Integer startHour, Integer endHour) {
         LocalTime currentHour = initialTime.plusSeconds(currentTicks);
         LocalTime startPeakHour = LocalTime.of(startHour, 0, 0);
         LocalTime endPeakHour = LocalTime.of(endHour, 0, 0);
         return (currentHour.isAfter(startPeakHour) && currentHour.isBefore(endPeakHour)) || currentHour.equals(startPeakHour) || currentHour.equals(endPeakHour);
+    }
+
+    // Comprobamos si en el tick actual hay que añadir tráfico a la simulación
+    private Boolean isTimeToAddTraffic(Integer secondsPerVehicle) {
+        return secondsPerVehicle <= 1 || currentTicks % secondsPerVehicle == 0;
+    }
+
+    // Añadimos una cantidad de vehículos al tramo de calle si es posible en función de su ocupación y capacidad máxima
+    private void addVehiclesIfPossible(Integer roadStretchInputVehicles, RoadStretchModel roadStretchInModel) {
+        Integer roadStretchVehicles = roadStretchInModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
+        Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
+        Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres para vehículos que hay en el tramo de calle
+        Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles; // Cantidad de vehículos que se puede añadir al tramo de calle
+        // Si el tramo de calle no está lleno añadimos los vehículos
+        if (!this.isRoadStretchFull(roadStretchInModel)) {
+            roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
+            totalVehiclesIn += roadStretchIncomingVehicles;
+        }
+    }
+
+    // Comprobamos si una calle está llena de vehículos
+    private Boolean isRoadStretchFull(RoadStretchModel roadStretchModel) {
+        Integer roadStretchVehicles = roadStretchModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
+        Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
+        return !(roadStretchVehicles < roadStretchMaxVehicles);
     }
 
     // Cambiamos al siguiente estado del cruce
@@ -384,13 +420,6 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Evaluamos si la simulación ha llegado a su fin
     private Boolean isSimulationFinished() {
         return currentTicks > totalTicks;
-    }
-
-    // Evaluamos si una calle está llena de coches
-    private Boolean isRoadStretchFull(RoadStretchModel roadStretchModel) {
-        Integer roadStretchVehicles = roadStretchModel.getVehicles();
-        Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles();
-        return !(roadStretchVehicles < roadStretchMaxVehicles);
     }
 
     // Escribimos el estado actual del cruce

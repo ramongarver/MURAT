@@ -160,7 +160,7 @@ public class Simulation {
                 // Configuración 1
             Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
             crossroadsInitialState.put(1, new ConfigurationCrossroadInitialStateModel(1, 1));
-            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.5, 2.0, 2.0,
+            cityConfiguration.put(1, new CityConfigurationModel(1, 4.0, 0.01, 2.0, 2.0,
                     LocalTime.of(6, 0), LocalTime.of(21, 0), Duration.ofSeconds(15), CityConfigurationConstant.DOUBLE_PEAK, crossroadsInitialState));
 
             // Cruces de la ciudad
