@@ -1,5 +1,9 @@
 package es.ugr.murat.simulation;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
+import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 import es.ugr.murat.agent.CityAgent;
 import es.ugr.murat.agent.CrossroadAgent;
 import es.ugr.murat.agent.TrafficLightAgent;
@@ -15,6 +19,11 @@ import es.ugr.murat.model.RoadStretchModel;
 import es.ugr.murat.model.StateModel;
 import es.ugr.murat.model.TrafficLightModel;
 
+import javax.swing.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -36,6 +45,7 @@ public class Simulation {
 
     private final Integer cityId = 2;
     private final Integer cityConfigurationId = 1;
+    private final Boolean readJSON = true;
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
     private final Map<Integer, CityConfigurationModel> cityConfiguration; // Configuración de la ciudad | (cityConfigurationId -> cityConfigurationModel)
@@ -55,7 +65,188 @@ public class Simulation {
     }
 
     private Simulation() {
-        if (cityId.equals(1)) {
+        if (readJSON) {
+
+//            List<String> cities = new ArrayList<>();
+//            File folder = new File("resources/data");
+//            for (File fileEntry : folder.listFiles()) {
+//                if (!fileEntry.isDirectory()) {
+//                    cities.add(fileEntry.getName());
+//                }
+//            }
+//
+//            String[] options = cities.toArray(new String[0]);
+//
+//            JOptionPane.showInputDialog(null, "Seleccione el valor", "Select", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+            JsonObject simulationJsonObject = null;
+            try {
+                FileReader fileReader = new FileReader("resources/data/CITY1.json");
+                simulationJsonObject = Json.parse(fileReader).asObject();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+
+            // Información de la ciudad
+            JsonObject cityJsonObject = simulationJsonObject.get("city").asObject();
+            String cityName = cityJsonObject.get("name").asString();
+            String description = cityJsonObject.get("description").asString();
+            cityModel = new CityModel(cityName, description);
+
+            // Configuración de la ciudad
+            cityConfiguration = new HashMap<>();
+                // Obtenemos cada una de las configuraciones
+            JsonArray cityConfigurationsJsonArray = simulationJsonObject.get("cityConfiguration").asArray();
+            for (JsonValue cityConfigurationJsonValue : cityConfigurationsJsonArray) {
+                JsonObject cityConfigurationJsonObject = cityConfigurationJsonValue.asObject();
+                Integer configurationId = cityConfigurationJsonObject.get("id").asInt();
+                Double vehicleLength = cityConfigurationJsonObject.get("vehicleLength").asDouble();
+                Double inputRatio = Double.parseDouble(cityConfigurationJsonObject.get("inputRatio").asString());
+                Double inputInnerRatio = cityConfigurationJsonObject.get("inputInnerRatio").asDouble();
+                Double outputInnerRatio =  cityConfigurationJsonObject.get("outputInnerRatio").asDouble();
+                LocalTime initialTime = LocalTime.of(cityConfigurationJsonObject.get("initialTime").asInt(), 0, 0);
+                LocalTime finalTime = LocalTime.of(cityConfigurationJsonObject.get("finalTime").asInt(), 0, 0);
+                Duration sampleTime = Duration.ofSeconds(cityConfigurationJsonObject.get("sampleTime").asInt());
+                String mode = cityConfigurationJsonObject.get("mode").asString();
+                Map<Integer, ConfigurationCrossroadInitialStateModel> crossroadsInitialState = new HashMap<>();
+                JsonArray crossroadInitialStatesJsonArray = cityConfigurationJsonObject.get("crossroadInitialState").asArray();
+                for (JsonValue crossroadInitialStateJsonValue : crossroadInitialStatesJsonArray) {
+                    JsonObject crossroadInitialStateJsonObject = crossroadInitialStateJsonValue.asObject();
+                    Integer crossroadId = crossroadInitialStateJsonObject.get("crossroadId").asInt();
+                    Integer initialStateId = crossroadInitialStateJsonObject.get("initialStateId").asInt();
+                    ConfigurationCrossroadInitialStateModel configurationCrossroadInitialStateModel =
+                            new ConfigurationCrossroadInitialStateModel(crossroadId, initialStateId);
+                    crossroadsInitialState.put(crossroadId, configurationCrossroadInitialStateModel);
+                }
+                CityConfigurationModel cityConfigurationModel =
+                        new CityConfigurationModel(configurationId, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio,
+                                initialTime, finalTime, sampleTime, mode, crossroadsInitialState);
+                cityConfiguration.put(configurationId, cityConfigurationModel);
+            }
+
+            // Valores de configuración necesarios para roadStretches
+            Double vehicleLength = cityConfiguration.get(cityConfigurationId).getVehicleLength();
+            Double inputRatio = cityConfiguration.get(cityConfigurationId).getInputRatio();
+            Double inputInnerRatio = cityConfiguration.get(cityConfigurationId).getInputInnerRatio();
+            Double outputInnerRatio = cityConfiguration.get(cityConfigurationId).getOutputInnerRatio();
+
+            // Cruces de la ciudad
+            crossroads = new HashMap<>(); // Cruces de la ciudad
+            crossroadTrafficLights = new HashMap<>(); // Semáforos por cruce de la ciudad
+            crossroadStates = new HashMap<>(); // Estados por cruce de la ciudad
+            trafficLightsColorsPerCrossroadsStates = new HashMap<>(); // Colores de semáforos por estado por cruce de la ciudad
+            crossroadsStretches = new HashMap<>(); // Tramos de cruce por cruce de la ciudad
+            crossroadsStatesTrafficLightsCrossroadStretchesNames = new HashMap<>();
+            // Para cada cruce
+            JsonArray crossroadsJsonArray = simulationJsonObject.get("crossroad").asArray();
+            for (JsonValue crossroadJsonValue : crossroadsJsonArray) {
+                // Información del cruce
+                JsonObject crossroadJsonObject = crossroadJsonValue.asObject();
+                Integer crossroadId = crossroadJsonObject.get("crossroadId").asInt();
+                String crossroadName = crossroadJsonObject.get("name").asString();
+                Integer minimumStateTime = crossroadJsonObject.get("minimumStateTime").asInt();
+                Integer cycleTime = crossroadJsonObject.get("cycleTime").asInt();
+                CrossroadModel crossroadModel =
+                        new CrossroadModel(crossroadId, crossroadName, Duration.ofSeconds(minimumStateTime), Duration.ofSeconds(cycleTime));
+                crossroads.put(crossroadId, crossroadModel);
+
+                // Semáforos asociados al cruce
+                Map<Integer, TrafficLightModel> trafficLights = new HashMap<>();
+                JsonArray crossroadTrafficLightsJsonArray = crossroadJsonObject.get("trafficLight").asArray();
+                for (JsonValue crossroadTrafficLightJsonValue : crossroadTrafficLightsJsonArray) {
+                    JsonObject crossroadTrafficLightJsonObject = crossroadTrafficLightJsonValue.asObject();
+                    Integer trafficLightId = crossroadTrafficLightJsonObject.get("trafficLightId").asInt();
+                    String trafficLightName = crossroadTrafficLightJsonObject.get("name").asString();
+                    String roadStretchInName = crossroadTrafficLightJsonObject.get("roadStretchInName").asString();
+                    TrafficLightModel trafficLightModel = new TrafficLightModel(trafficLightId, trafficLightName, roadStretchInName);
+                    trafficLights.put(trafficLightId, trafficLightModel);
+                }
+                crossroadTrafficLights.put(crossroadId, trafficLights);
+
+                // Estados asociados al cruce
+                Map<Integer, StateModel> states = new HashMap<>();
+                Map<Integer, Map<Integer, String>> trafficLightsColorsPerStates = new HashMap<>();
+                Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretchesNames = new HashMap<>();
+                JsonArray crossroadStatesJsonArray = crossroadJsonObject.get("state").asArray();
+                for (JsonValue crossroadStateJsonValue : crossroadStatesJsonArray) {
+                    JsonObject crossroadStateJsonObject = crossroadStateJsonValue.asObject();
+                    Integer stateId = crossroadStateJsonObject.get("stateId").asInt();
+                    String stateName = crossroadStateJsonObject.get("name").asString();
+                    Integer duration = crossroadStateJsonObject.get("duration").asInt();
+                    StateModel stateModel = new StateModel(stateId, stateName, duration);
+                    states.put(stateId, stateModel);
+
+                    // Colores de semáforos asociados a cada estado de un cruce
+                    Map<Integer, String> trafficLightsColors = new HashMap<>();
+                    Map<Integer, Set<String>> trafficLightsCrossroadStretchesNames = new HashMap<>();
+                    JsonArray trafficLightsColorsJsonArray = crossroadStateJsonObject.get("trafficLightState").asArray();
+                    for (JsonValue trafficLightColorJsonValue : trafficLightsColorsJsonArray) {
+                        JsonObject trafficLightColorJsonObject = trafficLightColorJsonValue.asObject();
+                        Integer trafficLightId = trafficLightColorJsonObject.get("trafficLightId").asInt();
+                        String light = trafficLightColorJsonObject.get("light").asString();
+                        trafficLightsColors.put(trafficLightId, light);
+
+                        // Tramo de cruce que habilita el semáforo en el estado
+                        Set<String> crossroadStretchesNames = new HashSet<>();
+                        JsonArray crossroadStretchRoutesJsonArray = trafficLightColorJsonObject.get("crossroadStretchRoutes").asArray();
+                        for (JsonValue crossroadStretchRouteJsonValue : crossroadStretchRoutesJsonArray) {
+                            JsonObject crossroadStretchRouteJsonObject = crossroadStretchRouteJsonValue.asObject();
+                            String crossroadStretchName = crossroadStretchRouteJsonObject.get("crossroadStretchName").asString();
+                            crossroadStretchesNames.add(crossroadStretchName);
+                        }
+                        if (crossroadStretchesNames.size() > 0) {
+                            trafficLightsCrossroadStretchesNames.put(trafficLightId, crossroadStretchesNames);
+                        }
+                    }
+                    trafficLightsColorsPerStates.put(stateId, trafficLightsColors);
+                    statesTrafficLightsCrossroadStretchesNames.put(stateId, trafficLightsCrossroadStretchesNames);
+                }
+                crossroadStates.put(crossroadId, states);
+                trafficLightsColorsPerCrossroadsStates.put(crossroadId, trafficLightsColorsPerStates);
+                crossroadsStatesTrafficLightsCrossroadStretchesNames.put(crossroadId, statesTrafficLightsCrossroadStretchesNames);
+
+                // Tramos de cruce asociados al cruce
+                Map<String, CrossroadStretchModel> crossroadStretches = new HashMap<>();
+                JsonArray crossroadStretchesJsonArray = crossroadJsonObject.get("crossroadStretch").asArray();
+                for (JsonValue crossroadStretchJsonValue : crossroadStretchesJsonArray) {
+                    JsonObject crossroadStretchJsonObject = crossroadStretchJsonValue.asObject();
+                    String originRoadStretchName = crossroadStretchJsonObject.get("originRoadStretchName").asString();
+                    String destinationRoadStretchName = crossroadStretchJsonObject.get("destinationRoadStretchName").asString();
+                    String crossroadStretchName = crossroadStretchJsonObject.get("name").asString();
+                    Double carsPercentageFromOriginToDestination = crossroadStretchJsonObject.get("carsPercentageFromOriginToDestination").asDouble();
+                    CrossroadStretchModel crossroadStretchModel =
+                            new CrossroadStretchModel(crossroadId, originRoadStretchName, destinationRoadStretchName,
+                                    crossroadStretchName, carsPercentageFromOriginToDestination);
+                    crossroadStretches.put(crossroadStretchName, crossroadStretchModel);
+                }
+                crossroadsStretches.put(crossroadId, crossroadStretches);
+            }
+
+            // Tramos de calle de la ciudad
+            roadStretches = new HashMap<>();
+            JsonArray roadStretchesJsonArray = simulationJsonObject.get("roadStretch").asArray();
+            for (JsonValue roadStretchJsonValue : roadStretchesJsonArray) {
+                JsonObject roadStretchJsonObject = roadStretchJsonValue.asObject();
+                JsonValue crossroadOriginIdJsonValue = roadStretchJsonObject.get("crossroadOriginId");
+                Integer crossroadOriginId = crossroadOriginIdJsonValue.isNull() ? null : crossroadOriginIdJsonValue.asInt();
+                JsonValue crossroadDestinationIdJsonValue = roadStretchJsonObject.get("crossroadDestinationId");
+                Integer crossroadDestinationId = crossroadDestinationIdJsonValue.isNull() ? null : crossroadDestinationIdJsonValue.asInt();
+                String direction = roadStretchJsonObject.get("direction").asString();
+                String roadStretchName = roadStretchJsonObject.get("name").asString();
+                Double length = roadStretchJsonObject.get("length").asDouble();
+                Integer lanes = roadStretchJsonObject.get("lanes").asInt();
+                Integer vehicles = roadStretchJsonObject.get("vehicles").asInt();
+                RoadStretchModel roadStretchModel =
+                        new RoadStretchModel(crossroadOriginId, crossroadDestinationId, direction, roadStretchName, length, lanes,
+                                vehicles, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio);
+                roadStretches.put(roadStretchName, roadStretchModel);
+            }
+
+            System.out.println("Hemos leído");
+
+        } else if (cityId.equals(1)) {
             // CITY2: Very simple cross city
             // Información de la ciudad
             cityModel = new CityModel("CITY2", "Very simple cross");
@@ -341,6 +532,8 @@ public class Simulation {
             statesTrafficLightsCrossroadStretchesNames.put(6, trafficLightsCrossroadStretchesNames);
             crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
         }
+        System.out.println("Hemos leído");
+
     }
 
     private void initAgents() {
