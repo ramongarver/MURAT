@@ -8,8 +8,9 @@ import es.ugr.murat.agent.CityAgent;
 import es.ugr.murat.agent.CrossroadAgent;
 import es.ugr.murat.agent.TrafficLightAgent;
 import es.ugr.murat.appboot.JADEBoot;
-import es.ugr.murat.constant.CityConfigurationConstant;
+import es.ugr.murat.constant.CityConstant;
 import es.ugr.murat.constant.CrossroadConstant;
+import es.ugr.murat.constant.SimulationConstant;
 import es.ugr.murat.model.CityConfigurationModel;
 import es.ugr.murat.model.CityModel;
 import es.ugr.murat.model.ConfigurationCrossroadInitialStateModel;
@@ -19,7 +20,7 @@ import es.ugr.murat.model.RoadStretchModel;
 import es.ugr.murat.model.StateModel;
 import es.ugr.murat.model.TrafficLightModel;
 
-import javax.swing.*;
+import javax.swing.JOptionPane;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -43,9 +44,8 @@ public class Simulation {
 
     public static Simulation simulation = null;
 
-    private final Integer cityId = 2;
-    private final Integer cityConfigurationId = 1;
-    private final Boolean readJSON = true;
+    private Integer cityId; // Identificador de la ciudad
+    private Integer cityConfigurationId; // Identificador de la configuración de la ciudad
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
     private final Map<Integer, CityConfigurationModel> cityConfiguration; // Configuración de la ciudad | (cityConfigurationId -> cityConfigurationModel)
@@ -64,24 +64,20 @@ public class Simulation {
         }
     }
 
+    // TODO: Comentar y refactorizar este constructor
     private Simulation() {
-        if (readJSON) {
+            List<String> cities = this.getCities(); // Ciudades disponibles en la simulación
+            List<String> configurations = new ArrayList<>(); // Configuraciones disponibles para la ciudad seleccionada
+            String[] citiesArray = cities.toArray(new String[0]);
+            String selectedCity = (String)
+                    JOptionPane.showInputDialog(null, SimulationConstant.SELECT_CITY, SimulationConstant.CITY,
+                            JOptionPane.QUESTION_MESSAGE, null, citiesArray, citiesArray[0]);
+            cityId = Integer.parseInt(selectedCity.split(CityConstant.AGENT_NAME)[1]);
 
-//            List<String> cities = new ArrayList<>();
-//            File folder = new File("resources/data");
-//            for (File fileEntry : folder.listFiles()) {
-//                if (!fileEntry.isDirectory()) {
-//                    cities.add(fileEntry.getName());
-//                }
-//            }
-//
-//            String[] options = cities.toArray(new String[0]);
-//
-//            JOptionPane.showInputDialog(null, "Seleccione el valor", "Select", JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-
+            // Leemos el JSON de la ciudad seleccionada
             JsonObject simulationJsonObject = null;
             try {
-                FileReader fileReader = new FileReader("resources/data/CITY1.json");
+                FileReader fileReader = new FileReader(SimulationConstant.DATA_PATH + selectedCity + ".json");
                 simulationJsonObject = Json.parse(fileReader).asObject();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -124,7 +120,14 @@ public class Simulation {
                         new CityConfigurationModel(configurationId, vehicleLength, inputRatio, inputInnerRatio, outputInnerRatio,
                                 initialTime, finalTime, sampleTime, mode, crossroadsInitialState);
                 cityConfiguration.put(configurationId, cityConfigurationModel);
+                configurations.add(configurationId.toString()); // Configuraciones disponibles para la ciudad seleccionada
             }
+
+            String[] configurationsArray = configurations.toArray(new String[0]);
+            String selectedConfiguration = (String)
+                    JOptionPane.showInputDialog(null, SimulationConstant.SELECT_CONFIGURATION, SimulationConstant.CONFIGURATION,
+                            JOptionPane.QUESTION_MESSAGE, null, configurationsArray, configurationsArray[0]);
+            cityConfigurationId = Integer.parseInt(selectedConfiguration);
 
             // Valores de configuración necesarios para roadStretches
             Double vehicleLength = cityConfiguration.get(cityConfigurationId).getVehicleLength();
@@ -244,12 +247,9 @@ public class Simulation {
                 roadStretches.put(roadStretchName, roadStretchModel);
             }
 
-            System.out.println("Hemos leído");
-
-        } else if (cityId.equals(1)) {
-            // CITY2: Very simple cross city
+            /* CITY1: Very simple cross city
             // Información de la ciudad
-            cityModel = new CityModel("CITY2", "Very simple cross");
+            cityModel = new CityModel("CITY1", "Very simple cross");
 
             // Configuración de la ciudad
             cityConfiguration = new HashMap<>();
@@ -340,11 +340,10 @@ public class Simulation {
             crossroadStretchesNames.add("RS3-RS4");
             trafficLightsCrossroadStretchesNames.put(2, crossroadStretchesNames);
             statesTrafficLightsCrossroadStretchesNames.put(2, trafficLightsCrossroadStretchesNames);
-            crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
-        } else {
-            // CITY1: Simple cross city
+            crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);*/
+            /* CITY3: Simple cross city
             // Información de la ciudad
-            cityModel = new CityModel("CITY1", "Simple cross city");
+            cityModel = new CityModel("CITY3", "Simple cross city");
 
             // Configuración de la ciudad
             cityConfiguration = new HashMap<>();
@@ -531,40 +530,59 @@ public class Simulation {
             trafficLightsCrossroadStretchesNames.put(3, crossroadStretchesNames);
             statesTrafficLightsCrossroadStretchesNames.put(6, trafficLightsCrossroadStretchesNames);
             crossroadsStatesTrafficLightsCrossroadStretchesNames.put(1, statesTrafficLightsCrossroadStretchesNames);
-        }
-        System.out.println("Hemos leído");
-
+            */
     }
 
     private void initAgents() {
         JADEBoot connection = new JADEBoot();
         System.out.println("¡Hello MURAT!");
+        // Lanzamos agentes
+            // Agente ciudad (CityAgent)
         connection.launchAgent(cityModel.getName(), CityAgent.class);
+            // Agentes cruce (CrossroadAgent)
         crossroads.forEach((crossroadId, crossroadModel) -> connection.launchAgent(crossroadModel.getName(), CrossroadAgent.class));
+            // Agentes semáforo (TrafficLightAgent)
         crossroadTrafficLights.forEach((crossroadId, trafficLights) -> trafficLights.
                 forEach((trafficLightId, trafficLightModel) -> connection.launchAgent(trafficLightModel.getName(), TrafficLightAgent.class)));
     }
 
+    //******************* Utilidades *******************//
+    // Obtenemos la lista de archivos de ciudades
+    private List<String> getCities() {
+        List<String> cities = new ArrayList<>();
+        File folder = new File(SimulationConstant.DATA_PATH);
+        for (File file : folder.listFiles()) {
+            if (!file.isDirectory()) {
+                cities.add(file.getName().split(".json")[0]);
+            }
+        }
+        return cities;
+    }
+    //**************************************************//
+
+    //*************** API de información inicial de la simulación ***************//
+        // Cruce
+    // Obtenemos el modelo del cruce identificado por crossroadId
     public CrossroadModel getCrossroadModel(Integer crossroadId) {
         return crossroads.get(crossroadId);
     }
-
+    // Obtenemos los semáforos del cruce identificado por crossroadId
     public Map<Integer, TrafficLightModel> getCrossroadTrafficLights(Integer crossroadId) {
         return crossroadTrafficLights.get(crossroadId);
     }
-
+    // Obtenemos los estados del cruce identificado por crossroadId
     public Map<Integer, StateModel> getCrossroadStates(Integer crossroadId) {
         return crossroadStates.get(crossroadId);
     }
-
+    // Obtenemos el estado inicial del cruce identificado por crossroadId
     public Integer getCrossroadInitialState(Integer crossroadId) {
         return cityConfiguration.get(cityConfigurationId).getCrossroadsInitialState().get(crossroadId).getStateId();
     }
-
+    // Obtenemos los colores de los semáforos por cada estado del cruce identificado por crossroadId
     public Map<Integer, Map<Integer, String>> getCrossroadTrafficLightsColorsPerCrossroadState(Integer crossroadId) {
         return trafficLightsColorsPerCrossroadsStates.get(crossroadId);
     }
-
+    // Obtenemos los tramos de calle que entran al cruce identificado por crossroadId
     public Map<String, RoadStretchModel> getCrossroadRoadStretchesIn(Integer crossroadId) {
         Map<String, RoadStretchModel> roadStretchesIn = new HashMap<>();
         roadStretches.forEach((roadStretchName, roadStretchModel) -> {
@@ -575,7 +593,7 @@ public class Simulation {
         });
         return roadStretchesIn;
     }
-
+    // Obtenemos los tramos de calle que salen del cruce identificado por crossroadId
     public Map<String, RoadStretchModel> getCrossroadRoadStretchesOut(Integer crossroadId) {
         Map<String, RoadStretchModel> roadStretchesOut = new HashMap<>();
         roadStretches.forEach((roadStretchName, roadStretchModel) -> {
@@ -586,15 +604,16 @@ public class Simulation {
         });
         return roadStretchesOut;
     }
-
+    // Obtenemos los tramos de cruce del cruce identificado por crossroadId
     public Map<String, CrossroadStretchModel> getCrossroadCrossroadsStretches(Integer crossroadId) {
         return crossroadsStretches.get(crossroadId);
     }
-
+    // Obtenemos los tramos de cruce habilitados por cada semáforo en verde por cada estado del cruce identificado por crossroadId
     public Map<Integer, Map<Integer, Set<String>>> getCrossroadStatesTrafficLightsCrossroadStretches(Integer crossroadId) {
         return crossroadsStatesTrafficLightsCrossroadStretchesNames.get(crossroadId);
     }
-
+        // TrafficLight
+    // Obtenemos el identificador del cruce al que pertenece el semáforo identificado por trafficLightId
     public Integer getTrafficLightCrossroadId(Integer trafficLightId) {
         // Obtenemos los semáforos que hay en cada cruce y comprobamos si el semáforo se encuentra ahí
         for (var crossroadTrafficLightsEntry : crossroadTrafficLights.entrySet()) {
@@ -604,56 +623,20 @@ public class Simulation {
         }
         return -1;
     }
-
+    // Obtenemos el tramo de calle de entrada al cruce identificado por crossroadId que regula el semáforo identificado por trafficLightId
     public String getTrafficLightRoadStretchInName(Integer crossroadId, Integer trafficLightId) {
         return crossroadTrafficLights.get(crossroadId).get(trafficLightId).getRoadStretchIn();
     }
-
+        // City
+    // Obtenemos el nombre de la ciudad
     public String getCityName() {
         return cityModel.getName();
     }
-
-    public LocalTime getCityConfigurationInitialTime() {
-        return cityConfiguration.get(cityConfigurationId).getInitialTime();
-    }
-
-    public String getCityConfigurationMode() {
-        return cityConfiguration.get(cityConfigurationId).getMode();
-    }
-
-    public Integer getCityConfigurationSampleTime() {
-        return (Integer) (int) cityConfiguration.get(cityConfigurationId).getSampleTime().getSeconds();
-    }
-
+    // Obtenemos los cruces de la ciudad
     public Map<Integer, CrossroadModel> getCityCrossroads() {
         return crossroads;
     }
-
-    public LocalTime getSimulationInitialTime() {
-        return cityConfiguration.get(cityConfigurationId).getInitialTime();
-    }
-
-    public LocalTime getSimulationFinalTime() {
-        return cityConfiguration.get(cityConfigurationId).getInitialTime();
-    }
-
-    public Integer getSimulationSeconds() {
-        LocalTime initialTime = cityConfiguration.get(cityConfigurationId).getInitialTime();
-        LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
-        Duration duration = Duration.between(initialTime, finalTime);
-        Integer seconds = (Integer) (int) duration.getSeconds();
-        return seconds;
-    }
-
-    public List<String> getCityRoadStretchesNames() {
-        List<String> roadStretchesNames = new ArrayList<>();
-        roadStretches.forEach((roadStretchId, roadStretchModel) -> {
-            roadStretchesNames.add(roadStretchModel.getName());
-        });
-        Collections.sort(roadStretchesNames);
-        return roadStretchesNames;
-    }
-
+    // Obtenemos los nombres de los cruces de la ciudad
     public List<String> getCityCrossroadsNames() {
         List<String> crossroadNames = new ArrayList<>();
         crossroads.forEach((crossroadId, crossroadModel) -> {
@@ -662,4 +645,39 @@ public class Simulation {
         Collections.sort(crossroadNames);
         return crossroadNames;
     }
+    // Obtenemos los nombres de los tramos de calle de la ciudad
+    public List<String> getCityRoadStretchesNames() {
+        List<String> roadStretchesNames = new ArrayList<>();
+        roadStretches.forEach((roadStretchId, roadStretchModel) -> {
+            roadStretchesNames.add(roadStretchModel.getName());
+        });
+        Collections.sort(roadStretchesNames);
+        return roadStretchesNames;
+    }
+        // CityConfiguration (Simulación)
+    // Obtenemos la hora de inicio de la simulación
+    public LocalTime getCityConfigurationInitialTime() {
+        return cityConfiguration.get(cityConfigurationId).getInitialTime();
+    }
+    // Obtenemos la hora de fin de la simulación
+    public LocalTime getCityConfigurationFinalTime() {
+        return cityConfiguration.get(cityConfigurationId).getFinalTime();
+    }
+    // Obtenemos el tiempo de muestreo de la simulación
+    public Integer getCityConfigurationSampleTime() {
+        return (Integer) (int) cityConfiguration.get(cityConfigurationId).getSampleTime().getSeconds();
+    }
+    // Obtenemos el modo de entrada de vehículo en la simulación
+    public String getCityConfigurationMode() {
+        return cityConfiguration.get(cityConfigurationId).getMode();
+    }
+    // Obtenemos el total de segundos de la simulación
+    public Integer getSimulationSeconds() {
+        LocalTime initialTime = cityConfiguration.get(cityConfigurationId).getInitialTime();
+        LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
+        Duration duration = Duration.between(initialTime, finalTime);
+        Integer seconds = (Integer) (int) duration.getSeconds();
+        return seconds;
+    }
+    //**************************************************//
 }

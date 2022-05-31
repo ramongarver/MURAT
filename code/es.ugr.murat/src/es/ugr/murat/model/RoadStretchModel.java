@@ -90,10 +90,12 @@ public class  RoadStretchModel {
         return type;
     }
 
+    // TODO: Checkear type
     public void setCrossroadOriginId(Integer crossroadOriginId) {
         this.crossroadOriginId = crossroadOriginId;
     }
 
+    // TODO: Checkear type
     public void setCrossroadDestinationId(Integer crossroadDestinationId) {
         this.crossroadDestinationId = crossroadDestinationId;
     }
@@ -131,6 +133,7 @@ public class  RoadStretchModel {
         this.output = output;
     }
 
+    // TODO: Eliminar
     public void setType(String type) {
         this.type = type;
     }

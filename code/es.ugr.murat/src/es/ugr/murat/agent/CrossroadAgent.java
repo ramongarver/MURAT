@@ -121,7 +121,7 @@ public class CrossroadAgent extends MURATBaseAgent {
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
             // Obtenemos la hora de inicio de la simulación
-        initialTime = Simulation.simulation.getSimulationInitialTime();
+        initialTime = Simulation.simulation.getCityConfigurationInitialTime();
             // Obtenemos los ticks totales de la simulación
         totalTicks = Simulation.simulation.getSimulationSeconds();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
