@@ -535,7 +535,7 @@ public class Simulation {
 
     private void initAgents() {
         JADEBoot connection = new JADEBoot();
-        System.out.println("¡Hello MURAT!");
+        System.out.println(SimulationConstant.BANNER);
         // Lanzamos agentes
             // Agente ciudad (CityAgent)
         connection.launchAgent(cityModel.getName(), CityAgent.class);
