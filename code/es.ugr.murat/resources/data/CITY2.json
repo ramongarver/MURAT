@@ -1,0 +1,1172 @@
+{
+  "city": {
+    "name": "CITY2",
+    "description": "Very simple crossroad 3x3"
+  },
+  "cityConfiguration": [
+    {
+      "id": 1,
+      "vehicleLength": 4,
+      "inputRatio": "0.05",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 2,
+      "initialTime": 6,
+      "finalTime": 21,
+      "sampleTime": 15,
+      "mode": "LINEAR",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 2,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 3,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 4,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 5,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 6,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 7,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 8,
+          "initialStateId": 1
+        },
+        {
+          "crossroadId": 9,
+          "initialStateId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "vehicleLength": 4,
+      "inputRatio": "0.1",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 2,
+      "initialTime": 5,
+      "finalTime": 23,
+      "sampleTime": 15,
+      "mode": "DOUBLE PEAK",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 2,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 3,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 4,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 5,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 6,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 7,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 8,
+          "initialStateId": 2
+        },
+        {
+          "crossroadId": 9,
+          "initialStateId": 2
+        }
+      ]
+    }
+  ],
+  "crossroad": [
+    {
+      "crossroadId": 1,
+      "name": "C1",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 1,
+          "name": "TL1",
+          "roadStretchInName": "RS2"
+        },
+        {
+          "trafficLightId": 2,
+          "name": "TL2",
+          "roadStretchInName": "RS3"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 1,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS2-RS1"
+                },
+                {
+                  "crossroadStretchName": "RS2-RS4"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 2,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 1,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 2,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS3-RS1"
+                },
+                {
+                  "crossroadStretchName": "RS3-RS4"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS2",
+          "destinationRoadStretchName": "RS1",
+          "name": "RS2-RS1",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS2",
+          "destinationRoadStretchName": "RS4",
+          "name": "RS2-RS4",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS3",
+          "destinationRoadStretchName": "RS1",
+          "name": "RS3-RS1",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS3",
+          "destinationRoadStretchName": "RS4",
+          "name": "RS3-RS4",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 2,
+      "name": "C2",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 3,
+          "name": "TL3",
+          "roadStretchInName": "RS6"
+        },
+        {
+          "trafficLightId": 4,
+          "name": "TL4",
+          "roadStretchInName": "RS1"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 3,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS6-RS5"
+                },
+                {
+                  "crossroadStretchName": "RS6-RS7"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 4,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 3,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 4,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS1-RS5"
+                },
+                {
+                  "crossroadStretchName": "RS1-RS7"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS6",
+          "destinationRoadStretchName": "RS5",
+          "name": "RS6-RS5",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS6",
+          "destinationRoadStretchName": "RS7",
+          "name": "RS6-RS7",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS1",
+          "destinationRoadStretchName": "RS5",
+          "name": "RS1-RS5",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS1",
+          "destinationRoadStretchName": "RS7",
+          "name": "RS1-RS7",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 3,
+      "name": "C3",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 5,
+          "name": "TL5",
+          "roadStretchInName": "RS9"
+        },
+        {
+          "trafficLightId": 6,
+          "name": "TL6",
+          "roadStretchInName": "RS5"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 5,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS9-RS8"
+                },
+                {
+                  "crossroadStretchName": "RS9-RS10"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 6,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 5,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 6,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS5-RS8"
+                },
+                {
+                  "crossroadStretchName": "RS5-RS10"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS9",
+          "destinationRoadStretchName": "RS8",
+          "name": "RS9-RS8",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS9",
+          "destinationRoadStretchName": "RS10",
+          "name": "RS9-RS10",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS5",
+          "destinationRoadStretchName": "RS8",
+          "name": "RS5-RS8",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS5",
+          "destinationRoadStretchName": "RS10",
+          "name": "RS5-RS10",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 4,
+      "name": "C4",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 7,
+          "name": "TL7",
+          "roadStretchInName": "RS4"
+        },
+        {
+          "trafficLightId": 8,
+          "name": "TL8",
+          "roadStretchInName": "RS12"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 7,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS4-RS11"
+                },
+                {
+                  "crossroadStretchName": "RS4-RS13"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 8,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 7,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 8,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS12-RS11"
+                },
+                {
+                  "crossroadStretchName": "RS12-RS13"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS4",
+          "destinationRoadStretchName": "RS11",
+          "name": "RS4-RS11",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS4",
+          "destinationRoadStretchName": "RS13",
+          "name": "RS4-RS13",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS12",
+          "destinationRoadStretchName": "RS11",
+          "name": "RS12-RS11",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS12",
+          "destinationRoadStretchName": "RS13",
+          "name": "RS12-RS13",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 5,
+      "name": "C5",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 9,
+          "name": "TL9",
+          "roadStretchInName": "RS7"
+        },
+        {
+          "trafficLightId": 10,
+          "name": "TL10",
+          "roadStretchInName": "RS11"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 9,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS7-RS14"
+                },
+                {
+                  "crossroadStretchName": "RS7-RS15"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 10,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 9,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 10,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS11-RS14"
+                },
+                {
+                  "crossroadStretchName": "RS11-RS15"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS7",
+          "destinationRoadStretchName": "RS14",
+          "name": "RS7-RS14",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS7",
+          "destinationRoadStretchName": "RS15",
+          "name": "RS7-RS15",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS11",
+          "destinationRoadStretchName": "RS14",
+          "name": "RS11-RS14",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS11",
+          "destinationRoadStretchName": "RS15",
+          "name": "RS11-RS15",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 6,
+      "name": "C6",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 11,
+          "name": "TL11",
+          "roadStretchInName": "RS10"
+        },
+        {
+          "trafficLightId": 12,
+          "name": "TL12",
+          "roadStretchInName": "RS14"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 11,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS10-RS16"
+                },
+                {
+                  "crossroadStretchName": "RS10-RS17"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 12,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 11,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 12,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS14-RS16"
+                },
+                {
+                  "crossroadStretchName": "RS14-RS17"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS10",
+          "destinationRoadStretchName": "RS16",
+          "name": "RS10-RS16",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS10",
+          "destinationRoadStretchName": "RS17",
+          "name": "RS10-RS17",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS14",
+          "destinationRoadStretchName": "RS16",
+          "name": "RS14-RS16",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS14",
+          "destinationRoadStretchName": "RS17",
+          "name": "RS14-RS17",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 7,
+      "name": "C7",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 13,
+          "name": "TL13",
+          "roadStretchInName": "RS13"
+        },
+        {
+          "trafficLightId": 14,
+          "name": "TL14",
+          "roadStretchInName": "RS19"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 13,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS13-RS18"
+                },
+                {
+                  "crossroadStretchName": "RS13-RS20"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 14,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 13,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 14,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS19-RS18"
+                },
+                {
+                  "crossroadStretchName": "RS19-RS20"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS13",
+          "destinationRoadStretchName": "RS18",
+          "name": "RS13-RS18",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS13",
+          "destinationRoadStretchName": "RS20",
+          "name": "RS13-RS20",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS19",
+          "destinationRoadStretchName": "RS18",
+          "name": "RS19-RS18",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS19",
+          "destinationRoadStretchName": "RS20",
+          "name": "RS19-RS20",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 8,
+      "name": "C8",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 15,
+          "name": "TL15",
+          "roadStretchInName": "RS15"
+        },
+        {
+          "trafficLightId": 16,
+          "name": "TL16",
+          "roadStretchInName": "RS18"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 15,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS15-RS21"
+                },
+                {
+                  "crossroadStretchName": "RS15-RS22"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 16,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 15,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 16,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS18-RS21"
+                },
+                {
+                  "crossroadStretchName": "RS18-RS22"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS15",
+          "destinationRoadStretchName": "RS21",
+          "name": "RS15-RS21",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS15",
+          "destinationRoadStretchName": "RS22",
+          "name": "RS15-RS22",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS18",
+          "destinationRoadStretchName": "RS21",
+          "name": "RS18-RS21",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS18",
+          "destinationRoadStretchName": "RS22",
+          "name": "RS18-RS22",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    },
+    {
+      "crossroadId": 9,
+      "name": "C9",
+      "minimumStateTime": 20,
+      "cycleTime": 165,
+      "trafficLight": [
+        {
+          "trafficLightId": 17,
+          "name": "TL17",
+          "roadStretchInName": "RS17"
+        },
+        {
+          "trafficLightId": 18,
+          "name": "TL18",
+          "roadStretchInName": "RS18"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 17,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS17-RS23"
+                },
+                {
+                  "crossroadStretchName": "RS17-RS24"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 18,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 17,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 18,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS21-RS23"
+                },
+                {
+                  "crossroadStretchName": "RS21-RS24"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS17",
+          "destinationRoadStretchName": "RS23",
+          "name": "RS17-RS23",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS17",
+          "destinationRoadStretchName": "RS24",
+          "name": "RS17-RS24",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS21",
+          "destinationRoadStretchName": "RS23",
+          "name": "RS21-RS23",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS21",
+          "destinationRoadStretchName": "RS24",
+          "name": "RS21-RS24",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    }
+  ],
+  "roadStretch": [
+    {
+      "crossroadOriginId": 1,
+      "crossroadDestinationId": 2,
+      "direction": "E",
+      "name": "RS1",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 1,
+      "direction": "S",
+      "name": "RS2",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 1,
+      "direction": "E",
+      "name": "RS3",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 1,
+      "crossroadDestinationId": 4,
+      "direction": "S",
+      "name": "RS4",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 2,
+      "crossroadDestinationId": 3,
+      "direction": "E",
+      "name": "RS5",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 2,
+      "direction": "S",
+      "name": "RS6",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 2,
+      "crossroadDestinationId": 5,
+      "direction": "S",
+      "name": "RS7",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 3,
+      "crossroadDestinationId": null,
+      "direction": "E",
+      "name": "RS8",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 3,
+      "direction": "S",
+      "name": "RS9",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 3,
+      "crossroadDestinationId": 6,
+      "direction": "S",
+      "name": "RS10",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 4,
+      "crossroadDestinationId": 5,
+      "direction": "E",
+      "name": "RS11",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 4,
+      "direction": "E",
+      "name": "RS12",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 4,
+      "crossroadDestinationId": 7,
+      "direction": "S",
+      "name": "RS13",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 5,
+      "crossroadDestinationId": 6,
+      "direction": "E",
+      "name": "RS14",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 5,
+      "crossroadDestinationId": 8,
+      "direction": "S",
+      "name": "RS15",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 6,
+      "crossroadDestinationId": null,
+      "direction": "E",
+      "name": "RS16",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 6,
+      "crossroadDestinationId": 9,
+      "direction": "S",
+      "name": "RS17",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 7,
+      "crossroadDestinationId": 8,
+      "direction": "E",
+      "name": "RS18",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 7,
+      "direction": "E",
+      "name": "RS19",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 7,
+      "crossroadDestinationId": null,
+      "direction": "S",
+      "name": "RS20",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 8,
+      "crossroadDestinationId": 9,
+      "direction": "E",
+      "name": "RS21",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 8,
+      "crossroadDestinationId": null,
+      "direction": "S",
+      "name": "RS22",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 9,
+      "crossroadDestinationId": null,
+      "direction": "E",
+      "name": "RS23",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 9,
+      "crossroadDestinationId": null,
+      "direction": "S",
+      "name": "RS24",
+      "length": 200,
+      "lanes": 1,
+      "vehicles": 0
+    }
+  ]
+}
