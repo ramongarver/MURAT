@@ -1,5 +1,10 @@
 package es.ugr.murat.constant;
 
+/**
+ * Clase representando las acciones que pueden realizar los agentes.
+ *
+ * @author Ramón García Verjaga
+ */
 public class ActionConstant {
 
     public static final String LAUNCHING_AGENT = "Launching agent";

@@ -1,5 +1,11 @@
 package es.ugr.murat.constant;
 
+/**
+ * Clase representando las constantes de tiempo.
+ * Factores de conversión de unidades de tiempo.
+ *
+ * @author Ramón García Verjaga
+ */
 public class TimeConstant {
 
     public static final int SECOND = 1;

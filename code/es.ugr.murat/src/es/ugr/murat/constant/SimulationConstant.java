@@ -1,5 +1,10 @@
 package es.ugr.murat.constant;
 
+/**
+ * Clase representando las constantes de la clase Simulation.
+ *
+ * @author Ramón García Verjaga
+ */
 public class SimulationConstant {
 
     public static final String DATA_PATH = "resources/data/";
@@ -9,10 +14,13 @@ public class SimulationConstant {
     public static final String CONFIGURATION = "CONFIGURATION";
     public static final String SELECT_CONFIGURATION = "Seleccione la configuración";
 
-    public static final String BANNER = " _ _   _      _ _         __  __                 _   _ \n" +
-            "(_) | | | ___| | | ___   |  \\/  |_   _ _ __ __ _| |_| |\n" +
-            "| | |_| |/ _ \\ | |/ _ \\  | |\\/| | | | | '__/ _` | __| |\n" +
-            "| |  _  |  __/ | | (_) | | |  | | |_| | | | (_| | |_|_|\n" +
-            "|_|_| |_|\\___|_|_|\\___/  |_|  |_|\\__,_|_|  \\__,_|\\__(_)\n";
+    public static final String BANNER =
+            """
+             _ _   _      _ _         __  __                 _   _\s
+            (_) | | | ___| | | ___   |  \\/  |_   _ _ __ __ _| |_| |
+            | | |_| |/ _ \\ | |/ _ \\  | |\\/| | | | | '__/ _` | __| |
+            | |  _  |  __/ | | (_) | | |  | | |_| | | | (_| | |_|_|
+            |_|_| |_|\\___|_|_|\\___/  |_|  |_|\\__,_|_|  \\__,_|\\__(_)
+            """;
 
 }
