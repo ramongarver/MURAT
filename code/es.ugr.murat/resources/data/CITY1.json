@@ -155,8 +155,8 @@
       "vehicles": 0
     },
     {
-      "crossroadOriginId": 1,
-      "crossroadDestinationId": null,
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 1,
       "direction": "E",
       "name": "RS3",
       "length": 100,
@@ -164,8 +164,8 @@
       "vehicles": 0
     },
     {
-      "crossroadOriginId": null,
-      "crossroadDestinationId": 1,
+      "crossroadOriginId": 1,
+      "crossroadDestinationId": null,
       "direction": "S",
       "name": "RS4",
       "length": 500,
