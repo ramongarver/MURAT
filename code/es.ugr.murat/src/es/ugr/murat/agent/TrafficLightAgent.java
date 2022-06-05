@@ -46,7 +46,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
             // Obtenemos datos del cruce al que pertenece
         crossroadId = Simulation.simulation.getTrafficLightCrossroadId(trafficLightId);
             // Obtenemos el nombre del tramo de calle que regula
-        roadStretchInName = Simulation.simulation.getTrafficLightRoadStretchInName(crossroadId, trafficLightId);
+        roadStretchInName = Simulation.simulation.getTrafficLightRoadStretchInName(trafficLightId);
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = TrafficLightConstant.LISTEN_CROSSROAD;
     }
