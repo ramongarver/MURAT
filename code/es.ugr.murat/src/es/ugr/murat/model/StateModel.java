@@ -1,7 +1,5 @@
 package es.ugr.murat.model;
 
-import java.time.Duration;
-
 /**
  * Clase representando el modelo de un estado.
  *

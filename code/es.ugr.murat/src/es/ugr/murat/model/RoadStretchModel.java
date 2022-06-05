@@ -34,10 +34,7 @@ public class  RoadStretchModel {
         this.vehicles = vehicles;
         this.maxVehicles = (int) (this.length * this.lanes / vehicleLength);
         this.occupancyPercentage = (double) this.vehicles / (double) this.maxVehicles * 100.0;
-        this.type = this.crossroadOriginId == null && this.crossroadDestinationId != null ? "ROOT" : // Si no tiene cruce origen y tiene cruce destino (calle de entrada al sistema)
-                        this.crossroadOriginId != null && this.crossroadDestinationId == null ? "LEAF" : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
-                            this.crossroadOriginId != null && this.crossroadDestinationId != null ? "INNER" : // Si tiene cruce origen y cruce destino (calle interna)
-                                    null;   // Nada de lo anterior
+        this.type = this.calculateAndSetType();
         this.input = "ROOT".equals(this.type) ? this.lanes * inputRatio : this.lanes * inputInnerRatio;
         this.output = this.lanes * outputInnerRatio;
     }
@@ -90,14 +87,14 @@ public class  RoadStretchModel {
         return type;
     }
 
-    // TODO: Checkear type
     public void setCrossroadOriginId(Integer crossroadOriginId) {
         this.crossroadOriginId = crossroadOriginId;
+        this.type = this.calculateAndSetType();
     }
 
-    // TODO: Checkear type
     public void setCrossroadDestinationId(Integer crossroadDestinationId) {
         this.crossroadDestinationId = crossroadDestinationId;
+        this.type = this.calculateAndSetType();
     }
 
     public void setDirection(String direction) {
@@ -133,9 +130,11 @@ public class  RoadStretchModel {
         this.output = output;
     }
 
-    // TODO: Eliminar
-    public void setType(String type) {
-        this.type = type;
+    private String calculateAndSetType() {
+        return  this.crossroadOriginId == null && this.crossroadDestinationId != null ? "ROOT" : // Si no tiene cruce origen y tiene cruce destino (calle de entrada al sistema)
+                this.crossroadOriginId != null && this.crossroadDestinationId == null ? "LEAF" : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
+                this.crossroadOriginId != null && this.crossroadDestinationId != null ? "INNER" : // Si tiene cruce origen y cruce destino (calle interna)
+                null;   // Nada de lo anterior
     }
 
 }
