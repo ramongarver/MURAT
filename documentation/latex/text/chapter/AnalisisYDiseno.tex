@@ -1,63 +1,96 @@
-\part{Motivaciones e introducción}
-\chapter{TODO: CapOne}
-\section{Introducción}
-
-\section{Motivaciones}
-
-\section{Objetivos}
-
-\section{¿Cómo está organizado este TFG?}
-Este trabajo de fin de grado está organizado en x partes, y capítulos e información adicional como: una portada, una autorización para la ubicación del mismo en la biblioteca, una autorización para su defensa, un resumen en español junto a sus palabras clave, un resumen en inglés junto a sus palabras clave, unos agradecimientos, un índice general, un índice de figuras, un índice de tablas y una bibliografía.
-
-Las partes y capítulos están organizados de la siguiente forma:
-\begin{itemize}
-    \item Parte I: Motivación e introducción. 
-    \begin{itemize}
-        \item Capítulo 1: Blablabla.
-    \end{itemize}
-
-    \item Parte II: Lorem ipsum.
-    \begin{itemize}
-        \item Capítulo 2: Blablabla.
-        \item Capítulo 3: Blablabla.
-        \item Capítulo 4: Blablabla.
-    \end{itemize}
-
-    \item Parte III: Lorem ipsum.
-    \begin{itemize}
-        \item Capítulo 5: Blablabla.
-        \item Capítulo 6: Blablabla.
-        \item Capítulo 7: Blablabla.
-    \end{itemize}
-
-    \item Parte IV: Lorem ipsum.
-    \begin{itemize}
-        \item Capítulo 8: Blablabla.
-    \end{itemize}
-\end{itemize}
-
-\part{Estado del arte}
-\chapter{Sistemas para el control del tráfico en la actualidad}
-
-\part{Construcción del sistema MURAT}
-\chapter{Planificación y presupuesto}
-\section{Metodología}
-\section{Herramientas utilizadas}
-\section{Planificación temporal}
-\section{Presupuesto}
-
 \chapter{Análisis y diseño}
 \section{¿Qué es un agente?}
 \subsection{Estructura de un agente}
 \subsection{Comunicación entre agentes}
 
 \newpage
+\section{Planteamiento del problema}
+
+\subsection{Cruce simple}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Topologia.pdf}
+    \caption{Topología del cruce simple}
+    \label{fig:cruce_simple_topologia}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado1.pdf}
+    \caption{Cruce simple en estado 1}
+    \label{fig:cruce_simple_estado_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado2.pdf}
+    \caption{Cruce simple en estado 2}
+    \label{fig:cruce_simple_estado_2}
+\end{figure}
+
+\newpage
+\subsection{Cruce estándar}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Topologia.pdf}
+    \caption{Topología del cruce estándar}
+    \label{fig:cruce_estandar_topologia}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado1.pdf}
+    \caption{Cruce estándar en estado 1}
+    \label{fig:cruce_estandar_estado_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado2.pdf}
+    \caption{Cruce estándar en estado 2}
+    \label{fig:cruce_estandar_estado_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado3.pdf}
+    \caption{Cruce estándar en estado 3}
+    \label{fig:cruce_estandar_estado_3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado4.pdf}
+    \caption{Cruce estándar en estado 4}
+    \label{fig:cruce_estandar_estado_4}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado5.pdf}
+    \caption{Cruce estándar en estado 5}
+    \label{fig:cruce_estandar_estado_5}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado6.pdf}
+    \caption{Cruce estándar en estado 6}
+    \label{fig:cruce_estandar_estado_6}
+\end{figure}
+
+\newpage
 \section{Sociedad de agentes}
 El sistema MURAT es una construcción software basada en una arquitectura multiagente. Esto implica que existen uno o más tipos de agentes con roles definidos y propósitos específicos. Asimismo, existen uno o más agentes de cada tipo. Estos agentes, para el cumplimientos de sus objetivos, se encuentran organizados en una sociedad.
 
-//
-
 // TODO: Introducir sociedad de agentes
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-Sociedad_de_agentes.pdf}
+    \caption{Sociedad de agentes del sistema MURAT}
+    \label{fig:sociedad_de_agentes}
+\end{figure}
 
 \subsection{Agente Semáforo (TrafficLight)}
 El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Su capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
@@ -79,7 +112,12 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
 \end{enumerate}
 
 \subsubsection{Diagrama de actividad del agente}
-Diagrama de actividad
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DA-TrafficLight.pdf}
+    \caption{Diagrama de actividad del agente Semáforo}
+    \label{fig:da_agente_semaforo}
+\end{figure}
 
 \subsection{Agente Cruce (Crossroad)}
 \subsubsection{Estados del agente}
@@ -252,29 +290,10 @@ Atributos:
 \textbf{Claves foráneas}: Simples ya añadidas, \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{state\_id}\} de (\textit{state}), \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{traffic\_light\_id}\} de (\textit{traffic\_light}) y \newline \{\textit{crossroad\_stretch\_name}\} de (\textit{crossroad\_stretch.name}).
 
 \subsection{Representación en JSON}
-La representación se realiza a través de un objeto de tipo JSON basado en tablas anteriormente descritas.
+La representación se realiza a través de un objeto de tipo JSON basado en las tablas anteriormente descritas.
+
+//TODO: explicar
+\lstinputlisting[language=json, linerange={1-10}]{text/data/CITY1.json}
 
 \subsection{Carga de datos en la inicialización}
 El sistema MURAT se sirve en su arranque de información que representa a una ciudad junto a sus calles, cruces y semáforos, además de la información de su configuración, variables relativas a la simulación de tráfico en la ciudad. Los datos cargados en el sistema para realizar una simulación de tráfico se indexan por el identificador de ciudad e identificador de configuración a través de la selección de uno de los archivos \textit{.json} existentes y una de sus configuraciones.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=\linewidth]{image/etsiit_logo.png}
-    \caption{Cruce estándar}
-    \label{fig:cruce_estandar}
-\end{figure}
-
-
-\chapter{Implementación}
-
-\part{Simulación de tráfico}
-\chapter{Escenarios}
-\section{Ciudad 1. Cruce simple}
-\section{Ciudad 2. Matriz de cruces simples}
-\section{Ciudad 3. Cruce estándar}
-\section{Ciudad 4. Matriz de cruces estándares}
-\section{Ciudad 5. Cruce complejo real}
-
-\chapter{Análisis de los resultados obtenidos}
-
-\part{Conclusiones y vías futuras}

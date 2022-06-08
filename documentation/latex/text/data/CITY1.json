@@ -1,0 +1,176 @@
+{
+  "city": {
+    "name": "CITY1",
+    "description": "Very simple crossroad"
+  },
+  "cityConfiguration": [
+    {
+      "id": 1,
+      "vehicleLength": 4,
+      "inputRatio": "0.05",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 2,
+      "initialTime": 6,
+      "finalTime": 21,
+      "sampleTime": 15,
+      "mode": "LINEAR",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "vehicleLength": 4,
+      "inputRatio": "0.1",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 2,
+      "initialTime": 5,
+      "finalTime": 23,
+      "sampleTime": 15,
+      "mode": "DOUBLE PEAK",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 3
+        }
+      ]
+    }
+  ],
+  "crossroad": [
+    {
+      "crossroadId": 1,
+      "name": "C1",
+      "minimumStateTime": 20,
+      "cycleTime": 90,
+      "trafficLight": [
+        {
+          "trafficLightId": 1,
+          "name": "TL1",
+          "roadStretchInName": "RS2"
+        },
+        {
+          "trafficLightId": 2,
+          "name": "TL2",
+          "roadStretchInName": "RS3"
+        }
+      ],
+      "state": [
+        {
+          "stateId": 1,
+          "name": "E1",
+          "duration": 45,
+          "trafficLightState": [
+            {
+              "trafficLightId": 1,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS2-RS1"
+                },
+                {
+                  "crossroadStretchName": "RS2-RS4"
+                }
+              ]
+            },
+            {
+              "trafficLightId": 2,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            }
+          ]
+        },
+        {
+          "stateId": 2,
+          "name": "E2",
+          "duration": 120,
+          "trafficLightState": [
+            {
+              "trafficLightId": 1,
+              "light": "R",
+              "crossroadStretchRoutes": []
+            },
+            {
+              "trafficLightId": 2,
+              "light": "G",
+              "crossroadStretchRoutes": [
+                {
+                  "crossroadStretchName": "RS3-RS1"
+                },
+                {
+                  "crossroadStretchName": "RS3-RS4"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "crossroadStretch": [
+        {
+          "originRoadStretchName": "RS2",
+          "destinationRoadStretchName": "RS1",
+          "name": "RS2-RS1",
+          "carsPercentageFromOriginToDestination": 20
+        },
+        {
+          "originRoadStretchName": "RS2",
+          "destinationRoadStretchName": "RS4",
+          "name": "RS2-RS4",
+          "carsPercentageFromOriginToDestination": 80
+        },
+        {
+          "originRoadStretchName": "RS3",
+          "destinationRoadStretchName": "RS1",
+          "name": "RS3-RS1",
+          "carsPercentageFromOriginToDestination": 35
+        },
+        {
+          "originRoadStretchName": "RS3",
+          "destinationRoadStretchName": "RS4",
+          "name": "RS3-RS4",
+          "carsPercentageFromOriginToDestination": 65
+        }
+      ]
+    }
+  ],
+  "roadStretch": [
+    {
+      "crossroadOriginId": 1,
+      "crossroadDestinationId": null,
+      "direction": "E",
+      "name": "RS1",
+      "length": 100,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 1,
+      "direction": "S",
+      "name": "RS2",
+      "length": 500,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": null,
+      "crossroadDestinationId": 1,
+      "direction": "E",
+      "name": "RS3",
+      "length": 100,
+      "lanes": 1,
+      "vehicles": 0
+    },
+    {
+      "crossroadOriginId": 1,
+      "crossroadDestinationId": null,
+      "direction": "S",
+      "name": "RS4",
+      "length": 500,
+      "lanes": 1,
+      "vehicles": 0
+    }
+  ]
+}
