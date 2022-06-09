@@ -17,15 +17,18 @@
 \usepackage{url}
 \usepackage{colortbl,longtable}
 \usepackage[stable]{footmisc}
+\usepackage{multirow}
+\usepackage{eurosym} % Add euro symbol
+\usepackage[acronym, toc]{glossaries}
+%\usepackage[style=list, number=none]{glossary}
 %\usepackage{doxygen/doxygen}
 %\usepackage{pdfpages}
 %\usepackage{index}
-%\usepackage[style=list, number=none]{glossary} %
+%\usepackage[style=long, cols=2,border=plain,toc=true,number=none]{glossary}
 %\usepackage{titlesec}
 %\usepackage{pailatino}
 %\usepackage[chapter]{algorithm}
-%\usepackage[style=long, cols=2,border=plain,toc=true,number=none]{glossary}
-\RequirePackage{verbatim}
+%\RequirePackage{verbatim}
 %\RequirePackage[Glenn]{fncychap}
 
 \decimalpoint
@@ -69,11 +72,12 @@ Telecomunicación}
 
 
 %\makeindex
-% \makeglossary
+\makeglossaries
 
 % Definición de comandos que me son tiles:
-%\renewcommand{\indexname}{Índice alfabético}
-%\renewcommand{\glossaryname}{Glosario}
+\renewcommand{\indexname}{Índice alfabético}
+\renewcommand{\glossaryname}{Glosario}
+
 
 \pagestyle{fancy}
 \fancyhf{}

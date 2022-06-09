@@ -1,49 +1,58 @@
 \input{config/ConfiguracionGeneral}
 
+
 \begin{document}
    
     \input{text/PreContenido}
-   
-   %\frontmatter
-   \tableofcontents
-   \listoffigures
-   \listoftables
-   %
-   %\mainmatter
-   %\setlength{\parskip}{5pt}
-
+    
+    \frontmatter % makes the pages numbered in lowercase roman, and makes chapters not numbered
+    \tableofcontents
+    \listoffigures
+    \listoftables
+    
+    
+    \mainmatter % changes the behavior back to the expected version, and resets the page number.
+    \setlength{\parskip}{5pt} % Separa cada párrafo en 5pt. LaTeX por defecto no lo hace.
+    
     \input{text/Contenido}
-
-   %
-   %\input{capitulos/02_EspecificacionRequisitos}
-   %
-   %\input{capitulos/03_Planificacion}
-   %
-   %\input{capitulos/04_Analisis}
-   %
-   %\input{capitulos/05_Diseno}
-   %
-   %\input{capitulos/06_Implementacion}
-   %
-   %\input{capitulos/07_Pruebas}
-   %
-   %\input{capitulos/08_Conclusiones}
-   %
-   %%\chapter{Conclusiones y Trabajos Futuros}
-   %
-   %
-   %%\nocite{*}
-   %\bibliography{bibliografia/bibliografia}\addcontentsline{toc}{chapter}{Bibliografía}
-   %\bibliographystyle{miunsrturl}
-   %
-   %\appendix
-   %\input{apendices/manual_usuario/manual_usuario}
-   %%\input{apendices/paper/paper}
-   %\input{glosario/entradas_glosario}
-   % \addcontentsline{toc}{chapter}{Glosario}
-   % \printglossary
-   
-   \chapter*{}
-   \thispagestyle{empty}
+    
+    %\input{capitulos/02_EspecificacionRequisitos}
+    %
+    %\input{capitulos/03_Planificacion}
+    %
+    %\input{capitulos/04_Analisis}
+    %
+    %\input{capitulos/05_Diseno}
+    %
+    %\input{capitulos/06_Implementacion}
+    %
+    %\input{capitulos/07_Pruebas}
+    %
+    %\input{capitulos/08_Conclusiones}
+    %
+    %%\chapter{Conclusiones y Trabajos Futuros}
+    
+    % Bibliography
+    \cleardoublepage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{Bibliografía}
+    \nocite{*}
+    \bibliographystyle{unsrt}
+    \bibliography{text/Bibliografia}
+    
+    %\appendix
+    %\input{apendices/manual_usuario/manual_usuario}
+    %%\input{apendices/paper/paper}
+    
+    % Glossary | Important to execute \makeglossaries before the beggining of the document
+    \input{text/Glosario}
+    \printglossary[title=Glosario, toctitle=Glosario]
+    
+    % Acronym | Important to execute \makeglossaries before the beggining of the document
+    \input{text/Acronimos}
+    \printglossary[title=Acrónimos, toctitle=Acrónimos, type=\acronymtype]
+    
+    \chapter*{}
+    \thispagestyle{empty}
 
 \end{document}
