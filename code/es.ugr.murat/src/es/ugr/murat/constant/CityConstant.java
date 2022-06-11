@@ -15,4 +15,8 @@ public class CityConstant {
     public static final int GENERATE_SIMULATION_REPORT = 3;
     public static final int FINALIZE_CROSSROADS = 4;
 
+    public static final String TIME = "Time";
+    public static final String VEHICLES_IN = "VehiclesIn";
+    public static final String VEHICLES_OUT = "VehiclesOut";
+
 }

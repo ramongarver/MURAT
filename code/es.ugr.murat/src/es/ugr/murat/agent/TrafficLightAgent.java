@@ -52,7 +52,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
     }
 
     protected void listenCrossroad() {
-        Logger.info("Estado de escucha al cruce", this.getClass().getSimpleName(), this.getLocalName());
+        Logger.info(ActionConstant.LISTENING_CROSSROAD, this.getClass().getSimpleName(), this.getLocalName());
         this.listenMessages();
     }
 
@@ -98,9 +98,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
                 else if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = TrafficLightConstant.EXIT;
                     // TODO: INFORM
-                }
-                // Manejamos mensajes no conocidos
-                else {
+                } else { // Manejamos mensajes no conocidos
                     Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
                 }
             }

@@ -11,6 +11,7 @@ public class ActionConstant {
     public static final String LAUNCHED_AGENT = "Launched agent";
 
     public static final String REMOVING_AGENT = "Removing agent";
+
     public static final String HELLO_SENT = "Hello sent";
     public static final String HELLO_RECEIVED = "Hello received";
 
@@ -20,6 +21,8 @@ public class ActionConstant {
     public static final String MESSAGE_SENT = "Message sent";
     public static final String MESSAGE_RECEIVED = "Message received";
     public static final String MESSAGE_UNKNOWN_RECEIVED = "Message unknown received";
+
+    public static final String LISTENING_CROSSROAD = "Listening to crossroad";
 
     public static final String STATE_CHANGED = "State changed";
 

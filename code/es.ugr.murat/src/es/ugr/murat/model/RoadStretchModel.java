@@ -20,8 +20,8 @@ public class  RoadStretchModel {
     private Integer vehicles; // Número de vehículos
     private Integer maxVehicles; // Capacidad máxima de vehículos
     private Double occupancyPercentage; // Porcentaje de ocupación del tramo de calle
-    private Double input; // Cantidad de coches que entran al tramo de calle por segundo
-    private Double output; // Cantidad de coches que salen del tramo de calle por segundo
+    private Double input; // Cantidad de vehículos que entran al tramo de calle por segundo
+    private Double output; // Cantidad de vehículos que salen del tramo de calle por segundo
     private String type; // Tipo de tramo de calle: raíz (entrada al sistema), hoja (salida del sistema) e intermedio
 
     public RoadStretchModel(Integer crossroadOriginId, Integer crossroadDestinationId, String direction, String name, Double length, Integer lanes, Integer vehicles, Double vehicleLength, Double inputRatio, Double inputInnerRatio, Double outputInnerRatio) {

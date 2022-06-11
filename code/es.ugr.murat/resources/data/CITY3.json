@@ -37,6 +37,23 @@
           "initialStateId": 3
         }
       ]
+    },
+    {
+      "id": 3,
+      "vehicleLength": 4,
+      "inputRatio": "0.05",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 1,
+      "initialTime": 4,
+      "finalTime": 22,
+      "sampleTime": 15,
+      "mode": "DOUBLE PEAK",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 1
+        }
+      ]
     }
   ],
   "crossroad": [
