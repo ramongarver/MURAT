@@ -14,8 +14,8 @@ public class CityConfigurationModel {
     private final Integer configurationId; // Id de la configuración
     private final Double vehicleLength; // Longitud de un vehículo (en metros)
     private final Double inputRatio; // Relación de entrada de tráfico al sistema: Cantidad de vehículos que se entran a la simulación por vía y segundo
-    private final Double inputInnerRatio; // Relación de entrada interna de tráfico: Cantidad de vehículos que entran a calles interiores (RoadStretch) por vía y segundo
-    private final Double outputInnerRatio; // Relación de salida interna de tráfico: Cantidad de vehículos que salen, bien de calles interiores, bien de la simulación
+    private final Double inputInnerRatio; // Relación de entrada interna de tráfico: Cantidad de vehículos que entran a los tramos de calle interiores (RoadStretch) por vía y segundo
+    private final Double outputInnerRatio; // Relación de salida interna de tráfico: Cantidad de vehículos que salen, bien de calles interiores, bien de la simulación por vía y segundo
     private final LocalTime initialTime; // Hora de inicio de la simulación
     private final LocalTime finalTime; // Hora de fin de la simulación
     private final Duration sampleTime; // Tiempo de muestreo de la simulación
