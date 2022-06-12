@@ -46,6 +46,7 @@ public class Simulation {
 
     private Integer cityId; // Identificador de la ciudad
     private Integer cityConfigurationId; // Identificador de la configuración de la ciudad
+    private Boolean optimizeStateTimesPolicy; // Indicador de política de tiempos variables o fijos
 
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
     private final Map<Integer, CityConfigurationModel> cityConfiguration; // Configuración de la ciudad | (cityConfigurationId -> cityConfigurationModel)
@@ -137,6 +138,16 @@ public class Simulation {
             Double inputRatio = cityConfiguration.get(cityConfigurationId).getInputRatio();
             Double inputInnerRatio = cityConfiguration.get(cityConfigurationId).getInputInnerRatio();
             Double outputInnerRatio = cityConfiguration.get(cityConfigurationId).getOutputInnerRatio();
+
+            // Seleccionamos una política de tiempos para la simulación
+            List<String> policies = new ArrayList<>();
+            policies.add(SimulationConstant.FIXED_TIME_POLICY);
+            policies.add(SimulationConstant.VARIABLE_TIME_POLICY);
+            String[] policiesArray = policies.toArray(new String[0]);
+            String selectedPolicy = (String)
+                    JOptionPane.showInputDialog(null, SimulationConstant.SELECT_POLICY, SimulationConstant.CONFIGURATION,
+                            JOptionPane.QUESTION_MESSAGE, null, policiesArray, configurationsArray[0]);
+            optimizeStateTimesPolicy = SimulationConstant.VARIABLE_TIME_POLICY.equals(selectedPolicy);
 
             // Cruces de la ciudad
             crossroads = new HashMap<>(); // Cruces de la ciudad
@@ -489,6 +500,10 @@ public class Simulation {
         LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
         Duration duration = Duration.between(initialTime, finalTime);
         return (Integer) (int) duration.getSeconds();
+    }
+    // Obtenemos si la política de optimización de tiempos está activa | (totalSimulationSeconds)
+    public Boolean getOptimizeStateTimesPolicy() {
+        return optimizeStateTimesPolicy;
     }
     //**************************************************//
 }

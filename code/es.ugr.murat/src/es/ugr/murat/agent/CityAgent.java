@@ -3,6 +3,7 @@ package es.ugr.murat.agent;
 import com.eclipsesource.json.Json;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CityConstant;
+import es.ugr.murat.constant.CommonConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.model.CrossroadModel;
@@ -42,7 +43,7 @@ public class CityAgent extends MURATBaseAgent {
     private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
 
     private Map<String, Integer> crossroadsTicks; // Número de ticks que ha realizado cada cruce | (crossroadName -> ticks)
-    private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; // Información de la simulación para cada tick | (tick -> columnName -> value)
+    private Map<Integer, Map<String, Double>> simulationInfoByTick; // Información de la simulación para cada tick | (tick -> columnName -> value)
 
     //*************** Ciclo de vida del agente ***************//
     @Override
@@ -56,7 +57,7 @@ public class CityAgent extends MURATBaseAgent {
         initialTime = null;
         totalTicks = null;
         crossroadsTicks = new HashMap<>();
-        tickRoadStretchOccupation = new HashMap<>();
+        simulationInfoByTick = new HashMap<>();
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -138,7 +139,7 @@ public class CityAgent extends MURATBaseAgent {
 
                         // Para el tick actual actualizamos los parámetros del registro con los valores del estado actual
                         tick.getValue().asObject().forEach((columnName) -> {
-                            tickRoadStretchOccupation.get(currentTick).put(columnName.getName(), Double.parseDouble(columnName.getValue().asString().replace(",", ".")));
+                            simulationInfoByTick.get(currentTick).put(columnName.getName(), Double.parseDouble(columnName.getValue().asString().replace(",", ".")));
                         });
 
                         // Comprobamos si ha finalizado la simulación
@@ -168,12 +169,12 @@ public class CityAgent extends MURATBaseAgent {
                     .setDelimiter(';')
                     .setHeader(headers.toArray(new String[0]))
                     .build())) {
-            tickRoadStretchOccupation.forEach((tick, roadStretchNameOccupation) -> {
+            simulationInfoByTick.forEach((tick, columnNames) -> {
                 if (tick % sampleTime == 0) {
                     List<String> record = new ArrayList<>();
                     LocalTime time = initialTime.plusSeconds(tick);
                     record.add(time.format(DateTimeFormatter.ISO_LOCAL_TIME));
-                    roadStretchNameOccupation.forEach((roadStretchName, occupation) -> {
+                    columnNames.forEach((columnName, occupation) -> {
                         record.add(occupation.toString().replace(".", ","));
                     });
                     try {
@@ -203,8 +204,8 @@ public class CityAgent extends MURATBaseAgent {
             roadStretchesNames.forEach((roadStretchName) -> {
                 roadStretchOccupation.put(roadStretchName, 0.0);
             });
-            roadStretchOccupation.put(CityConstant.VEHICLES_IN, 0.0);
-            roadStretchOccupation.put(CityConstant.VEHICLES_OUT, 0.0);
+            roadStretchOccupation.put(CommonConstant.VEHICLES_IN, 0.0);
+            roadStretchOccupation.put(CommonConstant.VEHICLES_OUT, 0.0);
 
             // Ordenamos el mapa por orden alfabético
             Map<String, Double> roadStretchOccupationSorted = roadStretchOccupation.entrySet()
@@ -236,7 +237,7 @@ public class CityAgent extends MURATBaseAgent {
                                     LinkedHashMap::new)
                     );
 
-            tickRoadStretchOccupation.put(i, roadStretchOccupationSorted);
+            simulationInfoByTick.put(i, roadStretchOccupationSorted);
         }
     }
 
@@ -259,18 +260,22 @@ public class CityAgent extends MURATBaseAgent {
     // Obtenemos la lista de las cabeceras (nombre de cada columna)
     private List<String> getCSVHeaders() {
         List<String> headers = new ArrayList<>();
-        headers.add(CityConstant.TIME);
+        headers.add(CommonConstant.TIME);
         headers.addAll(roadStretchesNames);
-        headers.add(CityConstant.VEHICLES_IN);
-        headers.add(CityConstant.VEHICLES_OUT);
+        headers.add(CommonConstant.VEHICLES_IN);
+        headers.add(CommonConstant.VEHICLES_OUT);
         for (Map.Entry<Integer, CrossroadModel> entry : crossroads.entrySet()) {
             CrossroadModel crossroadModel = entry.getValue();
-            headers.add(CityConstant.VEHICLES_IN + crossroadModel.getName());
-            headers.add(CityConstant.VEHICLES_OUT + crossroadModel.getName());
+            headers.add(CommonConstant.VEHICLES_TOTAL + crossroadModel.getName());
+            headers.add(CommonConstant.VEHICLES_IN + crossroadModel.getName());
+            headers.add(CommonConstant.VEHICLES_OUT + crossroadModel.getName());
+            headers.add(CommonConstant.VEHICLES_OUT_OF_SYSTEM + crossroadModel.getName());
+            headers.add(CommonConstant.AVERAGE_TICKS_TO_LEAVE + crossroadModel.getName());
+            headers.add(CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE + crossroadModel.getName());
         }
         for (Map.Entry<Integer, CrossroadModel> entry : crossroads.entrySet()) {
             CrossroadModel crossroadModel = entry.getValue();
-            headers.add(CityConstant.STATE + crossroadModel.getName());
+            headers.add(CommonConstant.STATE + crossroadModel.getName());
         }
         return headers;
     }

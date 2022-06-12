@@ -3,6 +3,7 @@ package es.ugr.murat.agent;
 import com.eclipsesource.json.JsonObject;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CityConfigurationConstant;
+import es.ugr.murat.constant.CommonConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
@@ -39,6 +40,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Integer crossroadId; // Identificador del cruce
     private CrossroadModel crossroadModel; // Información del cruce
     private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
+    private Map<Integer, StateModel> initialStates; // Estados del cruce iniciales | (stateId -> stateModel)
     private Map<Integer, StateModel> states; // Estados del cruce | (stateId -> stateModel)
     private Map<Integer, StateModel> futureStates; // Estados del cruce para el siguiente ciclo, se obtienen con la heurística de optimización de tiempo | (stateId -> stateModel)
     private Integer initialState; // Estado inicial del cruce
@@ -56,16 +58,21 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
 
     // Simulación
+    private Boolean optimizeStateTimesPolicy; // Indicador de la política de optimización de tiempos (si es true está activa)
+    private Integer sampleTime; // Tiempo de muestreo
     private LocalTime initialTime; // Hora de inicio de la simulación
     private Integer currentTicks; // Número de ticks realizados en la simulación
     private Integer stateTicks; // Número de ticks realizados en el estado actual
     private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
+    private Integer totalTicksToExit; // Número total de ticks que han tardado los vehículos en salir
     private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; //  (tick -> roadStretchName -> occupation)
 
     // Contadores de vehículos
-    private Queue<Integer> currentVehicles; // Número total de vehículos que hay en el cruce (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido)
+    private Map<String, Queue<Integer>> currentVehicles; // Número total de vehículos que hay en el cruce (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido) | (roadStretchName -> Cola)
     private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
     private Integer totalVehiclesOut; // Número total de vehículos que han salido del cruce
+    private Integer totalVehiclesOutOfSystem; // Número total de vehículos que han salido del sistema por el cruce
+    private Map<Integer, Integer> totalVehiclesOutOfSystemPerTick; // Número total de vehículos que han salido del sistema por el cruce por tick | (tick -> vehicles)
 
 
     //*************** Ciclo de vida del agente ***************//
@@ -92,14 +99,19 @@ public class CrossroadAgent extends MURATBaseAgent {
         crossroadsStretches = null;
         statesCrossroadStretches = null;
         statesTrafficLightsCrossroadStretches = null;
+        optimizeStateTimesPolicy = null;
+        sampleTime = null;
         initialTime = null;
         currentTicks = 0;
         stateTicks = 0;
         totalTicks = 0;
+        totalTicksToExit = 0;
         tickRoadStretchOccupation = new HashMap<>();
-        currentVehicles = new LinkedList<>();
+        currentVehicles = null;
         totalVehiclesIn = 0;
         totalVehiclesOut = 0;
+        totalVehiclesOutOfSystem = 0;
+        totalVehiclesOutOfSystemPerTick = new HashMap<>();
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -128,6 +140,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         trafficLights = Simulation.simulation.getCrossroadTrafficLights(crossroadId);
             // Obtenemos los estados del cruce
         states = Simulation.simulation.getCrossroadStates(crossroadId);
+        initialStates = this.initializeInitialStates();
             // Obtenemos el estado inicial del cruce
         initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
             // Obtenemos los colores de semáforos para cada estado del cruce
@@ -152,12 +165,17 @@ public class CrossroadAgent extends MURATBaseAgent {
         statesCrossroadStretches = Simulation.simulation.getCrossroadStatesCrossroadStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
+            // Obtenemos si la política de optimización de tiempos de estados está activa o no
+        optimizeStateTimesPolicy = Simulation.simulation.getOptimizeStateTimesPolicy();
+            // Obtenemos datos del tiempo de muestreo
+        sampleTime = Simulation.simulation.getCityConfigurationSampleTime();
             // Obtenemos la hora de inicio de la simulación
         initialTime = Simulation.simulation.getCityConfigurationInitialTime();
             // Obtenemos los ticks totales de la simulación
         totalTicks = Simulation.simulation.getSimulationSeconds();
             // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
         currentVehicles = this.initializeCurrentVehicles();
+        totalVehiclesOutOfSystemPerTick.put(0, 0); // TODO: initialize
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
@@ -196,7 +214,6 @@ public class CrossroadAgent extends MURATBaseAgent {
             // Comprobamos si hay que actualizar los tiempos de los estados y estamos en un nuevo ciclo
             if (updateStateTimes /*&& this.isNewCycle()*/) {
                 states = futureStates;
-                updateStateTimes = false;
             }
         }
 
@@ -207,7 +224,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         this.addTraffic();
 
         // Optimizamos los tiempos de los estados en función del tráfico
-        this.optimizeStateTimes(false);
+        this.optimizeStateTimes(optimizeStateTimesPolicy);
 
         currentTicks++;
         stateTicks++;
@@ -231,10 +248,30 @@ public class CrossroadAgent extends MURATBaseAgent {
 
     //*************** Utilidades y otros ***************//
     // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
-    private Queue<Integer> initializeCurrentVehicles() {
-        Queue<Integer> currentVehicles = new LinkedList<>();
+    private Map<String, Queue<Integer>> initializeCurrentVehicles() {
+        Map<String, Queue<Integer>> currentVehicles = new HashMap();
         for (Map.Entry<String, RoadStretchModel> entry : roadStretchesIn.entrySet()) {
-            currentVehicles.add(currentTicks);
+            Queue<Integer> roadStretchQueue = new LinkedList<>();
+            RoadStretchModel roadStretchModel = entry.getValue();
+            Integer vehicles = roadStretchModel.getVehicles();
+            for (int i = 0; i < vehicles; i++) {
+                roadStretchQueue.add(currentTicks);
+            }
+            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
+        }
+        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesOutToOutOfSystem.entrySet()) {
+            Queue<Integer> roadStretchQueue = new LinkedList<>();
+            RoadStretchModel roadStretchModel = entry.getValue();
+            Integer vehicles = roadStretchModel.getVehicles();
+            for (int i = 0; i < vehicles; i++) {
+                roadStretchQueue.add(currentTicks);
+            }
+            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
+        }
+        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesOutToAnotherCrossroad.entrySet()) {
+            Queue<Integer> roadStretchQueue = new LinkedList<>();
+            RoadStretchModel roadStretchModel = entry.getValue();
+            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
         }
         return currentVehicles;
     }
@@ -276,11 +313,18 @@ public class CrossroadAgent extends MURATBaseAgent {
                 Integer vehiclesToOutSystem = roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
                 roadStretchesOutModel.setVehicles(roadStretchVehicles - vehiclesToOutSystem);
                 totalVehiclesOut += vehiclesToOutSystem;
+                totalVehiclesOutOfSystem += vehiclesToOutSystem;
+                for(int i = 0; i < vehiclesToOutSystem; i++) {
+                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
+                    Integer ticksToExit = currentTicks - inputTick;
+                    totalTicksToExit += ticksToExit;
+                }
             } else { // Si no es salida del sistema de tráfico
 
             }
         });
 
+        // Movemos los vehículos
         crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
             roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
                 if (vehicles > 0) {
@@ -292,6 +336,9 @@ public class CrossroadAgent extends MURATBaseAgent {
                     Integer vehiclesToDestination = roadStretchDestinationFreeSpaces < roadStretchOriginToDestinationVehicles ? roadStretchDestinationFreeSpaces : roadStretchOriginToDestinationVehicles;
                     roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchOriginVehicles - vehiclesToDestination);
                     roadStretchesOut.get(roadStretchDestinationName).setVehicles(roadStretchDestinationVehicles + vehiclesToDestination);
+                    for (int i = 0; i < vehiclesToDestination; i++) {
+                        currentVehicles.get(roadStretchDestinationName).add(currentVehicles.get(roadStretchOriginName).remove());
+                    }
                     if (roadStretchesOut.get(roadStretchDestinationName).getCrossroadDestinationId() != null) { // Si no es salida del sistema de tráfico
                         totalVehiclesOut += vehiclesToDestination;
                     }
@@ -392,7 +439,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     private void addTraffic() {
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
             if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de calle de origen)
-                Double vehiclesPerSecond = roadStretchInModel.getInput(); // Vehículos por segundo que puede entrar al tramo de calle
+                Double vehiclesPerSecond = roadStretchInModel.getInput(); // Vehículos por segundo que pueden entrar al tramo de calle
                 Double secondsPerVehicle = 1 / roadStretchInModel.getInput(); // Segundos que tarda un vehículo en poder entrar al tramo de calle
 
                 // Comprobamos si la simulación está en alguno de los modos pico y si está en alguna de las horas pico
@@ -446,7 +493,7 @@ public class CrossroadAgent extends MURATBaseAgent {
             roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
             totalVehiclesIn += roadStretchIncomingVehicles;
             for (int i = 0; i < roadStretchIncomingVehicles; i++) {
-                currentVehicles.add(currentTicks);
+                currentVehicles.get(roadStretchInModel.getName()).add(currentTicks);
             }
         }
     }
@@ -568,6 +615,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesIn.forEach((roadStretchName, roadStretchModel) -> roadStretchOccupation.put(roadStretchName, roadStretchModel.getOccupancyPercentage()));
         roadStretchesOut.forEach((roadStretchName, roadStretchModel) -> roadStretchOccupation.put(roadStretchName, roadStretchModel.getOccupancyPercentage()));
         tickRoadStretchOccupation.put(currentTicks, roadStretchOccupation);
+        totalVehiclesOutOfSystemPerTick.put(currentTicks, totalVehiclesOutOfSystem);
     }
 
     // Informamos del estado actual del cruce
@@ -586,9 +634,13 @@ public class CrossroadAgent extends MURATBaseAgent {
             tickRoadStretchOccupationData.forEach((tick, roadStretchOccupation) -> {
                 JsonObject tickInformation = new JsonObject();
                 roadStretchOccupation.forEach((roadStretchName, occupation) -> tickInformation.add(roadStretchName, String.format("%.2f", occupation)));
-                tickInformation.add("vehiclesIn" + this.getLocalName(), String.format("%s", totalVehiclesIn));
-                tickInformation.add("vehiclesOut" + this.getLocalName(), String.format("%s", totalVehiclesOut));
-                tickInformation.add("state" + this.getLocalName(), String.format("%s", currentState));
+                tickInformation.add(CommonConstant.VEHICLES_TOTAL + this.getLocalName(), String.format("%s", this.calculateTotalVehicles()));
+                tickInformation.add(CommonConstant.VEHICLES_IN + this.getLocalName(), String.format("%s", totalVehiclesIn));
+                tickInformation.add(CommonConstant.VEHICLES_OUT + this.getLocalName(), String.format("%s", totalVehiclesOut));
+                tickInformation.add(CommonConstant.VEHICLES_OUT_OF_SYSTEM + this.getLocalName(), String.format("%s", totalVehiclesOutOfSystem));
+                tickInformation.add(CommonConstant.AVERAGE_TICKS_TO_LEAVE + this.getLocalName(), String.format("%s", totalVehiclesOutOfSystem == 0 ? 0 : totalTicksToExit / totalVehiclesOutOfSystem));
+                tickInformation.add(CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE + this.getLocalName(), String.format("%s", this.calculateCurrentTicksToLeave(tick)));
+                tickInformation.add(CommonConstant.STATE + this.getLocalName(), String.format("%s", currentState));
                 jsonReport.add(tick.toString(), tickInformation);
             });
 
@@ -750,6 +802,37 @@ public class CrossroadAgent extends MURATBaseAgent {
         Integer futureStateTime = currentStateTime - CrossroadConstant.STATE_TIME_VARIATION;
         Integer minStateTime = crossroadModel.getMinimumStateTime();
         return futureStateTime >= minStateTime;
+    }
+
+    private Integer calculateTotalVehicles() {
+        Integer totalVehicles = 0;
+        for (Map.Entry<String, Queue<Integer>> entry : currentVehicles.entrySet()) {
+            Integer vehicles = entry.getValue().size();
+            totalVehicles += vehicles;
+        }
+        return totalVehicles;
+    }
+
+    private Double calculateCurrentTicksToLeave(Integer currentTick) {
+        Double currentTicksToLeave = 0.0;
+        Integer previousSampleTick = Math.max((currentTick - sampleTime), 0);
+        Double previousVehiclesOutOfSystem = Double.valueOf(totalVehiclesOutOfSystemPerTick.get(previousSampleTick));
+        Double currentVehiclesOutOfSystem = Double.valueOf(totalVehiclesOutOfSystemPerTick.get(currentTick));
+        currentTicksToLeave = Double.valueOf((currentVehiclesOutOfSystem - previousVehiclesOutOfSystem) / sampleTime);
+        return currentTicksToLeave;
+    }
+
+    private Map<Integer, StateModel> copyStates(Map<Integer, StateModel> states) {
+        Map<Integer, StateModel> copyStates = new HashMap<>();
+        states.forEach((stateId, stateModel) -> {
+            StateModel copyStateModel = new StateModel(stateModel.getStateId(), stateModel.getName(), stateModel.getDurationTime());
+            copyStates.put(stateId, copyStateModel);
+        });
+        return copyStates;
+    }
+
+    private Map<Integer, StateModel> initializeInitialStates() {
+        return this.copyStates(states);
     }
     //**************************************************//
 }
