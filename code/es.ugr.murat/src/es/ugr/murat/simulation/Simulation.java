@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +55,7 @@ public class Simulation {
     private final Map<Integer, Map<Integer, Map<Integer, String>>> trafficLightsColorsPerCrossroadsStates; // Colores de semáforos para cada estado de un cruce | (crossroadId -> stateId -> trafficLightId -> color)
     private final Map<String, RoadStretchModel> roadStretches; // Tramos de calle de la ciudad | (name -> roadStretchModel)
     private final Map<Integer, Map<String, CrossroadStretchModel>> crossroadsStretches; // Tramos de cruce por cruce de la ciudad | (crossroadId -> crossroadStretchName -> crossroadStretchModel)
+    private final Map<Integer, Map<Integer, Map<String, Set<String>>>> crossroadsStatesCrossroadStretchesNames; // Tramos de cruce abiertos en cada estado por cruce de la ciudad | (crossroadId -> stateId -> crossroadStretchOrigin -> crossroadStretchDestination)
     private final Map<Integer, Map<Integer, Map<Integer, Set<String>>>> crossroadsStatesTrafficLightsCrossroadStretchesNames; // Tramos de cruce abiertos por cada semáforo y en cada estado por cruce de la ciudad | (crossroadId -> stateId -> trafficLightId -> crossroadStretchNames)
 
     public static void start() {
@@ -85,7 +87,7 @@ public class Simulation {
                 e.printStackTrace();
             }
 
-        // Información de la ciudad
+            // Información de la ciudad
             JsonObject cityJsonObject = simulationJsonObject.get("city").asObject();
             String cityName = cityJsonObject.get("name").asString();
             String description = cityJsonObject.get("description").asString();
@@ -142,7 +144,8 @@ public class Simulation {
             crossroadStates = new HashMap<>(); // Estados por cruce de la ciudad
             trafficLightsColorsPerCrossroadsStates = new HashMap<>(); // Colores de semáforos por estado por cruce de la ciudad
             crossroadsStretches = new HashMap<>(); // Tramos de cruce por cruce de la ciudad
-            crossroadsStatesTrafficLightsCrossroadStretchesNames = new HashMap<>();
+            crossroadsStatesCrossroadStretchesNames = new HashMap<>(); // Tramos de cruce abiertos en cada estado por cruce de la ciudad
+            crossroadsStatesTrafficLightsCrossroadStretchesNames = new HashMap<>(); // Tramos de cruce abiertos por cada semáforo y en cada estado por cruce de la ciudad
             // Para cada cruce
             JsonArray crossroadsJsonArray = simulationJsonObject.get("crossroad").asArray();
             for (JsonValue crossroadJsonValue : crossroadsJsonArray) {
@@ -153,7 +156,7 @@ public class Simulation {
                 Integer minimumStateTime = crossroadJsonObject.get("minimumStateTime").asInt();
                 Integer cycleTime = crossroadJsonObject.get("cycleTime").asInt();
                 CrossroadModel crossroadModel =
-                        new CrossroadModel(crossroadId, crossroadName, Duration.ofSeconds(minimumStateTime), Duration.ofSeconds(cycleTime));
+                        new CrossroadModel(crossroadId, crossroadName, minimumStateTime, Duration.ofSeconds(cycleTime));
                 crossroads.put(crossroadId, crossroadModel);
 
                 // Semáforos asociados al cruce
@@ -172,6 +175,7 @@ public class Simulation {
                 // Estados asociados al cruce
                 Map<Integer, StateModel> states = new HashMap<>();
                 Map<Integer, Map<Integer, String>> trafficLightsColorsPerStates = new HashMap<>();
+                Map<Integer, Map<String, Set<String>>> statesCrossroadStretchesNames = new HashMap<>();
                 Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretchesNames = new HashMap<>();
                 JsonArray crossroadStatesJsonArray = crossroadJsonObject.get("state").asArray();
                 for (JsonValue crossroadStateJsonValue : crossroadStatesJsonArray) {
@@ -183,6 +187,7 @@ public class Simulation {
                     states.put(stateId, stateModel);
 
                     // Colores de semáforos asociados a cada estado de un cruce
+                    Map<String, Set<String>> crossroadStretchesOriginDestinations = new HashMap<>();
                     Map<Integer, String> trafficLightsColors = new HashMap<>();
                     Map<Integer, Set<String>> trafficLightsCrossroadStretchesNames = new HashMap<>();
                     JsonArray trafficLightsColorsJsonArray = crossroadStateJsonObject.get("trafficLightState").asArray();
@@ -199,16 +204,27 @@ public class Simulation {
                             JsonObject crossroadStretchRouteJsonObject = crossroadStretchRouteJsonValue.asObject();
                             String crossroadStretchName = crossroadStretchRouteJsonObject.get("crossroadStretchName").asString();
                             crossroadStretchesNames.add(crossroadStretchName);
+                            String crossroadStretchOrigin = this.getCrossroadStretchOrigin(crossroadStretchName);
+                            String crossroadStretchDestination = this.getCrossroadStretchDestination(crossroadStretchName);
+                            if (crossroadStretchesOriginDestinations.containsKey(crossroadStretchOrigin)) {
+                                crossroadStretchesOriginDestinations.get(crossroadStretchOrigin).add(crossroadStretchDestination);
+                            } else {
+                                Set<String> crossroadStretchesDestination = new HashSet<>();
+                                crossroadStretchesDestination.add(crossroadStretchDestination);
+                                crossroadStretchesOriginDestinations.put(crossroadStretchOrigin, crossroadStretchesDestination);
+                            }
                         }
                         if (crossroadStretchesNames.size() > 0) {
                             trafficLightsCrossroadStretchesNames.put(trafficLightId, crossroadStretchesNames);
                         }
                     }
                     trafficLightsColorsPerStates.put(stateId, trafficLightsColors);
+                    statesCrossroadStretchesNames.put(stateId, crossroadStretchesOriginDestinations);
                     statesTrafficLightsCrossroadStretchesNames.put(stateId, trafficLightsCrossroadStretchesNames);
                 }
                 crossroadStates.put(crossroadId, states);
                 trafficLightsColorsPerCrossroadsStates.put(crossroadId, trafficLightsColorsPerStates);
+                crossroadsStatesCrossroadStretchesNames.put(crossroadId, statesCrossroadStretchesNames);
                 crossroadsStatesTrafficLightsCrossroadStretchesNames.put(crossroadId, statesTrafficLightsCrossroadStretchesNames);
 
                 // Tramos de cruce asociados al cruce
@@ -274,6 +290,15 @@ public class Simulation {
         }
         return cities;
     }
+
+    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN
+    private String getCrossroadStretchOrigin(String crossroadStretchName) {
+        return crossroadStretchName.split("-")[0];
+    }
+    // Obtenemos el destino del cruce | Para la forma RSN-RSM obtenemos RSM
+    private String getCrossroadStretchDestination(String crossroadStretchName) {
+        return crossroadStretchName.split("-")[1];
+    }
     //**************************************************//
 
     //*************** API de información inicial de la simulación ***************//
@@ -309,6 +334,32 @@ public class Simulation {
         });
         return roadStretchesIn;
     }
+    // Obtenemos los tramos de calle que entran al cruce identificado por crossroadId desde fuera del sistema | (roadStretchNameIn -> roadStretchModelIn)
+    public Map<String, RoadStretchModel> getCrossroadRoadStretchesInFromOutOfSystem(Integer crossroadId) {
+        Map<String, RoadStretchModel> roadStretchesInFromOutOfSystem = new HashMap<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadOriginId == null &&
+                    crossroadDestinationId != null && crossroadDestinationId.equals(crossroadId)) {
+                roadStretchesInFromOutOfSystem.put(roadStretchName, roadStretchModel);
+            }
+        });
+        return roadStretchesInFromOutOfSystem;
+    }
+    // Obtenemos los tramos de calle que entran al cruce identificado por crossroadId desde otro cruce | (roadStretchNameIn -> roadStretchModelIn)
+    public Map<String, RoadStretchModel> getCrossroadRoadStretchesInFromAnotherCrossroad(Integer crossroadId) {
+        Map<String, RoadStretchModel> roadStretchesInFromAnotherCrossroad = new HashMap<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadOriginId != null && !crossroadOriginId.equals(crossroadId) &&
+                    crossroadDestinationId != null && crossroadDestinationId.equals(crossroadId)) {
+                roadStretchesInFromAnotherCrossroad.put(roadStretchName, roadStretchModel);
+            }
+        });
+        return roadStretchesInFromAnotherCrossroad;
+    }
     // Obtenemos los tramos de calle que salen del cruce identificado por crossroadId | (roadStretchNameOut -> roadStretchModelOut)
     public Map<String, RoadStretchModel> getCrossroadRoadStretchesOut(Integer crossroadId) {
         Map<String, RoadStretchModel> roadStretchesOut = new HashMap<>();
@@ -320,9 +371,39 @@ public class Simulation {
         });
         return roadStretchesOut;
     }
+    // Obtenemos los tramos de calle que salen del cruce identificado por crossroadId hacia fuera del sistema | (roadStretchNameOut -> roadStretchModelOut)
+    public Map<String, RoadStretchModel> getCrossroadRoadStretchesOutToOutOfSystem(Integer crossroadId) {
+        Map<String, RoadStretchModel> roadStretchesOutToOutOfSystem = new HashMap<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadOriginId != null && crossroadOriginId.equals(crossroadId) &&
+                    crossroadDestinationId == null) {
+                roadStretchesOutToOutOfSystem.put(roadStretchName, roadStretchModel);
+            }
+        });
+        return roadStretchesOutToOutOfSystem;
+    }
+    // Obtenemos los tramos de calle que salen del cruce identificado por crossroadId hacia otro cruce (roadStretchNameOut -> roadStretchModelOut)
+    public Map<String, RoadStretchModel> getCrossroadRoadStretchesOutToAnotherCrossroad(Integer crossroadId) {
+        Map<String, RoadStretchModel> roadStretchesOutToAnotherCrossroad = new HashMap<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadOriginId != null && crossroadOriginId.equals(crossroadId) &&
+                    crossroadDestinationId != null && !crossroadDestinationId.equals(crossroadId)) {
+                roadStretchesOutToAnotherCrossroad.put(roadStretchName, roadStretchModel);
+            }
+        });
+        return roadStretchesOutToAnotherCrossroad;
+    }
     // Obtenemos los tramos de cruce del cruce identificado por crossroadId | (crossroadStretchName -> crossroadStretchModel)
     public Map<String, CrossroadStretchModel> getCrossroadCrossroadsStretches(Integer crossroadId) {
         return crossroadsStretches.get(crossroadId);
+    }
+    // Obtenemos los tramos de cruce habilitados por cada estado del cruce identificado por crossroadId | (crossroadId -> stateId -> crossroadStretchOrigin -> crossroadStretchDestination)
+    public Map<Integer, Map<String, Set<String>>> getCrossroadStatesCrossroadStretches(Integer crossroadId) {
+        return crossroadsStatesCrossroadStretchesNames.get(crossroadId);
     }
     // Obtenemos los tramos de cruce habilitados por cada semáforo en verde por cada estado del cruce identificado por crossroadId | (stateId -> trafficLightId -> crossroadStretchNames)
     public Map<Integer, Map<Integer, Set<String>>> getCrossroadStatesTrafficLightsCrossroadStretches(Integer crossroadId) {
@@ -364,7 +445,25 @@ public class Simulation {
     public List<String> getCityRoadStretchesNames() {
         List<String> roadStretchesNames = new ArrayList<>();
         roadStretches.forEach((roadStretchId, roadStretchModel) -> roadStretchesNames.add(roadStretchModel.getName()));
-        Collections.sort(roadStretchesNames);
+        Collections.sort(roadStretchesNames, new Comparator<String>() { // TODO: Extraer comparator
+            public int compare(String o1, String o2) {
+                if (extractString(o1).equals(extractString(o2)))
+                    return extractInt(o1) - extractInt(o2);
+                else
+                    return o1.compareTo(o2);
+            }
+
+            String extractString(String s) {
+                String prefix = s.replaceAll("\\d", "");
+                return prefix;
+            }
+
+            int extractInt(String s) {
+                String num = s.replaceAll("\\D", "");
+                // return 0 if no digits found
+                return num.isEmpty() ? 0 : Integer.parseInt(num);
+            }
+        });
         return roadStretchesNames;
     }
         // CityConfiguration (Simulación)

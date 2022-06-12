@@ -12,6 +12,6 @@ public class CityConfigurationConstant {
     public static final String DOUBLE_PEAK = "DOUBLE PEAK";
     public static final String TRIPLE_PEAK = "TRIPLE PEAK"; // TODO: Valorar si dejar o no
 
-    public static final Double PEAK_FACTOR = 5.0;
+    public static final Double PEAK_FACTOR = 20.0;
 
 }

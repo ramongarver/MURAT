@@ -17,9 +17,13 @@ import jade.core.AID;
 import jade.lang.acl.ACLMessage;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 
@@ -36,12 +40,19 @@ public class CrossroadAgent extends MURATBaseAgent {
     private CrossroadModel crossroadModel; // Información del cruce
     private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
     private Map<Integer, StateModel> states; // Estados del cruce | (stateId -> stateModel)
+    private Map<Integer, StateModel> futureStates; // Estados del cruce para el siguiente ciclo, se obtienen con la heurística de optimización de tiempo | (stateId -> stateModel)
     private Integer initialState; // Estado inicial del cruce
     private Integer currentState; // Estado actual del cruce
+    private Boolean updateStateTimes; // Indicador de actualización de los tiempos de los cruces en el siguiente ciclo
     private Map<Integer, Map<Integer, String>> trafficLightsColorsPerState; // Colores de semáforos para cada estado | (stateId -> trafficLightId -> color)
     private Map<String, RoadStretchModel> roadStretchesIn; // Tramos de calle que entran al cruce | (roadStretchInName -> roadStretchModel)
+    private Map<String, RoadStretchModel> roadStretchesInFromOutOfSystem; // Tramos de calle que entran al cruce desde fuera del sistema | (roadStretchInName -> roadStretchModel)
+    private Map<String, RoadStretchModel> roadStretchesInFromAnotherCrossroad; // Tramos de calle que entran al cruce desde otro cruce | (roadStretchInName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOut; // Tramos de calle que salen del cruce | (roadStretchOutName -> roadStretchModel)
+    private Map<String, RoadStretchModel> roadStretchesOutToOutOfSystem; // Tramos de calle que salen del cruce hacia fuera del sistema | (roadStretchOutName -> roadStretchModel)
+    private Map<String, RoadStretchModel> roadStretchesOutToAnotherCrossroad; // Tramos de calle que salen del cruce hacia otro cruce | (roadStretchOutName -> roadStretchModel)
     private Map<String, CrossroadStretchModel> crossroadsStretches; // Tramos de cruce | (name -> crossroadStretchModel)
+    private Map<Integer, Map<String, Set<String>>> statesCrossroadStretches; // Tramos de cruce abiertos en cada estado | (stateId -> crossroadStretchOrigin -> crossroadStretchDestination)
     private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
 
     // Simulación
@@ -51,7 +62,8 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Integer totalTicks; // Número total de ticks a realizar para completar la simulación
     private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; //  (tick -> roadStretchName -> occupation)
 
-    // Contadores de vehículos;
+    // Contadores de vehículos
+    private Queue<Integer> currentVehicles; // Número total de vehículos que hay en el cruce (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido)
     private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
     private Integer totalVehiclesOut; // Número total de vehículos que han salido del cruce
 
@@ -69,16 +81,23 @@ public class CrossroadAgent extends MURATBaseAgent {
         states = null;
         initialState = null;
         currentState = null;
+        updateStateTimes = false;
         trafficLightsColorsPerState = null;
         roadStretchesIn = null;
+        roadStretchesInFromOutOfSystem = null;
+        roadStretchesInFromAnotherCrossroad = null;
         roadStretchesOut = null;
+        roadStretchesOutToOutOfSystem = null;
+        roadStretchesOutToAnotherCrossroad = null;
         crossroadsStretches = null;
+        statesCrossroadStretches = null;
         statesTrafficLightsCrossroadStretches = null;
         initialTime = null;
         currentTicks = 0;
         stateTicks = 0;
         totalTicks = 0;
         tickRoadStretchOccupation = new HashMap<>();
+        currentVehicles = new LinkedList<>();
         totalVehiclesIn = 0;
         totalVehiclesOut = 0;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
@@ -95,6 +114,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
     }
 
+    // Cargamos datos
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
         // Cargamos datos del cruce
@@ -112,22 +132,37 @@ public class CrossroadAgent extends MURATBaseAgent {
         initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
             // Obtenemos los colores de semáforos para cada estado del cruce
         trafficLightsColorsPerState = Simulation.simulation.getCrossroadTrafficLightsColorsPerCrossroadState(crossroadId);
-            // Obtenemos los tramos de calle tanto de entrada al cruce
+            // Obtenemos los tramos de calle de entrada al cruce
+                // Todos los tramos de entrada al cruce
         roadStretchesIn = Simulation.simulation.getCrossroadRoadStretchesIn(crossroadId);
-            // Obtenemos los tramos de calle tanto de salida del cruce
+                // Tramos de calle de entrada al cruce desde fuera del sistema
+        roadStretchesInFromOutOfSystem = Simulation.simulation.getCrossroadRoadStretchesInFromOutOfSystem(crossroadId);
+                // Tramos de calle de entrada al cruce desde otro cruce
+        roadStretchesInFromAnotherCrossroad = Simulation.simulation.getCrossroadRoadStretchesInFromAnotherCrossroad(crossroadId);
+            // Obtenemos los tramos de calle de salida del cruce
+                // Todos los tramos de calle de salida del cruce
         roadStretchesOut = Simulation.simulation.getCrossroadRoadStretchesOut(crossroadId);
+                // Tramos de calle de salida desde el cruce hacia fuera del sistema
+        roadStretchesOutToOutOfSystem = Simulation.simulation.getCrossroadRoadStretchesOutToOutOfSystem(crossroadId);
+                // Tramos de calle de salida desde el cruce hacia otro cruce
+        roadStretchesOutToAnotherCrossroad = Simulation.simulation.getCrossroadRoadStretchesOutToAnotherCrossroad(crossroadId);
             // Obtenemos los tramos de cruce del cruce
         crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
+            // Obtenemos los tramos de cruce abiertos en cada estado
+        statesCrossroadStretches = Simulation.simulation.getCrossroadStatesCrossroadStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
             // Obtenemos la hora de inicio de la simulación
         initialTime = Simulation.simulation.getCityConfigurationInitialTime();
             // Obtenemos los ticks totales de la simulación
         totalTicks = Simulation.simulation.getSimulationSeconds();
+            // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
+        currentVehicles = this.initializeCurrentVehicles();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
 
+    // Inicializamos los agentes semáforo
     protected void initializeTrafficLights() {
         // Enviamos un mensaje a cada semáforo para inicializarlo con en color que corresponda en función del estado inicial del cruce
         trafficLightsColorsPerState.get(initialState).forEach((trafficLightId, color) ->
@@ -138,15 +173,19 @@ public class CrossroadAgent extends MURATBaseAgent {
         status = CrossroadConstant.CONTROL_TRAFFIC;
     }
 
+    // Controlamos el tráfico
     protected void controlTraffic() {
         // Mostramos el estado actual del cruce
         Logger.info(this.writeCurrentState());
+
+        // Almacenamos el estado actual del cruce
+        this.storeCurrentState();
 
         // Informamos del estado actual del cruce
         this.reportCurrentState(false);
 
         // Comprobamos si ha finalizado la simulación
-        if (this.isSimulationFinished()) {
+        if (this.hasSimulationFinished()) {
             status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
         }
 
@@ -154,6 +193,11 @@ public class CrossroadAgent extends MURATBaseAgent {
         Integer stateDuration = states.get(currentState).getDurationTime();
         if (stateTicks.equals(stateDuration)) {
             this.changeToTheNextState();
+            // Comprobamos si hay que actualizar los tiempos de los estados y estamos en un nuevo ciclo
+            if (updateStateTimes /*&& this.isNewCycle()*/) {
+                states = futureStates;
+                updateStateTimes = false;
+            }
         }
 
         // Movemos el tráfico a otras calles (hacemos que los vehículos pasen por el cruce)
@@ -162,10 +206,14 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Añadimos tráfico a la simulación
         this.addTraffic();
 
+        // Optimizamos los tiempos de los estados en función del tráfico
+        this.optimizeStateTimes(false);
+
         currentTicks++;
         stateTicks++;
     }
 
+    // Finalizamos los agentes semáforo
     protected void finalizeTrafficLights() {
         // Enviamos un mensaje a cada semáforo para pedirle que finalice
         trafficLights.forEach((trafficLightId, trafficLightModel) ->
@@ -175,27 +223,35 @@ public class CrossroadAgent extends MURATBaseAgent {
         status = CrossroadConstant.EXIT;
     }
 
+    // Salimos
     protected void exit() {
         exit = true;
     }
     //**************************************************//
 
     //*************** Utilidades y otros ***************//
+    // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
+    private Queue<Integer> initializeCurrentVehicles() {
+        Queue<Integer> currentVehicles = new LinkedList<>();
+        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesIn.entrySet()) {
+            currentVehicles.add(currentTicks);
+        }
+        return currentVehicles;
+    }
+
     // Escuchamos mensajes
     private void listenMessages() {
         this.receiveACLMessage();
         switch (incomingMessage.getPerformative()) {
             case ACLMessage.INFORM -> { // Si la performativa es INFORM
+
             }
             case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
                 // Finalizamos el agente
                 if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
-                    // TODO: INFORM
-                }
-                // Manejamos mensajes no conocidos
-                else {
-                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName()); // TODO: pensar si manejar esto de otra forma
+                } else { // Manejamos mensajes no conocidos
+                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
                 }
             }
         }
@@ -206,13 +262,13 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Obtenemos los ids de los semáforos en verde
         Set<Integer> greenTrafficLightsIds = this.getGreenTrafficLightsIds();
 
-        // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de coches interesados en ir por cada uno
+        // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno
         Map<String, Map<String, Double>> crossroadStretches = this.getCrossroadStretches(greenTrafficLightsIds);
 
-        // Obtenemos los coches que van a cruzar y hacia qué calle va cada coche
+        // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo
         Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
 
-        //
+        // Movemos los vehículos fuera del sistema de tráfico
         roadStretchesOut.forEach((roadStretchOutName, roadStretchesOutModel) -> {
             if (roadStretchesOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
                 Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue();
@@ -220,6 +276,8 @@ public class CrossroadAgent extends MURATBaseAgent {
                 Integer vehiclesToOutSystem = roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
                 roadStretchesOutModel.setVehicles(roadStretchVehicles - vehiclesToOutSystem);
                 totalVehiclesOut += vehiclesToOutSystem;
+            } else { // Si no es salida del sistema de tráfico
+
             }
         });
 
@@ -240,6 +298,20 @@ public class CrossroadAgent extends MURATBaseAgent {
                 }
             });
         });
+
+        // TODO: Quitar si no se llega a esta fase
+//        // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
+//
+//        // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
+//        // Enviamos vehículos a otros cruces
+//
+//        roadStretchesOutToAnotherCrossroad.entrySet().size()
+//        roadStretchesOutToOutOfSystem.entrySet().size()
+//
+//        // Recibimos vehículos de otros cruces
+//        for (int i = 0; i < roadStretchesInFromAnotherCrossroad.entrySet().size(); i++) {
+//            this.listenMessages();
+//        }
     }
 
     // Obtenemos los ids de los semáforos en verde
@@ -253,7 +325,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         return greenTrafficLightsIds;
     }
 
-    // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de coches interesados en ir por cada uno para un conjunto de semáforos | ()
+    // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno para un conjunto de semáforos | (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
     private Map<String, Map<String, Double>> getCrossroadStretches(Set<Integer> greenTrafficLightsIds) {
         Map<String, Map<String, Double>> crossroadStretches = new HashMap<>(); // (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
         greenTrafficLightsIds.forEach((trafficLightId) -> { // Para cada semáforo en verde
@@ -261,7 +333,7 @@ public class CrossroadAgent extends MURATBaseAgent {
             String originRoadStretchName = trafficLights.get(trafficLightId).getRoadStretchIn(); // Obtenemos la calle que regula, calle origen del cruce asociada al semáforo
             statesTrafficLightsCrossroadStretches.get(currentState).get(trafficLightId).forEach((crossroadStretchName) -> { // Obtenemos el conjunto de cruces que habilita estando en verde
                 String destinationRoadStretchName = getCrossroadStretchDestination(crossroadStretchName); // Obtenemos la calle de destino
-                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de coches interesados a ir a ese destino
+                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de vehículos interesados a ir a ese destino
                 destinationRoadStretch.put(destinationRoadStretchName, carsPercentageFromOriginToDestination); // Añadimos el destino con el porcentaje asociado
             });
             crossroadStretches.put(originRoadStretchName, destinationRoadStretch); // Añadimos el origen con todos los destinos asociados para ese estado y semáforo
@@ -269,7 +341,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         return crossroadStretches;
     }
 
-    // Obtenemos los coches que van a cruzar y hacia qué calle va cada coche | ()
+    // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo | (originRoadStretchName -> destinationRoadStretchName -> vehiclesToDestination)
     private Map<String, Map<String, Integer>> getCrossroadStretchesVehicles(Map<String, Map<String, Double>> crossroadStretches) {
         Map<String, Map<String, Integer>> crossroadStretchesVehicles = new HashMap<>();
         Random random = new Random();
@@ -291,12 +363,12 @@ public class CrossroadAgent extends MURATBaseAgent {
                 Integer upperIntervalValue = 0;
                 for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) { // Para cada calle de destino
                     String destinationRoadStretchName = entry.getKey(); // Calle de destino
-                    Integer currentPercentage = entry.getValue().intValue(); // Porcentaje de coches que van hacia esa calle de destino
+                    Integer currentPercentage = entry.getValue().intValue(); // Porcentaje de vehículo que van hacia esa calle de destino
                     Integer vehiclesToDestination = destinationVehicles.get(destinationRoadStretchName); // Vehículos que por ahora van hacia esa calle de destino
                     lowerIntervalValue += previousPercentage == null ? 1 : previousPercentage;
                     upperIntervalValue += currentPercentage;
                     if (lowerIntervalValue <= randomNum && randomNum <= upperIntervalValue) {
-                        destinationVehicles.put(destinationRoadStretchName, vehiclesToDestination + 1); // Añadimos un coche para que vaya a la calle de destino
+                        destinationVehicles.put(destinationRoadStretchName, vehiclesToDestination + 1); // Añadimos un vehículo para que vaya a la calle de destino
                     }
                     previousPercentage = currentPercentage;
                 }
@@ -306,7 +378,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         return crossroadStretchesVehicles;
     }
 
-    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN
+    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN // TODO: Revisar código repetido, también está en la clase Simulation
     private String getCrossroadStretchOrigin(String crossroadStretchName) {
         return crossroadStretchName.split("-")[0];
     }
@@ -325,8 +397,8 @@ public class CrossroadAgent extends MURATBaseAgent {
 
                 // Comprobamos si la simulación está en alguno de los modos pico y si está en alguna de las horas pico
                 if (this.isOnPeakModeAndInPeakHour()) { // Modificamos la cantidad de vehículos por hora pico
-                    vehiclesPerSecond *= 5.0;
-                    secondsPerVehicle /= 5.0;
+                    vehiclesPerSecond *= CityConfigurationConstant.PEAK_FACTOR;
+                    secondsPerVehicle /= CityConfigurationConstant.PEAK_FACTOR;
                 }
 
                 // Comprobamos si se añaden uno o más vehículos por segundo al tramo de calle
@@ -334,7 +406,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                 // Calculamos la cantidad de vehículos que quieren entrar al tramo de calle:
                     // --> Si el número de vehículos por segundo es mayor o igual a uno se quiere añadir esa cantidad. Se añade en cada tick.
                     // --> Si el número de vehículos por segundo es menor que uno se quiere añadir uno cada N número de segundos. Se añade cada determinados ticks.
-                Integer roadStretchInputVehicles = oneOrMoreVehiclesPerSecond ? vehiclesPerSecond.intValue() : 1; // Cantidad de coches que quieren entrar al tramo de calle
+                Integer roadStretchInputVehicles = oneOrMoreVehiclesPerSecond ? vehiclesPerSecond.intValue() : 1; // Cantidad de vehículos que quieren entrar al tramo de calle
                 // Comprobamos si en este tick hay que añadir vehículos
                 if (this.isTimeToAddTraffic(secondsPerVehicle.intValue())) {
                     this.addVehiclesIfPossible(roadStretchInputVehicles, roadStretchInModel);
@@ -373,6 +445,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         if (!this.isRoadStretchFull(roadStretchInModel)) {
             roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
             totalVehiclesIn += roadStretchIncomingVehicles;
+            for (int i = 0; i < roadStretchIncomingVehicles; i++) {
+                currentVehicles.add(currentTicks);
+            }
         }
     }
 
@@ -417,8 +492,12 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
     }
 
+    private Boolean isNewCycle() {
+        return currentState.equals(1);
+    }
+
     // Evaluamos si la simulación ha llegado a su fin
-    private Boolean isSimulationFinished() {
+    private Boolean hasSimulationFinished() {
         return currentTicks > totalTicks;
     }
 
@@ -480,11 +559,10 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         state += "||";
 
-        this.storeCurrentState();
-
         return state;
     }
 
+    // Almacenamos el estado actual de ocupación de los tramos de calle del cruce
     private void storeCurrentState() {
         Map<String, Double> roadStretchOccupation = new HashMap<>();
         roadStretchesIn.forEach((roadStretchName, roadStretchModel) -> roadStretchOccupation.put(roadStretchName, roadStretchModel.getOccupancyPercentage()));
@@ -493,8 +571,10 @@ public class CrossroadAgent extends MURATBaseAgent {
     }
 
     // Informamos del estado actual del cruce
+    // TODO: Refactor, quitar bulk
     private void reportCurrentState(Boolean isBulk) {
-        if (!isBulk || isSimulationFinished()) {
+        if (!isBulk || hasSimulationFinished()) {
+            // Obtenemos el estado actual de ocupación de los tramos de calle del cruce
             Map<Integer, Map<String, Double>> currentTickRoadStretchOccupation = new HashMap<>();
             currentTickRoadStretchOccupation.put(currentTicks, new HashMap<>(tickRoadStretchOccupation.get(currentTicks)));
             Map<Integer, Map<String, Double>> tickRoadStretchOccupationSingle = currentTickRoadStretchOccupation; // Información de ocupación de calle en el tick actual
@@ -506,8 +586,9 @@ public class CrossroadAgent extends MURATBaseAgent {
             tickRoadStretchOccupationData.forEach((tick, roadStretchOccupation) -> {
                 JsonObject tickInformation = new JsonObject();
                 roadStretchOccupation.forEach((roadStretchName, occupation) -> tickInformation.add(roadStretchName, String.format("%.2f", occupation)));
-                tickInformation.add("vehiclesIn", String.format("%s", totalVehiclesIn));
-                tickInformation.add("vehiclesOut", String.format("%s", totalVehiclesOut));
+                tickInformation.add("vehiclesIn" + this.getLocalName(), String.format("%s", totalVehiclesIn));
+                tickInformation.add("vehiclesOut" + this.getLocalName(), String.format("%s", totalVehiclesOut));
+                tickInformation.add("state" + this.getLocalName(), String.format("%s", currentState));
                 jsonReport.add(tick.toString(), tickInformation);
             });
 
@@ -515,6 +596,160 @@ public class CrossroadAgent extends MURATBaseAgent {
             String report = MessageConstant.REPORT + " " + jsonReport;
             this.sendACLMessage(ACLMessage.INFORM, this.getAID(), new AID(cityName, AID.ISLOCALNAME), report);
         }
+    }
+
+    // Mejoramos los tiempos de los estados
+    private void optimizeStateTimes(Boolean active) {
+        if (active) {
+            // Evaluamos si hay algún tramo de calle de entrada con congestión
+            Map<String, Double> congestedRoadStretchesIn = this.getCongestedRoadStretchesIn();
+            Boolean isCongested = congestedRoadStretchesIn.size() > 0;
+
+            // Si hay congestión en el cruce intentamos optimizar los tiempos de los estados para resolverla
+            if (isCongested) {
+                // Analizamos si existe algún estado del cruce que beneficie la salida de tráfico de los tramos de calle
+                    // --> Estado del cruce que habilite tramos de cruce cuyos tramos de calle de origen sean el mayor número de entre los congestionados
+
+                Map<Integer, Map<String, Double>> stateRoadStretchCongestionScore = new HashMap<>(); // | (stateId -> roadStretchOrigin -> congestionScore)
+                statesCrossroadStretches.forEach((stateId, roadStretches) -> {
+                    Map<String, Double> roadStretchCongestionScore = new HashMap<>();
+                    for (Map.Entry<String, Set<String>> entry : roadStretches.entrySet()) {
+                        String roadStretchOrigin = entry.getKey();
+                        if (congestedRoadStretchesIn.containsKey(roadStretchOrigin)) {
+                            roadStretchCongestionScore.put(roadStretchOrigin, congestedRoadStretchesIn.get(roadStretchOrigin));
+                        }
+                    }
+                    stateRoadStretchCongestionScore.put(stateId, roadStretchCongestionScore);
+                });
+
+                List<Integer> bestStateCandidates = new ArrayList<>();
+                List<Integer> worstStateCandidates = new ArrayList<>();
+                Integer roadStretchesMaxNumber = 0;
+                Integer roadStretchesMinNumber = congestedRoadStretchesIn.size() + 1;
+                for (Map.Entry<Integer, Map<String, Double>> entry : stateRoadStretchCongestionScore.entrySet()) {
+                    Integer stateId = entry.getKey(); // (stateId)
+                    Map<String, Double> roadStretchCongestionScore = entry.getValue(); // (roadStretchOrigin -> congestionScore)
+                    Integer roadStretchesNumber = roadStretchCongestionScore.size();
+                    // Obtenemos los candidatos a ser el mejor estado
+                    if (roadStretchesMaxNumber < roadStretchesNumber) {
+                        bestStateCandidates.clear();
+                        bestStateCandidates.add(stateId);
+                        roadStretchesMaxNumber = roadStretchesNumber;
+                    } else if (roadStretchesMaxNumber.equals(roadStretchesNumber)) {
+                        bestStateCandidates.add(stateId);
+                    }
+                    // Obtenemos los candidatos a ser el peor estado
+                    if (roadStretchesMinNumber > roadStretchesNumber) {
+                        worstStateCandidates.clear();
+                        worstStateCandidates.add(stateId);
+                        roadStretchesMinNumber = roadStretchesNumber;
+                    }
+                    else if (roadStretchesMinNumber.equals(roadStretchesNumber)) {
+                        worstStateCandidates.add(stateId);
+                    }
+                }
+
+                Integer bestState = -1;
+                Integer worstState = -1;
+                if (bestStateCandidates.size() == 1) { // Si solo hay un candidato, ese es el mejor estado
+                    bestState = bestStateCandidates.get(0);
+                } else { // Si hay varios candidatos, hay que elegir el mejor (el estado que habilite tramos de cruce tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la mayor)
+                    Double bestStateScore = Double.NEGATIVE_INFINITY;
+                    for (Integer bestStateCandidate : bestStateCandidates) {
+                        // Comprobar si es posible el incremento de tiempo del estado candidato
+                        // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es menor o igual que el máximo, pasar a valorar las puntuaciones
+                        // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es mayor que el máximo, pasar al siguiente candidato a mejor estado
+                        if (this.isPossibleToIncreaseStateTime(bestStateCandidate)) {
+                            Double currentScore = 0.0;
+                            for (Map.Entry<String, Double> entry : stateRoadStretchCongestionScore.get(bestStateCandidate).entrySet()) {
+                                Double congestionScore = entry.getValue();
+                                currentScore += congestionScore;
+                            }
+                            if (bestStateScore < currentScore) {
+                                bestState = bestStateCandidate;
+                                bestStateScore = currentScore;
+                            }
+                        }
+                    }
+                }
+
+                if (worstStateCandidates.size() == 1) { // Si solo hay un candidato, ese es el peor estado
+                    worstState = worstStateCandidates.get(0);
+                } else { // Si hay varios candidatos, hay que elegir el peor (el estado que habilite menos tramos de cruce o habilitándolos tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la menor)
+                    Double worstStateScore = Double.POSITIVE_INFINITY;
+                    for (Integer worstStateCandidate : worstStateCandidates) {
+                        // Comprobar si es posible la disminución de tiempo del estado candidato
+                            // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es mayor o igual que el mínimo, pasar a valorar las puntuaciones
+                            // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es menor que el mínimo, pasar al siguiente candidato a peor estado
+                        if(this.isPossibleToReduceStateTime(worstStateCandidate)) {
+                            Double currentScore = 0.0;
+                            for (Map.Entry<String, Double> entry : stateRoadStretchCongestionScore.get(worstStateCandidate).entrySet()) {
+                                Double congestionScore = entry.getValue();
+                                currentScore += congestionScore;
+                            }
+                            if (worstStateScore > currentScore) {
+                                worstState = worstStateCandidate;
+                                worstStateScore = currentScore;
+                            }
+                        }
+                    }
+                }
+
+                // Ajustamos los tiempos
+                updateStateTimes = this.adjustStateTimes(bestState, worstState);
+            }
+        }
+    }
+
+    private Map<String, Double> getCongestedRoadStretchesIn() {
+        Map<String, Double> congestedRoadStretchesIn = new HashMap<>();
+        final Double SATURATION_POINT = 60.0;
+        final Double VEHICLE_WEIGHT = 0.32;
+        final Double OCCUPATION_WEIGHT = 0.68;
+        roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
+            if (roadStretchInModel.getOccupancyPercentage() > SATURATION_POINT) {
+                Integer vehicles = roadStretchInModel.getVehicles();
+                Double occupancyPercentage = roadStretchInModel.getOccupancyPercentage();
+                Double congestionScore = VEHICLE_WEIGHT * vehicles + OCCUPATION_WEIGHT * occupancyPercentage;
+                congestedRoadStretchesIn.put(roadStretchInName, congestionScore);
+            }
+        });
+        return congestedRoadStretchesIn;
+    }
+
+    private Boolean adjustStateTimes(Integer bestState, Integer worstState) {
+        Boolean adjustedStateTimes = false;
+        if (bestState != -1 && worstState != -1) {
+            futureStates = new HashMap<>();
+            states.forEach((stateId, stateModel) -> {
+                Integer futureDuration;
+                if (bestState.equals(stateId)) {
+                    futureDuration = stateModel.getDurationTime() + CrossroadConstant.STATE_TIME_VARIATION;
+                } else if (worstState.equals(stateId)) {
+                    futureDuration = stateModel.getDurationTime() - CrossroadConstant.STATE_TIME_VARIATION;
+                } else {
+                    futureDuration = stateModel.getDurationTime();
+                }
+                StateModel futureStateModel = new StateModel(stateId, stateModel.getName(), futureDuration);
+                futureStates.put(stateId, futureStateModel);
+            });
+            adjustedStateTimes = true;
+        }
+        return adjustedStateTimes;
+    }
+
+    private Boolean isPossibleToIncreaseStateTime(Integer stateId) { // TODO: Pensar si quitar o añadir limitación
+        Integer currentStateTime = states.get(stateId).getDurationTime();
+        Integer futureStateTime = currentStateTime + CrossroadConstant.STATE_TIME_VARIATION;
+        Integer maxStateTime;
+        return true;
+    }
+
+    private Boolean isPossibleToReduceStateTime(Integer stateId) {
+        Integer currentStateTime = states.get(stateId).getDurationTime();
+        Integer futureStateTime = currentStateTime - CrossroadConstant.STATE_TIME_VARIATION;
+        Integer minStateTime = crossroadModel.getMinimumStateTime();
+        return futureStateTime >= minStateTime;
     }
     //**************************************************//
 }

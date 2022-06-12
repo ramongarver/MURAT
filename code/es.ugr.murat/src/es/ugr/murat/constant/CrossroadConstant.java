@@ -15,4 +15,6 @@ public class CrossroadConstant {
     public static final int CONTROL_TRAFFIC = 3;
     public static final int FINALIZE_TRAFFIC_LIGHTS = 4;
 
+    public static final int STATE_TIME_VARIATION = 10;
+
 }

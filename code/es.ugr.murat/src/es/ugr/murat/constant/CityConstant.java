@@ -18,5 +18,6 @@ public class CityConstant {
     public static final String TIME = "Time";
     public static final String VEHICLES_IN = "VehiclesIn";
     public static final String VEHICLES_OUT = "VehiclesOut";
+    public static final String STATE = "State";
 
 }
