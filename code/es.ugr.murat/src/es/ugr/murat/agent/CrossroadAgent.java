@@ -1,6 +1,9 @@
 package es.ugr.murat.agent;
 
+import com.eclipsesource.json.Json;
+import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 import es.ugr.murat.constant.ActionConstant;
 import es.ugr.murat.constant.CityConfigurationConstant;
 import es.ugr.murat.constant.CommonConstant;
@@ -16,6 +19,7 @@ import es.ugr.murat.simulation.Simulation;
 import es.ugr.murat.util.Logger;
 import jade.core.AID;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -53,6 +57,8 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Map<String, RoadStretchModel> roadStretchesOut; // Tramos de calle que salen del cruce | (roadStretchOutName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOutToOutOfSystem; // Tramos de calle que salen del cruce hacia fuera del sistema | (roadStretchOutName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOutToAnotherCrossroad; // Tramos de calle que salen del cruce hacia otro cruce | (roadStretchOutName -> roadStretchModel)
+    private List<Integer> crossroadsIn; // Cruces que tienen tramos de calle de salida que entran a este cruce
+    private List<Integer> crossroadsOut; // Cruces que tienen tramos de calle de entrada que salen de este cruce
     private Map<String, CrossroadStretchModel> crossroadsStretches; // Tramos de cruce | (name -> crossroadStretchModel)
     private Map<Integer, Map<String, Set<String>>> statesCrossroadStretches; // Tramos de cruce abiertos en cada estado | (stateId -> crossroadStretchOrigin -> crossroadStretchDestination)
     private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
@@ -68,10 +74,13 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; //  (tick -> roadStretchName -> occupation)
 
     // Contadores de vehículos
-    private Map<String, Queue<Integer>> currentVehicles; // Número total de vehículos que hay en el cruce (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido) | (roadStretchName -> Cola)
+    private Map<String, Queue<Integer>> currentVehicles; // Número total de vehículos que hay en cada tramo de calle (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido) | (roadStretchName -> Cola)
     private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
+    private Integer totalVehiclesInFromOutOfSystem; // Número total de vehículos que han entrado en el cruce desde fuera del sistema
+    private Integer totalVehiclesInFromAnotherCrossroad; //  Número total de vehículos que han entrado en el cruce desde otro cruce
     private Integer totalVehiclesOut; // Número total de vehículos que han salido del cruce
     private Integer totalVehiclesOutOfSystem; // Número total de vehículos que han salido del sistema por el cruce
+    private Integer totalVehiclesOutToAnotherCrossroad; // Número total de vehículos que han salido del cruce hacia otro cruce
     private Map<Integer, Integer> totalVehiclesOutOfSystemPerTick; // Número total de vehículos que han salido del sistema por el cruce por tick | (tick -> vehicles)
 
 
@@ -96,6 +105,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesOut = null;
         roadStretchesOutToOutOfSystem = null;
         roadStretchesOutToAnotherCrossroad = null;
+        crossroadsIn = new ArrayList<>();
+        crossroadsOut = new ArrayList<>();
         crossroadsStretches = null;
         statesCrossroadStretches = null;
         statesTrafficLightsCrossroadStretches = null;
@@ -109,8 +120,11 @@ public class CrossroadAgent extends MURATBaseAgent {
         tickRoadStretchOccupation = new HashMap<>();
         currentVehicles = null;
         totalVehiclesIn = 0;
+        totalVehiclesInFromOutOfSystem = 0;
+        totalVehiclesInFromAnotherCrossroad = 0;
         totalVehiclesOut = 0;
         totalVehiclesOutOfSystem = 0;
+        totalVehiclesOutToAnotherCrossroad = 0;
         totalVehiclesOutOfSystemPerTick = new HashMap<>();
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
@@ -159,6 +173,10 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesOutToOutOfSystem = Simulation.simulation.getCrossroadRoadStretchesOutToOutOfSystem(crossroadId);
                 // Tramos de calle de salida desde el cruce hacia otro cruce
         roadStretchesOutToAnotherCrossroad = Simulation.simulation.getCrossroadRoadStretchesOutToAnotherCrossroad(crossroadId);
+            // Obtenemos los cruces que tienen tramos de calle de salida que entran a este cruce
+        crossroadsIn = Simulation.simulation.getCrossroadCrossroadsIn(crossroadId);
+            // Obtenemos los cruces que tienen tramos de calle de entrada que salen de este cruce
+        crossroadsOut = Simulation.simulation.getCrossroadCrossroadsOut(crossroadId);
             // Obtenemos los tramos de cruce del cruce
         crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos en cada estado
@@ -187,6 +205,15 @@ public class CrossroadAgent extends MURATBaseAgent {
                 this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
                         new AID(TrafficLightConstant.AGENT_NAME + trafficLightId, AID.ISLOCALNAME),
                         TrafficLightConstant.RED.equals(color) ? MessageConstant.SET_LIGHT_TO_RED : MessageConstant.SET_LIGHT_TO_GREEN));
+        // Recibimos mensajes de información de los semáforos establecidos
+        MessageTemplate messageTemplate1 = MessageTemplate.MatchContent(MessageConstant.CHANGE_LIGHT);
+        MessageTemplate messageTemplate2 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_RED);
+        MessageTemplate messageTemplate3 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_GREEN);
+        MessageTemplate messageTemplateOr = MessageTemplate.or(messageTemplate1, messageTemplate2);
+        MessageTemplate messageTemplate = MessageTemplate.or(messageTemplateOr, messageTemplate3);
+        for (int i = 0; i < trafficLights.size(); i++) {
+            this.listenMessages(messageTemplate);
+        }
         currentState = initialState;
         status = CrossroadConstant.CONTROL_TRAFFIC;
     }
@@ -200,7 +227,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         this.storeCurrentState();
 
         // Informamos del estado actual del cruce
-        this.reportCurrentState(false);
+        this.reportCurrentState();
 
         // Comprobamos si ha finalizado la simulación
         if (this.hasSimulationFinished()) {
@@ -278,20 +305,44 @@ public class CrossroadAgent extends MURATBaseAgent {
 
     // Escuchamos mensajes
     private void listenMessages() {
-        this.receiveACLMessage();
+        this.listenMessages(null);
+    }
+
+    private void listenMessages(MessageTemplate messageTemplate) {
+        if (messageTemplate != null) {
+            this.receiveACLMessage(messageTemplate);
+        } else {
+            this.receiveACLMessage();
+        }
         switch (incomingMessage.getPerformative()) {
             case ACLMessage.INFORM -> { // Si la performativa es INFORM
-
+                // Comprobamos si están enviando vehículos al agente
+                if (incomingMessage.getContent().startsWith(MessageConstant.RECEIVED_ALL_TICK_REPORTS)) {
+                    System.out.println(this.getLocalName() + "::RECEIVED_REPORTS");// TODO: Logger
+                }
             }
             case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
                 // Finalizamos el agente
                 if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
+                } else if (incomingMessage.getContent().startsWith(MessageConstant.TRANSFERRED_VEHICLES)) {
+                    String transferredVehiclesMessage = incomingMessage.getContent().replace(MessageConstant.TRANSFERRED_VEHICLES + " ", "");
+                    String roadStretchName = transferredVehiclesMessage.split(" ")[0];
+                    String transferredVehicles = transferredVehiclesMessage.split(" ")[1];
+                    this.processVehiclesReceivedFromAnotherCrossroad(roadStretchName, transferredVehicles);
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), incomingMessage.getContent());
                 } else { // Manejamos mensajes no conocidos
                     Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
                 }
             }
         }
+    }
+
+    private Integer getVehiclesToOut(RoadStretchModel roadStretchesOutModel) {
+        String roadStretchName = roadStretchesOutModel.getName();
+        Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue();
+        Integer roadStretchVehicles = currentVehicles.get(roadStretchName).size();
+        return roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
     }
 
     // Hacemos que el tráfico avance
@@ -305,26 +356,49 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo
         Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
 
-        // Movemos los vehículos fuera del sistema de tráfico
-        roadStretchesOut.forEach((roadStretchOutName, roadStretchesOutModel) -> {
-            if (roadStretchesOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
-                Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue();
-                Integer roadStretchVehicles = roadStretchesOutModel.getVehicles();
-                Integer vehiclesToOutSystem = roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
-                roadStretchesOutModel.setVehicles(roadStretchVehicles - vehiclesToOutSystem);
-                totalVehiclesOut += vehiclesToOutSystem;
-                totalVehiclesOutOfSystem += vehiclesToOutSystem;
-                for(int i = 0; i < vehiclesToOutSystem; i++) {
+        // Movemos los vehículos fuera del sistema de tráfico o a otros cruces
+        for (Map.Entry<String, RoadStretchModel> roadStretchOut : roadStretchesOut.entrySet()) {
+            String roadStretchOutName = roadStretchOut.getKey();
+            RoadStretchModel roadStretchOutModel = roadStretchOut.getValue();
+            Integer roadStretchVehicles = currentVehicles.get(roadStretchOutName).size(); // TODO: Explicar porqué
+            Integer vehiclesOut = this.getVehiclesToOut(roadStretchOutModel);
+            roadStretchOutModel.setVehicles(roadStretchVehicles - vehiclesOut);
+            totalVehiclesOut += vehiclesOut;
+            if (roadStretchOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
+                totalVehiclesOutOfSystem += vehiclesOut;
+                for (int i = 0; i < vehiclesOut; i++) {
                     Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
                     Integer ticksToExit = currentTicks - inputTick;
                     totalTicksToExit += ticksToExit;
                 }
-            } else { // Si no es salida del sistema de tráfico
+            } else { // Si no es salida del sistema de tráfico | Enviamos vehículos a otros cruces
+                totalVehiclesOutToAnotherCrossroad += vehiclesOut;
+                JsonObject vehiclesTicksJsonObject = new JsonObject();
+                JsonArray jsonArray = new JsonArray();
+                for (int i = 0; i < vehiclesOut; i++) {
+                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
+                    jsonArray.add(inputTick);
+//                    Integer ticksToExit = currentTicks - inputTick; TODO: revisar
+//                    totalTicksToExit += ticksToExit;
+                }
+                vehiclesTicksJsonObject.add("vehicles", jsonArray);
+                String vehiclesTicks = vehiclesTicksJsonObject.toString();
 
+                String transferredVehicles = MessageConstant.TRANSFERRED_VEHICLES + " " + roadStretchOutName + " " + vehiclesTicks;
+                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(), new AID(CrossroadConstant.AGENT_NAME + roadStretchOutModel.getCrossroadDestinationId(), AID.ISLOCALNAME), transferredVehicles);
+                MessageTemplate messageTemplate = MessageTemplate.MatchContent(transferredVehicles);
+                this.listenMessages(messageTemplate);
+                // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
+                // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
             }
-        });
+        }
 
-        // Movemos los vehículos
+        // Recibimos vehículos de otros cruces
+        for (int i = 0; i < roadStretchesInFromAnotherCrossroad.entrySet().size(); i++) {
+            this.listenMessages();
+        }
+
+        // Movemos los vehículos haciendo que crucen por un tramo de cruce
         crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
             roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
                 if (vehicles > 0) {
@@ -339,26 +413,9 @@ public class CrossroadAgent extends MURATBaseAgent {
                     for (int i = 0; i < vehiclesToDestination; i++) {
                         currentVehicles.get(roadStretchDestinationName).add(currentVehicles.get(roadStretchOriginName).remove());
                     }
-                    if (roadStretchesOut.get(roadStretchDestinationName).getCrossroadDestinationId() != null) { // Si no es salida del sistema de tráfico
-                        totalVehiclesOut += vehiclesToDestination;
-                    }
                 }
             });
         });
-
-        // TODO: Quitar si no se llega a esta fase
-//        // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
-//
-//        // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
-//        // Enviamos vehículos a otros cruces
-//
-//        roadStretchesOutToAnotherCrossroad.entrySet().size()
-//        roadStretchesOutToOutOfSystem.entrySet().size()
-//
-//        // Recibimos vehículos de otros cruces
-//        for (int i = 0; i < roadStretchesInFromAnotherCrossroad.entrySet().size(); i++) {
-//            this.listenMessages();
-//        }
     }
 
     // Obtenemos los ids de los semáforos en verde
@@ -492,6 +549,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         if (!this.isRoadStretchFull(roadStretchInModel)) {
             roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
             totalVehiclesIn += roadStretchIncomingVehicles;
+            totalVehiclesInFromOutOfSystem += roadStretchIncomingVehicles;
             for (int i = 0; i < roadStretchIncomingVehicles; i++) {
                 currentVehicles.get(roadStretchInModel.getName()).add(currentTicks);
             }
@@ -619,35 +677,44 @@ public class CrossroadAgent extends MURATBaseAgent {
     }
 
     // Informamos del estado actual del cruce
-    // TODO: Refactor, quitar bulk
-    private void reportCurrentState(Boolean isBulk) {
-        if (!isBulk || hasSimulationFinished()) {
-            // Obtenemos el estado actual de ocupación de los tramos de calle del cruce
-            Map<Integer, Map<String, Double>> currentTickRoadStretchOccupation = new HashMap<>();
-            currentTickRoadStretchOccupation.put(currentTicks, new HashMap<>(tickRoadStretchOccupation.get(currentTicks)));
-            Map<Integer, Map<String, Double>> tickRoadStretchOccupationSingle = currentTickRoadStretchOccupation; // Información de ocupación de calle en el tick actual
-            Map<Integer, Map<String, Double>> tickRoadStretchOccupationBulk = tickRoadStretchOccupation; // Información de ocupación de calles en todos los ticks de la simulación
-            Map<Integer, Map<String, Double>> tickRoadStretchOccupationData = isBulk ? tickRoadStretchOccupationBulk : tickRoadStretchOccupationSingle;
+    // TODO: Refactor: quitad bulk, adaptar a un único tick
+    private void reportCurrentState() {
+        // Obtenemos el estado actual de ocupación de los tramos de calle del cruce
+        Map<Integer, Map<String, Double>> currentTickRoadStretchOccupation = new HashMap<>();
+        currentTickRoadStretchOccupation.put(currentTicks, new HashMap<>(tickRoadStretchOccupation.get(currentTicks)));
 
-            // Construimos el objeto JSON con la información
-            JsonObject jsonReport = new JsonObject();
-            tickRoadStretchOccupationData.forEach((tick, roadStretchOccupation) -> {
-                JsonObject tickInformation = new JsonObject();
-                roadStretchOccupation.forEach((roadStretchName, occupation) -> tickInformation.add(roadStretchName, String.format("%.2f", occupation)));
-                tickInformation.add(CommonConstant.VEHICLES_TOTAL + this.getLocalName(), String.format("%s", this.calculateTotalVehicles()));
-                tickInformation.add(CommonConstant.VEHICLES_IN + this.getLocalName(), String.format("%s", totalVehiclesIn));
-                tickInformation.add(CommonConstant.VEHICLES_OUT + this.getLocalName(), String.format("%s", totalVehiclesOut));
-                tickInformation.add(CommonConstant.VEHICLES_OUT_OF_SYSTEM + this.getLocalName(), String.format("%s", totalVehiclesOutOfSystem));
-                tickInformation.add(CommonConstant.AVERAGE_TICKS_TO_LEAVE + this.getLocalName(), String.format("%s", totalVehiclesOutOfSystem == 0 ? 0 : totalTicksToExit / totalVehiclesOutOfSystem));
-                tickInformation.add(CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE + this.getLocalName(), String.format("%s", this.calculateCurrentTicksToLeave(tick)));
-                tickInformation.add(CommonConstant.STATE + this.getLocalName(), String.format("%s", currentState));
-                jsonReport.add(tick.toString(), tickInformation);
-            });
+        // Construimos el objeto JSON con los datos de la simulación
+        JsonObject reportJsonObject = new JsonObject();
+        currentTickRoadStretchOccupation.forEach((tick, roadStretchesOccupation) -> {
+            JsonObject tickDataJsonObject = new JsonObject();
+            // Añadimos información sobre la ocupación de cada uno de los tramos de calle
+            roadStretchesOccupation.forEach((roadStretchName, occupation) -> tickDataJsonObject.add(roadStretchName, String.format("%.2f", occupation)));
+            // Añadimos información del total de vehículos en el cruce
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_TOTAL), String.format("%s", this.calculateTotalVehicles()));
+            // Añadimos información de los vehículos que han entrado en el cruce
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_IN), String.format("%s", totalVehiclesIn));
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM), String.format("%s", totalVehiclesInFromOutOfSystem));
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_IN_FROM_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesInFromAnotherCrossroad));
+            // Añadimos información de los vehículos que han salido del cruce
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT), String.format("%s", totalVehiclesOut));
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_OF_SYSTEM), String.format("%s", totalVehiclesOutOfSystem));
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesOutToAnotherCrossroad));
+            // TODO: añadir comentario
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.AVERAGE_TICKS_TO_LEAVE), String.format("%s", totalVehiclesOutOfSystem == 0 ? 0 : totalTicksToExit / totalVehiclesOutOfSystem));
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE), String.format("%s", this.calculateCurrentTicksToLeave(tick)));
+            // Añadimos información del estado del cruce
+            tickDataJsonObject.add(this.getColumnName(CommonConstant.STATE), String.format("%s", currentState));
 
-            // Enviamos el mensaje al agente ciudad
-            String report = MessageConstant.REPORT + " " + jsonReport;
-            this.sendACLMessage(ACLMessage.INFORM, this.getAID(), new AID(cityName, AID.ISLOCALNAME), report);
-        }
+            reportJsonObject.add(tick.toString(), tickDataJsonObject);
+        });
+
+        // Enviamos el mensaje al agente ciudad
+        String report = MessageConstant.REPORT + " " + reportJsonObject;
+        this.sendACLMessage(ACLMessage.INFORM, this.getAID(), new AID(cityName, AID.ISLOCALNAME), report);
+
+        // Esperamos el mensaje del agente ciudad (sincronización entre cruces)
+        MessageTemplate messageTemplate = MessageTemplate.MatchContent(MessageConstant.RECEIVED_ALL_TICK_REPORTS);
+        this.blockingReceive(messageTemplate);
     }
 
     // Mejoramos los tiempos de los estados
@@ -665,8 +732,8 @@ public class CrossroadAgent extends MURATBaseAgent {
                 Map<Integer, Map<String, Double>> stateRoadStretchCongestionScore = new HashMap<>(); // | (stateId -> roadStretchOrigin -> congestionScore)
                 statesCrossroadStretches.forEach((stateId, roadStretches) -> {
                     Map<String, Double> roadStretchCongestionScore = new HashMap<>();
-                    for (Map.Entry<String, Set<String>> entry : roadStretches.entrySet()) {
-                        String roadStretchOrigin = entry.getKey();
+                    for (Map.Entry<String, Set<String>> roadStretch : roadStretches.entrySet()) {
+                        String roadStretchOrigin = roadStretch.getKey();
                         if (congestedRoadStretchesIn.containsKey(roadStretchOrigin)) {
                             roadStretchCongestionScore.put(roadStretchOrigin, congestedRoadStretchesIn.get(roadStretchOrigin));
                         }
@@ -833,6 +900,27 @@ public class CrossroadAgent extends MURATBaseAgent {
 
     private Map<Integer, StateModel> initializeInitialStates() {
         return this.copyStates(states);
+    }
+
+    private void processVehiclesReceivedFromAnotherCrossroad(String roadStretchName, String transferredVehicles) {
+        JsonObject transferredVehiclesJsonObject = Json.parse(transferredVehicles).asObject();
+        JsonArray transferredVehiclesJsonArray = transferredVehiclesJsonObject.get("vehicles").asArray();
+        Integer numberOfTransferredVehicles = 0;
+        for(JsonValue transferredVehicleJsonValue : transferredVehiclesJsonArray) {
+            Integer vehicleTick = transferredVehicleJsonValue.asInt();
+            currentVehicles.get(roadStretchName).add(vehicleTick);
+            numberOfTransferredVehicles++;
+        }
+        RoadStretchModel roadStretchModel = roadStretchesIn.get(roadStretchName);
+        Integer previousNumberOfVehicles = roadStretchModel.getVehicles();
+        Integer numberOfVehicles = previousNumberOfVehicles + numberOfTransferredVehicles;
+        roadStretchModel.setVehicles(numberOfVehicles);
+        totalVehiclesIn += numberOfTransferredVehicles;
+        totalVehiclesInFromAnotherCrossroad += numberOfTransferredVehicles;
+    }
+
+    private String getColumnName(String name) {
+        return this.getLocalName() + name;
     }
     //**************************************************//
 }

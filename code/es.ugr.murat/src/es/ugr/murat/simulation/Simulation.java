@@ -408,6 +408,30 @@ public class Simulation {
         });
         return roadStretchesOutToAnotherCrossroad;
     }
+    // Obtenemos los cruces que tienen tramos de calle de salida que entran a este cruce
+    public List<Integer> getCrossroadCrossroadsIn(Integer crossroadId) {
+        List<Integer> crossroadsIn = new ArrayList<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOrigin = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestination = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadId.equals(crossroadDestination) && crossroadOrigin != null) {
+                crossroadsIn.add(crossroadOrigin);
+            }
+        });
+        return crossroadsIn;
+    }
+    // Obtenemos los cruces que tienen tramos de calle de entrada que salen de este cruce
+    public List<Integer> getCrossroadCrossroadsOut(Integer crossroadId) {
+        List<Integer> crossroadsOut = new ArrayList<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOrigin = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestination = roadStretchModel.getCrossroadDestinationId();
+            if (crossroadId.equals(crossroadOrigin) && crossroadDestination != null) {
+                crossroadsOut.add(crossroadDestination);
+            }
+        });
+        return crossroadsOut;
+    }
     // Obtenemos los tramos de cruce del cruce identificado por crossroadId | (crossroadStretchName -> crossroadStretchModel)
     public Map<String, CrossroadStretchModel> getCrossroadCrossroadsStretches(Integer crossroadId) {
         return crossroadsStretches.get(crossroadId);

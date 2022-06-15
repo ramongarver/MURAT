@@ -12,12 +12,19 @@ public class CommonConstant {
     public static final String AGENT_NAME_TRAFFIC_LIGHT = "TL";
 
     public static final String TIME = "Time";
+
     public static final String VEHICLES_TOTAL = "VehiclesTotal";
+
     public static final String VEHICLES_IN = "VehiclesIn";
+    public static final String VEHICLES_IN_FROM_OUT_OF_SYSTEM = "VehiclesInFromOutOfSystem";
+    public static final String VEHICLES_IN_FROM_ANOTHER_CROSSROAD = "VehiclesInFromAnotherCrossroad";
+
     public static final String VEHICLES_OUT = "VehiclesOut";
     public static final String VEHICLES_OUT_OF_SYSTEM = "VehiclesOutOfSystem";
+    public static final String VEHICLES_OUT_TO_ANOTHER_CROSSROAD = "VehiclesOutToAnotherCrossroad";
+
     public static final String AVERAGE_TICKS_TO_LEAVE = "AverageTicksToLeave";
     public static final String AVERAGE_CURRENT_TICKS_TO_LEAVE = "AverageCurrentTicksToLeave";
-    public static final String STATE = "State";
 
+    public static final String STATE = "State";
 }

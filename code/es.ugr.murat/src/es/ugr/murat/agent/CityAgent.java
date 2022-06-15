@@ -45,6 +45,12 @@ public class CityAgent extends MURATBaseAgent {
     private Map<String, Integer> crossroadsTicks; // Número de ticks que ha realizado cada cruce | (crossroadName -> ticks)
     private Map<Integer, Map<String, Double>> simulationInfoByTick; // Información de la simulación para cada tick | (tick -> columnName -> value)
 
+    private Map<Integer, Map<String, Boolean>> receivedReports; // Información de la recepción de informes de los cruces en cada tick (tick -> crossroadName -> received);
+
+    private Double totalVehiclesIn; // Número total de vehículos que han entrado en la simulación
+    private Double totalVehiclesOut; // Número total de vehículos que han salido de la simulación
+
+
     //*************** Ciclo de vida del agente ***************//
     @Override
     protected void setup() {
@@ -58,6 +64,9 @@ public class CityAgent extends MURATBaseAgent {
         totalTicks = null;
         crossroadsTicks = new HashMap<>();
         simulationInfoByTick = new HashMap<>();
+        receivedReports = new HashMap<>();
+        totalVehiclesIn = 0.0;
+        totalVehiclesOut = 0.0;
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
 
@@ -91,6 +100,8 @@ public class CityAgent extends MURATBaseAgent {
         totalTicks = Simulation.simulation.getSimulationSeconds();
             // Inicializamos la estructura que va a contener el estado de la simulación en cada tick
         this.initializeTickRoadStretchOccupationTicks();
+            // Inicializamos la estructura que va a contener la información sobre la recepción de reports
+        this.initializeReceivedReports();
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
         status = CityConstant.WAIT_CROSSROADS_REPORTS;
     }
@@ -138,9 +149,30 @@ public class CityAgent extends MURATBaseAgent {
                         crossroadsTicks.put(crossroadName, currentTick);
 
                         // Para el tick actual actualizamos los parámetros del registro con los valores del estado actual
-                        tick.getValue().asObject().forEach((columnName) -> {
-                            simulationInfoByTick.get(currentTick).put(columnName.getName(), Double.parseDouble(columnName.getValue().asString().replace(",", ".")));
+                        tick.getValue().asObject().forEach((columnNameJsonObject) -> {
+                            String columnName = columnNameJsonObject.getName();
+                            Double value = Double.parseDouble(columnNameJsonObject.getValue().asString().replace(",", "."));
+                            simulationInfoByTick.get(currentTick).put(columnName, value);
+                            //TODO: Añadir this.updateVehiclesInOut();
+                            if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM))) {
+                                Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM));
+                                totalVehiclesIn += value - previousValue;
+                            }
+                            if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM))) {
+                                Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM));
+                                totalVehiclesOut += value - previousValue;
+                            }
                         });
+                        simulationInfoByTick.get(currentTick).put(CommonConstant.VEHICLES_IN, totalVehiclesIn);
+                        simulationInfoByTick.get(currentTick).put(CommonConstant.VEHICLES_OUT, totalVehiclesOut);
+
+                        // Etiquetamos el report como recibido para el tick actual y el cruce remitente del mismo
+                        receivedReports.get(currentTick).put(crossroadName, true);
+
+                        // Comprobamos si se han recibido todos los informes y avisamos a los cruces de que pueden continuar
+                        if(this.receivedAllTickReports(currentTick)) {
+                            this.notifyCrossroads();
+                        }
 
                         // Comprobamos si ha finalizado la simulación
                         if (this.hasSimulationFinished()) {
@@ -172,10 +204,13 @@ public class CityAgent extends MURATBaseAgent {
             simulationInfoByTick.forEach((tick, columnNames) -> {
                 if (tick % sampleTime == 0) {
                     List<String> record = new ArrayList<>();
-                    LocalTime time = initialTime.plusSeconds(tick);
-                    record.add(time.format(DateTimeFormatter.ISO_LOCAL_TIME));
-                    columnNames.forEach((columnName, occupation) -> {
-                        record.add(occupation.toString().replace(".", ","));
+                    headers.forEach((columnName) -> {
+                        if (columnName.equals(headers.get(0))) {
+                            LocalTime time = initialTime.plusSeconds(tick);
+                            record.add(time.format(DateTimeFormatter.ISO_LOCAL_TIME));
+                        } else {
+                            record.add(columnNames.get(columnName).toString().replace(".", ","));
+                        }
                     });
                     try {
                         printer.printRecord(record);
@@ -241,6 +276,19 @@ public class CityAgent extends MURATBaseAgent {
         }
     }
 
+    // Inicializamos la estructura que va a contener la información sobre la recepción de reports
+    private void initializeReceivedReports() {
+        // Inicializamos la estructura para cada tick de la simulación
+        for (int i = 0; i <= totalTicks + 1; i++) {
+            // Creamos el mapa con todos los parámetros que vamos a almacenar
+            Map<String, Boolean> receivedReport = new HashMap<>();
+            crossroadsNames.forEach((crossroadName) -> {
+                receivedReport.put(crossroadName, false);
+            });
+            receivedReports.put(i, receivedReport);
+        }
+    }
+
     private FileWriter createFileWriter() throws IOException {
         // Obtenemos la fecha y hora actual y la formateamos para utilizarla en el nombre del archivo
         String currentDateTimeFormatted = this.getCurrentDateTimeFormatted();
@@ -264,18 +312,19 @@ public class CityAgent extends MURATBaseAgent {
         headers.addAll(roadStretchesNames);
         headers.add(CommonConstant.VEHICLES_IN);
         headers.add(CommonConstant.VEHICLES_OUT);
-        for (Map.Entry<Integer, CrossroadModel> entry : crossroads.entrySet()) {
-            CrossroadModel crossroadModel = entry.getValue();
-            headers.add(CommonConstant.VEHICLES_TOTAL + crossroadModel.getName());
-            headers.add(CommonConstant.VEHICLES_IN + crossroadModel.getName());
-            headers.add(CommonConstant.VEHICLES_OUT + crossroadModel.getName());
-            headers.add(CommonConstant.VEHICLES_OUT_OF_SYSTEM + crossroadModel.getName());
-            headers.add(CommonConstant.AVERAGE_TICKS_TO_LEAVE + crossroadModel.getName());
-            headers.add(CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE + crossroadModel.getName());
-        }
-        for (Map.Entry<Integer, CrossroadModel> entry : crossroads.entrySet()) {
-            CrossroadModel crossroadModel = entry.getValue();
-            headers.add(CommonConstant.STATE + crossroadModel.getName());
+        for (Map.Entry<Integer, CrossroadModel> crossroad : crossroads.entrySet()) {
+            CrossroadModel crossroadModel = crossroad.getValue();
+            String crossroadName = crossroadModel.getName();
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_TOTAL));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_ANOTHER_CROSSROAD));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_TO_ANOTHER_CROSSROAD));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.AVERAGE_TICKS_TO_LEAVE));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.STATE));
         }
         return headers;
     }
@@ -291,4 +340,26 @@ public class CityAgent extends MURATBaseAgent {
         return true;
     }
 
+    private String getColumnName(String crossroadName, String attributeName) {
+        return crossroadName + attributeName;
+    }
+
+    private Boolean receivedAllTickReports(Integer tick) {
+        for (Map.Entry<String, Boolean> receivedReport : receivedReports.get(tick).entrySet()) {
+            Boolean received = receivedReport.getValue();
+            if (!received) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void notifyCrossroads() {
+        crossroadsNames.forEach((crossroadName) ->
+                this.sendACLMessage(
+                        ACLMessage.INFORM,
+                        this.getAID(),
+                        new AID(crossroadName, AID.ISLOCALNAME),
+                        MessageConstant.RECEIVED_ALL_TICK_REPORTS));
+    }
 }

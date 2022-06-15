@@ -6,6 +6,7 @@ import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
 
 /**
  * Basado en LARVABaseAgent.java por Anatoli-Grishenko.
@@ -77,10 +78,18 @@ public class MURATBaseAgent extends Agent {
         this.sendACLMessage(message);
     }
 
-    protected final void receiveACLMessage() {
-        incomingMessage = this.blockingReceive();
+    protected final void receiveACLMessage(MessageTemplate messageTemplate) {
+        if (messageTemplate != null) {
+            incomingMessage = this.blockingReceive(messageTemplate);
+        } else {
+            incomingMessage = this.blockingReceive();
+        }
         //Logger.info(ActionConstant.MESSAGE_RECEIVED, this.getClass().getSimpleName(), this.getLocalName(), incomingMessage.toString());
         Logger.info("⬛ Received ACLM " + Logger.fancyWriteACLM(incomingMessage));
+    }
+
+    protected final void receiveACLMessage() {
+        this.receiveACLMessage(null);
     }
 
 }

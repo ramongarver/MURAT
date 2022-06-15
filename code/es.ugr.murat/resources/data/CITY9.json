@@ -30,7 +30,7 @@
       "initialTime": 4,
       "finalTime": 22,
       "sampleTime": 10,
-      "mode": "SINGLE PEAK",
+      "mode": "DOUBLE PEAK",
       "crossroadInitialState": [
         {
           "crossroadId": 1,
@@ -52,6 +52,23 @@
         {
           "crossroadId": 1,
           "initialStateId": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "vehicleLength": 4,
+      "inputRatio": "0.05",
+      "inputInnerRatio": 2,
+      "outputInnerRatio": 1,
+      "initialTime": 4,
+      "finalTime": 22,
+      "sampleTime": 10,
+      "mode": "DOUBLE PEAK",
+      "crossroadInitialState": [
+        {
+          "crossroadId": 1,
+          "initialStateId": 3
         }
       ]
     }
@@ -166,7 +183,7 @@
         {
           "stateId": 3,
           "name": "E3",
-          "duration": 120,
+          "duration": 60,
           "trafficLightState": [
             {
               "trafficLightId": 1,
@@ -244,7 +261,7 @@
         {
           "stateId": 5,
           "name": "E5",
-          "duration": 60,
+          "duration": 120,
           "trafficLightState": [
             {
               "trafficLightId": 1,

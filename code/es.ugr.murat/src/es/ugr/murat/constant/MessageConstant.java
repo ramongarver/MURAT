@@ -13,6 +13,10 @@ public class MessageConstant {
     public static final String SET_LIGHT_TO_RED = "SET LIGHT TO RED";
     public static final String SET_LIGHT_TO_GREEN = "SET LIGHT TO GREEN";
 
+    public static final String RECEIVED_ALL_TICK_REPORTS = "RECEIVED ALL TICK REPORTS";
+
+    public static final String TRANSFERRED_VEHICLES = "TRANSFERRED VEHICLES";
+
     public static final String REPORT = "REPORT";
 
     public static final String FINALIZE = "FINALIZE";
