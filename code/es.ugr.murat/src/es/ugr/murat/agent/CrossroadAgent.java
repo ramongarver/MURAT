@@ -720,96 +720,80 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Mejoramos los tiempos de los estados
     private void optimizeStateTimes(Boolean active) {
         if (active) {
-            // Evaluamos si hay algún tramo de calle de entrada con congestión
+            // Obtenemos los tramos de calle de entrada congestionados y sus puntuaciones de congestión asociadas
             Map<String, Double> congestedRoadStretchesIn = this.getCongestedRoadStretchesIn();
+            // Evaluamos si existe algún tramo de calle de entrada con congestión
             Boolean isCongested = congestedRoadStretchesIn.size() > 0;
-
-            // Si hay congestión en el cruce intentamos optimizar los tiempos de los estados para resolverla
+            // Si hay congestión en el cruce, optimizamos, si es posible, los tiempos de los estados para resolverla
             if (isCongested) {
-                // Analizamos si existe algún estado del cruce que beneficie la salida de tráfico de los tramos de calle
-                    // --> Estado del cruce que habilite tramos de cruce cuyos tramos de calle de origen sean el mayor número de entre los congestionados
+                // Analizamos si existe algún estado del cruce que beneficie la salida de tráfico de los tramos de calle,
+                // es decir, algún estado del cruce que habilite tramos de cruce cuyos tramos de calle de origen sean el mayor número de entre los congestionados
 
-                Map<Integer, Map<String, Double>> stateRoadStretchCongestionScore = new HashMap<>(); // | (stateId -> roadStretchOrigin -> congestionScore)
-                statesCrossroadStretches.forEach((stateId, roadStretches) -> {
-                    Map<String, Double> roadStretchCongestionScore = new HashMap<>();
-                    for (Map.Entry<String, Set<String>> roadStretch : roadStretches.entrySet()) {
-                        String roadStretchOrigin = roadStretch.getKey();
-                        if (congestedRoadStretchesIn.containsKey(roadStretchOrigin)) {
-                            roadStretchCongestionScore.put(roadStretchOrigin, congestedRoadStretchesIn.get(roadStretchOrigin));
-                        }
-                    }
-                    stateRoadStretchCongestionScore.put(stateId, roadStretchCongestionScore);
-                });
+                // Obtenemos para cada estado los tramos de calle de entrada congestionados que habilita y sus puntuaciones de congestión asociadas
+                Map<Integer, Map<String, Double>> statesRoadStretchesCongestionScores = this.getStatesRoadStretchesCongestionScores(congestedRoadStretchesIn);
 
-                List<Integer> bestStateCandidates = new ArrayList<>();
-                List<Integer> worstStateCandidates = new ArrayList<>();
-                Integer roadStretchesMaxNumber = 0;
-                Integer roadStretchesMinNumber = congestedRoadStretchesIn.size() + 1;
-                for (Map.Entry<Integer, Map<String, Double>> entry : stateRoadStretchCongestionScore.entrySet()) {
-                    Integer stateId = entry.getKey(); // (stateId)
-                    Map<String, Double> roadStretchCongestionScore = entry.getValue(); // (roadStretchOrigin -> congestionScore)
-                    Integer roadStretchesNumber = roadStretchCongestionScore.size();
-                    // Obtenemos los candidatos a ser el mejor estado
-                    if (roadStretchesMaxNumber < roadStretchesNumber) {
-                        bestStateCandidates.clear();
-                        bestStateCandidates.add(stateId);
+                List<Integer> bestStateCandidates = new ArrayList<>(); // Candidatos a ser el peor estado
+                List<Integer> worstStateCandidates = new ArrayList<>(); // Candidatos a ser el mejor estado
+                Integer roadStretchesMaxNumber = 0; // Máximo número de tramos de calle origen saturados cuyos tramos de cruce asociados son habilitados por un estado concreto
+                Integer roadStretchesMinNumber = congestedRoadStretchesIn.size(); // Mínimo número de tramos de calle origen saturados cuyos tramos de cruce asociados son habilitados por un estado concreto
+                for (Map.Entry<Integer, Map<String, Double>> stateRoadStretchesCongestionScores : statesRoadStretchesCongestionScores.entrySet()) {
+                    Integer stateId = stateRoadStretchesCongestionScores.getKey(); // (stateId)
+                    Integer roadStretchesNumber = stateRoadStretchesCongestionScores.getValue().size(); // size(roadStretchOrigin -> congestionScore)
+                    // Obtenemos los candidatos a ser el mejor estado, en función de los tramos de calle origen saturados cuyos tramos de cruce asociados son habilitados
+                    if (roadStretchesMaxNumber < roadStretchesNumber) { // Si el estado actual es mejor que los candidatos anteriores
+                        bestStateCandidates.clear(); // Eliminamos los mejores candidatos hasta el momento
+                        bestStateCandidates.add(stateId); // Añadimos el candidato actual
                         roadStretchesMaxNumber = roadStretchesNumber;
-                    } else if (roadStretchesMaxNumber.equals(roadStretchesNumber)) {
+                    } else if (roadStretchesMaxNumber.equals(roadStretchesNumber)) { // Si el estado actual es igual a los candidatos actuales
                         bestStateCandidates.add(stateId);
                     }
-                    // Obtenemos los candidatos a ser el peor estado
-                    if (roadStretchesMinNumber > roadStretchesNumber) {
+                    // Obtenemos los candidatos a ser el peor estado, en función de los tramos de calle origen saturados cuyos tramos de cruce asociados son habilitados
+                    if (roadStretchesMinNumber > roadStretchesNumber) { // Si el estado actual es peor que los candidatos anteriores
                         worstStateCandidates.clear();
                         worstStateCandidates.add(stateId);
                         roadStretchesMinNumber = roadStretchesNumber;
                     }
-                    else if (roadStretchesMinNumber.equals(roadStretchesNumber)) {
+                    else if (roadStretchesMinNumber.equals(roadStretchesNumber)) { // Si el estado actual es igual a los candidatos actuales
                         worstStateCandidates.add(stateId);
                     }
                 }
 
                 Integer bestState = -1;
                 Integer worstState = -1;
-                if (bestStateCandidates.size() == 1) { // Si solo hay un candidato, ese es el mejor estado
-                    bestState = bestStateCandidates.get(0);
-                } else { // Si hay varios candidatos, hay que elegir el mejor (el estado que habilite tramos de cruce tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la mayor)
-                    Double bestStateScore = Double.NEGATIVE_INFINITY;
-                    for (Integer bestStateCandidate : bestStateCandidates) {
-                        // Comprobar si es posible el incremento de tiempo del estado candidato
-                        // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es menor o igual que el máximo, pasar a valorar las puntuaciones
-                        // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es mayor que el máximo, pasar al siguiente candidato a mejor estado
-                        if (this.isPossibleToIncreaseStateTime(bestStateCandidate)) {
-                            Double currentScore = 0.0;
-                            for (Map.Entry<String, Double> entry : stateRoadStretchCongestionScore.get(bestStateCandidate).entrySet()) {
-                                Double congestionScore = entry.getValue();
-                                currentScore += congestionScore;
-                            }
-                            if (bestStateScore < currentScore) {
-                                bestState = bestStateCandidate;
-                                bestStateScore = currentScore;
-                            }
+                // Hay que elegir el mejor estado entre los candidatos (el estado que habilite tramos de cruce tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la mayor)
+                Double bestStateScore = Double.NEGATIVE_INFINITY;
+                for (Integer bestStateCandidate : bestStateCandidates) {
+                    // Comprobamos si es posible el incremento de tiempo del estado candidato
+                    // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es menor o igual que el máximo, pasar a valorar las puntuaciones
+                    // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es mayor que el máximo, pasar al siguiente candidato a mejor estado
+                    if (this.isPossibleToIncreaseStateTime(bestStateCandidate)) {
+                        Double currentScore = 0.0;
+                        for (Map.Entry<String, Double> entry : statesRoadStretchesCongestionScores.get(bestStateCandidate).entrySet()) {
+                            Double congestionScore = entry.getValue();
+                            currentScore += congestionScore;
+                        }
+                        if (bestStateScore < currentScore) {
+                            bestState = bestStateCandidate;
+                            bestStateScore = currentScore;
                         }
                     }
                 }
 
-                if (worstStateCandidates.size() == 1) { // Si solo hay un candidato, ese es el peor estado
-                    worstState = worstStateCandidates.get(0);
-                } else { // Si hay varios candidatos, hay que elegir el peor (el estado que habilite menos tramos de cruce o habilitándolos tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la menor)
-                    Double worstStateScore = Double.POSITIVE_INFINITY;
-                    for (Integer worstStateCandidate : worstStateCandidates) {
-                        // Comprobar si es posible la disminución de tiempo del estado candidato
-                            // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es mayor o igual que el mínimo, pasar a valorar las puntuaciones
-                            // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es menor que el mínimo, pasar al siguiente candidato a peor estado
-                        if(this.isPossibleToReduceStateTime(worstStateCandidate)) {
-                            Double currentScore = 0.0;
-                            for (Map.Entry<String, Double> entry : stateRoadStretchCongestionScore.get(worstStateCandidate).entrySet()) {
-                                Double congestionScore = entry.getValue();
-                                currentScore += congestionScore;
-                            }
-                            if (worstStateScore > currentScore) {
-                                worstState = worstStateCandidate;
-                                worstStateScore = currentScore;
-                            }
+                // Hay que elegir el peor estado entre los candidatos (el estado que habilite menos tramos de cruce o habilitándolos tales que la suma de las puntuaciones de congestión de sus tramos de calle de origen sea la menor)
+                Double worstStateScore = Double.POSITIVE_INFINITY;
+                for (Integer worstStateCandidate : worstStateCandidates) {
+                    // Comprobar si es posible la disminución de tiempo del estado candidato
+                    // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es mayor o igual que el mínimo, pasar a valorar las puntuaciones
+                    // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es menor que el mínimo, pasar al siguiente candidato a peor estado
+                    if(this.isPossibleToReduceStateTime(worstStateCandidate)) {
+                        Double currentScore = 0.0;
+                        for (Map.Entry<String, Double> entry : statesRoadStretchesCongestionScores.get(worstStateCandidate).entrySet()) {
+                            Double congestionScore = entry.getValue();
+                            currentScore += congestionScore;
+                        }
+                        if (worstStateScore > currentScore) {
+                            worstState = worstStateCandidate;
+                            worstStateScore = currentScore;
                         }
                     }
                 }
@@ -820,20 +804,33 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
     }
 
+    // Obtenemos los tramos de calle de entrada congestionados y sus puntuaciones de congestión asociadas
     private Map<String, Double> getCongestedRoadStretchesIn() {
         Map<String, Double> congestedRoadStretchesIn = new HashMap<>();
-        final Double SATURATION_POINT = 60.0;
-        final Double VEHICLE_WEIGHT = 0.32;
-        final Double OCCUPATION_WEIGHT = 0.68;
         roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
-            if (roadStretchInModel.getOccupancyPercentage() > SATURATION_POINT) {
+            if (roadStretchInModel.getOccupancyPercentage() > CrossroadConstant.SATURATION_THRESHOLD) {
                 Integer vehicles = roadStretchInModel.getVehicles();
                 Double occupancyPercentage = roadStretchInModel.getOccupancyPercentage();
-                Double congestionScore = VEHICLE_WEIGHT * vehicles + OCCUPATION_WEIGHT * occupancyPercentage;
+                Double congestionScore = CrossroadConstant.VEHICLE_WEIGHT * vehicles + CrossroadConstant.OCCUPATION_WEIGHT * occupancyPercentage;
                 congestedRoadStretchesIn.put(roadStretchInName, congestionScore);
             }
         });
         return congestedRoadStretchesIn;
+    }
+
+    private Map<Integer, Map<String, Double>> getStatesRoadStretchesCongestionScores(Map<String, Double> congestedRoadStretchesIn) {
+        Map<Integer, Map<String, Double>> statesRoadStretchesCongestionScores = new HashMap<>(); // | (stateId -> roadStretchOrigin -> congestionScore)
+        statesCrossroadStretches.forEach((stateId, roadStretches) -> {
+            Map<String, Double> roadStretchCongestionScore = new HashMap<>();
+            for (Map.Entry<String, Set<String>> roadStretch : roadStretches.entrySet()) {
+                String roadStretchOrigin = roadStretch.getKey();
+                if (congestedRoadStretchesIn.containsKey(roadStretchOrigin)) {
+                    roadStretchCongestionScore.put(roadStretchOrigin, congestedRoadStretchesIn.get(roadStretchOrigin));
+                }
+            }
+            statesRoadStretchesCongestionScores.put(stateId, roadStretchCongestionScore);
+        });
+        return statesRoadStretchesCongestionScores;
     }
 
     private Boolean adjustStateTimes(Integer bestState, Integer worstState) {

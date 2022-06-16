@@ -15,6 +15,10 @@ public class CrossroadConstant {
     public static final int CONTROL_TRAFFIC = 3;
     public static final int FINALIZE_TRAFFIC_LIGHTS = 4;
 
+    public static final Double SATURATION_THRESHOLD = 60.0;
+    public static final Double VEHICLE_WEIGHT = 0.32;
+    public static final Double OCCUPATION_WEIGHT = 0.68;
+
     public static final int STATE_TIME_VARIATION = 10;
 
 }
