@@ -153,15 +153,7 @@ public class CityAgent extends MURATBaseAgent {
                             String columnName = columnNameJsonObject.getName();
                             Double value = Double.parseDouble(columnNameJsonObject.getValue().asString().replace(",", "."));
                             simulationInfoByTick.get(currentTick).put(columnName, value);
-                            //TODO: Añadir this.updateVehiclesInOut();
-                            if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM))) {
-                                Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM));
-                                totalVehiclesIn += value - previousValue;
-                            }
-                            if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM))) {
-                                Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM));
-                                totalVehiclesOut += value - previousValue;
-                            }
+                            this.updateVehiclesInOut(crossroadName, columnName, currentTick, value);
                         });
                         simulationInfoByTick.get(currentTick).put(CommonConstant.VEHICLES_IN, totalVehiclesIn);
                         simulationInfoByTick.get(currentTick).put(CommonConstant.VEHICLES_OUT, totalVehiclesOut);
@@ -362,4 +354,24 @@ public class CityAgent extends MURATBaseAgent {
                         new AID(crossroadName, AID.ISLOCALNAME),
                         MessageConstant.RECEIVED_ALL_TICK_REPORTS));
     }
+
+    private void updateVehiclesInOut(String crossroadName, String columnName, Integer currentTick, Double value) {
+        this.updateVehiclesInFromOutOfSystem(crossroadName, columnName, currentTick, value);
+        this.updateVehiclesOutOfSystem(crossroadName, columnName, currentTick, value);
+    }
+
+    private void updateVehiclesInFromOutOfSystem(String crossroadName, String columnName, Integer currentTick, Double value) {
+        if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM))) {
+            Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM));
+            totalVehiclesIn += value - previousValue;
+        }
+    }
+
+    private void updateVehiclesOutOfSystem(String crossroadName, String columnName, Integer currentTick, Double value) {
+        if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM))) {
+            Double previousValue = currentTick == 0 ? 0.0 : simulationInfoByTick.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM));
+            totalVehiclesOut += value - previousValue;
+        }
+    }
+
 }
