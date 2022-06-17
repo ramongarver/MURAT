@@ -293,28 +293,25 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
     private Map<String, Queue<Integer>> initializeCurrentVehicles() {
         Map<String, Queue<Integer>> currentVehicles = new HashMap();
-        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesIn.entrySet()) {
+        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesIn.entrySet()) { // TODO: Refactorizar métodos
             Queue<Integer> roadStretchQueue = new LinkedList<>();
-            RoadStretchModel roadStretchModel = entry.getValue();
-            Integer vehicles = roadStretchModel.getVehicles();
+            Integer vehicles = roadStretch.getValue().getVehicles();
             for (int i = 0; i < vehicles; i++) {
                 roadStretchQueue.add(currentTicks);
             }
-            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
+            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
         }
-        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesOutToOutOfSystem.entrySet()) {
+        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesOutToOutOfSystem.entrySet()) {
             Queue<Integer> roadStretchQueue = new LinkedList<>();
-            RoadStretchModel roadStretchModel = entry.getValue();
-            Integer vehicles = roadStretchModel.getVehicles();
+            Integer vehicles = roadStretch.getValue().getVehicles();
             for (int i = 0; i < vehicles; i++) {
                 roadStretchQueue.add(currentTicks);
             }
-            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
+            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
         }
-        for (Map.Entry<String, RoadStretchModel> entry : roadStretchesOutToAnotherCrossroad.entrySet()) {
+        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesOutToAnotherCrossroad.entrySet()) {
             Queue<Integer> roadStretchQueue = new LinkedList<>();
-            RoadStretchModel roadStretchModel = entry.getValue();
-            currentVehicles.put(roadStretchModel.getName(), roadStretchQueue);
+            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
         }
         return currentVehicles;
     }
@@ -376,7 +373,8 @@ public class CrossroadAgent extends MURATBaseAgent {
         for (Map.Entry<String, RoadStretchModel> roadStretchOut : roadStretchesOut.entrySet()) {
             String roadStretchOutName = roadStretchOut.getKey();
             RoadStretchModel roadStretchOutModel = roadStretchOut.getValue();
-            Integer roadStretchVehicles = currentVehicles.get(roadStretchOutName).size(); // TODO: Explicar porqué
+            // Integer roadStretchVehicles = currentVehicles.get(roadStretchOutName).size(); // TODO: Explicar porqué
+            Integer roadStretchVehicles = roadStretchOutModel.getVehicles();
             Integer vehiclesOut = this.getVehiclesToOut(roadStretchOutModel);
             roadStretchOutModel.setVehicles(roadStretchVehicles - vehiclesOut);
             totalVehiclesOut += vehiclesOut;
@@ -420,13 +418,13 @@ public class CrossroadAgent extends MURATBaseAgent {
         crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
             roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
                 if (vehicles > 0) {
-                    Integer roadStretchOriginVehicles = roadStretchesIn.get(roadStretchOriginName).getVehicles();
+                    Integer roadStretchOriginVehicles = currentVehicles.get(roadStretchOriginName).size();
                     Integer roadStretchOriginToDestinationVehicles = roadStretchOriginVehicles < vehicles ? roadStretchOriginVehicles : vehicles;
                     Integer roadStretchDestinationVehicles = roadStretchesOut.get(roadStretchDestinationName).getVehicles();
                     Integer roadStretchDestinationMaxVehicles = roadStretchesOut.get(roadStretchDestinationName).getMaxVehicles();
                     Integer roadStretchDestinationFreeSpaces = roadStretchDestinationMaxVehicles - roadStretchDestinationVehicles;
                     Integer vehiclesToDestination = roadStretchDestinationFreeSpaces < roadStretchOriginToDestinationVehicles ? roadStretchDestinationFreeSpaces : roadStretchOriginToDestinationVehicles;
-                    roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchOriginVehicles - vehiclesToDestination);
+                    roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchesIn.get(roadStretchOriginName).getVehicles() - vehiclesToDestination);
                     roadStretchesOut.get(roadStretchDestinationName).setVehicles(roadStretchDestinationVehicles + vehiclesToDestination);
                     for (int i = 0; i < vehiclesToDestination; i++) {
                         currentVehicles.get(roadStretchDestinationName).add(currentVehicles.get(roadStretchOriginName).remove());
