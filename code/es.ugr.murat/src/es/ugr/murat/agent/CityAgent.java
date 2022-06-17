@@ -305,8 +305,8 @@ public class CityAgent extends MURATBaseAgent {
         headers.add(CommonConstant.VEHICLES_IN);
         headers.add(CommonConstant.VEHICLES_OUT);
         for (Map.Entry<Integer, CrossroadModel> crossroad : crossroads.entrySet()) {
-            CrossroadModel crossroadModel = crossroad.getValue();
-            String crossroadName = crossroadModel.getName();
+            String crossroadName = crossroad.getValue().getName();
+            headers.add(this.getColumnName(crossroadName, CommonConstant.STATE));
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_TOTAL));
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN));
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM));
@@ -314,9 +314,12 @@ public class CityAgent extends MURATBaseAgent {
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT));
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_OF_SYSTEM));
             headers.add(this.getColumnName(crossroadName, CommonConstant.VEHICLES_OUT_TO_ANOTHER_CROSSROAD));
-            headers.add(this.getColumnName(crossroadName, CommonConstant.AVERAGE_TICKS_TO_LEAVE));
-            headers.add(this.getColumnName(crossroadName, CommonConstant.AVERAGE_CURRENT_TICKS_TO_LEAVE));
-            headers.add(this.getColumnName(crossroadName, CommonConstant.STATE));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_OF_SYSTEM));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_OF_SYSTEM));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_TO_ANOTHER_CROSSROAD));
+            headers.add(this.getColumnName(crossroadName, CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_TO_ANOTHER_CROSSROAD));
         }
         return headers;
     }
