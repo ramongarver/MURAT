@@ -290,6 +290,7 @@ public class CrossroadAgent extends MURATBaseAgent {
     //**************************************************//
 
     //*************** Utilidades y otros ***************//
+        // Inicializadores
     // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
     private Map<String, Queue<Integer>> initializeCurrentVehicles() {
         Map<String, Queue<Integer>> currentVehicles = new HashMap();
@@ -315,6 +316,11 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
         return currentVehicles;
     }
+    // Inicializamos el atributo initialState
+    private Map<Integer, StateModel> initializeInitialStates() {
+        return this.copyStates(states);
+    }
+
 
     // Escuchamos mensajes
     private void listenMessages() {
@@ -911,10 +917,6 @@ public class CrossroadAgent extends MURATBaseAgent {
             copyStates.put(stateId, copyStateModel);
         });
         return copyStates;
-    }
-
-    private Map<Integer, StateModel> initializeInitialStates() {
-        return this.copyStates(states);
     }
 
     private void processVehiclesReceivedFromAnotherCrossroad(String roadStretchName, String transferredVehicles) {

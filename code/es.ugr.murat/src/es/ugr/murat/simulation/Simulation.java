@@ -44,10 +44,12 @@ public class Simulation {
 
     public static Simulation simulation = null;
 
+    // Atributos de elección de la ciudad, configuración y política de optimización de tiempos
     private Integer cityId; // Identificador de la ciudad
     private Integer cityConfigurationId; // Identificador de la configuración de la ciudad
     private Boolean optimizeStateTimesPolicy; // Indicador de política de tiempos variables o fijos
 
+    // Atributos de información sobre la ciudad a simular
     private final CityModel cityModel; // Información de la ciudad (nombre y descripción)
     private final Map<Integer, CityConfigurationModel> cityConfiguration; // Configuración de la ciudad | (cityConfigurationId -> cityConfigurationModel)
     private final Map<Integer, CrossroadModel> crossroads; // Cruces de la ciudad | (crossroadId -> crossroadModel)
@@ -66,6 +68,7 @@ public class Simulation {
         }
     }
 
+    // Cargamos los datos de la simulación
     private Simulation() {
             // Mostramos el banner de "HELLO MURAT"
             System.out.println(SimulationConstant.BANNER);
@@ -276,6 +279,7 @@ public class Simulation {
             }
     }
 
+    // Iniciamos los agentes
     private void initAgents() {
         JADEBoot connection = new JADEBoot();
         System.out.println(SimulationConstant.BANNER);
@@ -301,7 +305,6 @@ public class Simulation {
         }
         return cities;
     }
-
     // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN
     private String getCrossroadStretchOrigin(String crossroadStretchName) {
         return crossroadStretchName.split("-")[0];

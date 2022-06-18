@@ -30,8 +30,5 @@ public class CommonConstant {
     public static final String TICKS_AVERAGE_PER_SAMPLE_OUT_TO_ANOTHER_CROSSROAD = "TAvOutCross";
     public static final String TICKS_AVERAGE_CUMULATIVE_OUT_TO_ANOTHER_CROSSROAD = "TAvOutCrossCumulative";
 
-    public static final String AVERAGE_TICKS_TO_LEAVE = "AverageTicksToLeave";
-    public static final String AVERAGE_CURRENT_TICKS_TO_LEAVE = "AverageCurrentTicksToLeave";
-
     public static final String STATE = "State";
 }
