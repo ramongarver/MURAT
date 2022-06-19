@@ -69,7 +69,6 @@ public class MURATBaseAgent extends Agent {
     protected final void sendACLMessage(ACLMessage message) {
         this.send(message);
         outgoingMessage = message;
-        //Logger.info(ActionConstant.MESSAGE_SENT, this.getClass().getSimpleName(), this.getLocalName(), outgoingMessage.toString());
         Logger.info("⬜ Sending ACLM " + Logger.fancyWriteACLM(outgoingMessage));
     }
 
@@ -84,7 +83,6 @@ public class MURATBaseAgent extends Agent {
         } else {
             incomingMessage = this.blockingReceive();
         }
-        //Logger.info(ActionConstant.MESSAGE_RECEIVED, this.getClass().getSimpleName(), this.getLocalName(), incomingMessage.toString());
         Logger.info("⬛ Received ACLM " + Logger.fancyWriteACLM(incomingMessage));
     }
 

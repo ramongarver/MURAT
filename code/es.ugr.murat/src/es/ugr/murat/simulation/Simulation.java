@@ -19,6 +19,7 @@ import es.ugr.murat.model.CrossroadStretchModel;
 import es.ugr.murat.model.RoadStretchModel;
 import es.ugr.murat.model.StateModel;
 import es.ugr.murat.model.TrafficLightModel;
+import es.ugr.murat.util.Logger;
 
 import javax.swing.JOptionPane;
 import java.io.File;
@@ -71,7 +72,7 @@ public class Simulation {
     // Cargamos los datos de la simulación
     private Simulation() {
             // Mostramos el banner de "HELLO MURAT"
-            System.out.println(SimulationConstant.BANNER);
+            Logger.info(SimulationConstant.BANNER);
 
             // Obtenemos las ciudades disponibles y seleccionamos una de ellas para la simulación
             List<String> cities = this.getCitiesFromFolder(); // Ciudades disponibles en la simulación
@@ -281,16 +282,16 @@ public class Simulation {
 
     // Iniciamos los agentes
     private void initAgents() {
+        // Creamos la instancia JADEBoot, objeto utilizado para crear a los agentes
         JADEBoot connection = new JADEBoot();
-        System.out.println(SimulationConstant.BANNER);
         // Lanzamos agentes
+            // Agentes semáforo (TrafficLightAgent)
+        crossroadTrafficLights.forEach((crossroadId, trafficLights) -> trafficLights.
+                forEach((trafficLightId, trafficLightModel) -> connection.launchAgent(trafficLightModel.getName(), TrafficLightAgent.class)));
             // Agente ciudad (CityAgent)
         connection.launchAgent(cityModel.getName(), CityAgent.class);
             // Agentes cruce (CrossroadAgent)
         crossroads.forEach((crossroadId, crossroadModel) -> connection.launchAgent(crossroadModel.getName(), CrossroadAgent.class));
-            // Agentes semáforo (TrafficLightAgent)
-        crossroadTrafficLights.forEach((crossroadId, trafficLights) -> trafficLights.
-                forEach((trafficLightId, trafficLightModel) -> connection.launchAgent(trafficLightModel.getName(), TrafficLightAgent.class)));
     }
 
     //******************* Utilidades *******************//
@@ -316,7 +317,7 @@ public class Simulation {
     //**************************************************//
 
     //*************** API de información inicial de la simulación ***************//
-        // Cruce
+        // Crossroad
     // Obtenemos el modelo del cruce identificado por crossroadId | (crossroadModel)
     public CrossroadModel getCrossroadModel(Integer crossroadId) {
         return crossroads.get(crossroadId);
@@ -522,6 +523,7 @@ public class Simulation {
         return cityConfiguration.get(cityConfigurationId).getMode();
     }
     // Obtenemos el total de segundos de la simulación | (totalSimulationSeconds)
+        // Simulation
     public Integer getSimulationSeconds() {
         LocalTime initialTime = cityConfiguration.get(cityConfigurationId).getInitialTime();
         LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
