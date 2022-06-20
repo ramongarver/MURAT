@@ -11,6 +11,7 @@ import es.ugr.murat.appboot.JADEBoot;
 import es.ugr.murat.constant.CityConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.SimulationConstant;
+import es.ugr.murat.helper.Helper;
 import es.ugr.murat.model.CityConfigurationModel;
 import es.ugr.murat.model.CityModel;
 import es.ugr.murat.model.ConfigurationCrossroadInitialStateModel;
@@ -219,8 +220,8 @@ public class Simulation {
                             JsonObject crossroadStretchRouteJsonObject = crossroadStretchRouteJsonValue.asObject();
                             String crossroadStretchName = crossroadStretchRouteJsonObject.get("crossroadStretchName").asString();
                             crossroadStretchesNames.add(crossroadStretchName);
-                            String crossroadStretchOrigin = this.getCrossroadStretchOrigin(crossroadStretchName);
-                            String crossroadStretchDestination = this.getCrossroadStretchDestination(crossroadStretchName);
+                            String crossroadStretchOrigin = Helper.getCrossroadStretchOrigin(crossroadStretchName);
+                            String crossroadStretchDestination = Helper.getCrossroadStretchDestination(crossroadStretchName);
                             if (crossroadStretchesOriginDestinations.containsKey(crossroadStretchOrigin)) {
                                 crossroadStretchesOriginDestinations.get(crossroadStretchOrigin).add(crossroadStretchDestination);
                             } else {
@@ -306,14 +307,6 @@ public class Simulation {
         }
         return cities;
     }
-    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN
-    private String getCrossroadStretchOrigin(String crossroadStretchName) {
-        return crossroadStretchName.split("-")[0];
-    }
-    // Obtenemos el destino del cruce | Para la forma RSN-RSM obtenemos RSM
-    private String getCrossroadStretchDestination(String crossroadStretchName) {
-        return crossroadStretchName.split("-")[1];
-    }
     //**************************************************//
 
     //*************** API de información inicial de la simulación ***************//
@@ -337,6 +330,18 @@ public class Simulation {
     // Obtenemos los colores de los semáforos por cada estado del cruce identificado por crossroadId | (stateId -> trafficLightId -> color)
     public Map<Integer, Map<Integer, String>> getCrossroadTrafficLightsColorsPerCrossroadState(Integer crossroadId) {
         return trafficLightsColorsPerCrossroadsStates.get(crossroadId);
+    }
+    // Obtenemos los tramos de calle a los que está conectado el cruce identificado por crossroadId | (roadStretchName -> roadStretchModel)
+    public Map<String, RoadStretchModel> getCrossroadRoadStretches(Integer crossroadId) {
+        Map<String, RoadStretchModel> crossroadRoadStretches = new HashMap<>();
+        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
+            Integer crossroadOriginId = roadStretchModel.getCrossroadOriginId();
+            Integer crossroadDestinationId = roadStretchModel.getCrossroadDestinationId();
+            if ((crossroadOriginId != null && crossroadOriginId.equals(crossroadId)) || (crossroadDestinationId != null && crossroadDestinationId.equals(crossroadId))) {
+                crossroadRoadStretches.put(roadStretchName, roadStretchModel);
+            }
+        });
+        return crossroadRoadStretches;
     }
     // Obtenemos los tramos de calle que entran al cruce identificado por crossroadId | (roadStretchNameIn -> roadStretchModelIn)
     public Map<String, RoadStretchModel> getCrossroadRoadStretchesIn(Integer crossroadId) {
@@ -412,30 +417,6 @@ public class Simulation {
         });
         return roadStretchesOutToAnotherCrossroad;
     }
-    // Obtenemos los cruces que tienen tramos de calle de salida que entran a este cruce
-    public List<Integer> getCrossroadCrossroadsIn(Integer crossroadId) {
-        List<Integer> crossroadsIn = new ArrayList<>();
-        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
-            Integer crossroadOrigin = roadStretchModel.getCrossroadOriginId();
-            Integer crossroadDestination = roadStretchModel.getCrossroadDestinationId();
-            if (crossroadId.equals(crossroadDestination) && crossroadOrigin != null) {
-                crossroadsIn.add(crossroadOrigin);
-            }
-        });
-        return crossroadsIn;
-    }
-    // Obtenemos los cruces que tienen tramos de calle de entrada que salen de este cruce
-    public List<Integer> getCrossroadCrossroadsOut(Integer crossroadId) {
-        List<Integer> crossroadsOut = new ArrayList<>();
-        roadStretches.forEach((roadStretchName, roadStretchModel) -> {
-            Integer crossroadOrigin = roadStretchModel.getCrossroadOriginId();
-            Integer crossroadDestination = roadStretchModel.getCrossroadDestinationId();
-            if (crossroadId.equals(crossroadOrigin) && crossroadDestination != null) {
-                crossroadsOut.add(crossroadDestination);
-            }
-        });
-        return crossroadsOut;
-    }
     // Obtenemos los tramos de cruce del cruce identificado por crossroadId | (crossroadStretchName -> crossroadStretchModel)
     public Map<String, CrossroadStretchModel> getCrossroadCrossroadsStretches(Integer crossroadId) {
         return crossroadsStretches.get(crossroadId);
@@ -484,7 +465,7 @@ public class Simulation {
     public List<String> getCityRoadStretchesNames() {
         List<String> roadStretchesNames = new ArrayList<>();
         roadStretches.forEach((roadStretchId, roadStretchModel) -> roadStretchesNames.add(roadStretchModel.getName()));
-        Collections.sort(roadStretchesNames, new Comparator<String>() { // TODO: Extraer comparator
+        Collections.sort(roadStretchesNames, new Comparator<String>() {
             public int compare(String o1, String o2) {
                 if (extractString(o1).equals(extractString(o2)))
                     return extractInt(o1) - extractInt(o2);

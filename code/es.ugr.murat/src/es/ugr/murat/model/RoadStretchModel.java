@@ -1,5 +1,7 @@
 package es.ugr.murat.model;
 
+import es.ugr.murat.constant.CommonConstant;
+
 /**
  * Clase representando el modelo de un tramo de calle.
  * Puede ser:
@@ -10,10 +12,6 @@ package es.ugr.murat.model;
  * @author Ramón García Verjaga
  */
 public class  RoadStretchModel {
-
-    private static final String ROOT = "ROOT";
-    private static final String LEAF = "LEAF";
-    private static final String INNER = "INNER";
 
     private Integer crossroadOriginId; // Id del cruce de origen
     private Integer crossroadDestinationId; // Id del cruce de destino
@@ -39,7 +37,7 @@ public class  RoadStretchModel {
         this.maxVehicles = (int) (this.length * this.lanes / vehicleLength);
         this.occupancyPercentage = (double) this.vehicles / (double) this.maxVehicles * 100.0;
         this.type = this.calculateAndSetType();
-        this.input = ROOT.equals(this.type) ? this.lanes * inputRatio : this.lanes * inputInnerRatio;
+        this.input = CommonConstant.ROOT.equals(this.type) ? this.lanes * inputRatio : this.lanes * inputInnerRatio;
         this.output = this.lanes * outputInnerRatio;
     }
 
@@ -135,9 +133,9 @@ public class  RoadStretchModel {
     }
 
     private String calculateAndSetType() {
-        return  this.crossroadOriginId == null && this.crossroadDestinationId != null ? ROOT : // Si no tiene cruce origen y tiene cruce destino (calle de entrada al sistema)
-                this.crossroadOriginId != null && this.crossroadDestinationId == null ? LEAF : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
-                this.crossroadOriginId != null && this.crossroadDestinationId != null ? INNER : // Si tiene cruce origen y cruce destino (calle interna)
+        return  this.crossroadOriginId == null && this.crossroadDestinationId != null ? CommonConstant.ROOT : // Si no tiene cruce origen y tiene cruce destino (calle de entrada al sistema)
+                this.crossroadOriginId != null && this.crossroadDestinationId == null ? CommonConstant.LEAF : // Si tiene cruce origen y nodo tiene cruce destino (calle de salida del sistema)
+                this.crossroadOriginId != null && this.crossroadDestinationId != null ? CommonConstant.INNER : // Si tiene cruce origen y cruce destino (calle interna)
                 null;   // Nada de lo anterior
     }
 

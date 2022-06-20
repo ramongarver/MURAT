@@ -7,13 +7,16 @@ package es.ugr.murat.constant;
  */
 public class CommonConstant {
 
-    public static final String AGENT_NAME_CITY = "CITY";
-    public static final String AGENT_NAME_CROSSROAD = "C";
-    public static final String AGENT_NAME_TRAFFIC_LIGHT = "TL";
+    public static final String ROOT = "ROOT";
+    public static final String LEAF = "LEAF";
+    public static final String INNER = "INNER";
 
     public static final String TIME = "Time";
 
+    public static final String STATE = "State";
+
     public static final String VEHICLES_TOTAL = "VehiclesTotal";
+    public static final String VEHICLES_TOTAL_AVERAGE = "VehiclesTotalAverage";
 
     public static final String VEHICLES_IN = "VehiclesIn";
     public static final String VEHICLES_IN_FROM_OUT_OF_SYSTEM = "VehiclesInFromOutOfSystem";
@@ -30,5 +33,4 @@ public class CommonConstant {
     public static final String TICKS_AVERAGE_PER_SAMPLE_OUT_TO_ANOTHER_CROSSROAD = "TAvOutCross";
     public static final String TICKS_AVERAGE_CUMULATIVE_OUT_TO_ANOTHER_CROSSROAD = "TAvOutCrossCumulative";
 
-    public static final String STATE = "State";
 }

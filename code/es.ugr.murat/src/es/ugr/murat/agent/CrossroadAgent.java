@@ -10,6 +10,7 @@ import es.ugr.murat.constant.CommonConstant;
 import es.ugr.murat.constant.CrossroadConstant;
 import es.ugr.murat.constant.MessageConstant;
 import es.ugr.murat.constant.TrafficLightConstant;
+import es.ugr.murat.helper.Helper;
 import es.ugr.murat.model.CrossroadModel;
 import es.ugr.murat.model.CrossroadStretchModel;
 import es.ugr.murat.model.RoadStretchModel;
@@ -39,32 +40,42 @@ import java.util.Set;
  */
 public class CrossroadAgent extends MURATBaseAgent {
 
+    // Información genérica de la ciudad y simulación
     private String cityName; // Nombre de la ciudad
     private String cityInputMode; // Modo de entrada de vehículos en la simulación (LINEAR, SINGLE PEAK, DOUBLE PEAK)
+    private Boolean optimizeStateTimesPolicy; // Indicador de la política de optimización de tiempos (si es true está activa)
+
+    // Información propia del cruce
     private Integer crossroadId; // Identificador del cruce
     private CrossroadModel crossroadModel; // Información del cruce
-    private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
-    private Map<Integer, StateModel> initialStates; // Estados del cruce iniciales | (stateId -> stateModel)
+
+    // Información de los estados del cruce
     private Map<Integer, StateModel> states; // Estados del cruce | (stateId -> stateModel)
+    private Map<Integer, StateModel> initialStates; // Estados del cruce iniciales | (stateId -> stateModel)
     private Map<Integer, StateModel> futureStates; // Estados del cruce para el siguiente ciclo, se obtienen con la heurística de optimización de tiempo | (stateId -> stateModel)
     private Integer initialState; // Estado inicial del cruce
     private Integer currentState; // Estado actual del cruce
     private Boolean updateStateTimes; // Indicador de actualización de los tiempos de los cruces en el siguiente ciclo
+
+    // Información de los semáforos
+    private Map<Integer, TrafficLightModel> trafficLights; // Semáforos del cruce | (trafficLightId -> trafficLightModel)
     private Map<Integer, Map<Integer, String>> trafficLightsColorsPerState; // Colores de semáforos para cada estado | (stateId -> trafficLightId -> color)
+
+    // Información de los tramos de calle entrantes al cruce y salientes del cruce
+    private Map<String, RoadStretchModel> roadStretches; // Tramos de calle conectados al cruce | (roadStretchName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesIn; // Tramos de calle que entran al cruce | (roadStretchInName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesInFromOutOfSystem; // Tramos de calle que entran al cruce desde fuera del sistema | (roadStretchInName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesInFromAnotherCrossroad; // Tramos de calle que entran al cruce desde otro cruce | (roadStretchInName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOut; // Tramos de calle que salen del cruce | (roadStretchOutName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOutToOutOfSystem; // Tramos de calle que salen del cruce hacia fuera del sistema | (roadStretchOutName -> roadStretchModel)
     private Map<String, RoadStretchModel> roadStretchesOutToAnotherCrossroad; // Tramos de calle que salen del cruce hacia otro cruce | (roadStretchOutName -> roadStretchModel)
-    private List<Integer> crossroadsIn; // Cruces que tienen tramos de calle de salida que entran a este cruce
-    private List<Integer> crossroadsOut; // Cruces que tienen tramos de calle de entrada que salen de este cruce
+
+    // Información de los tramos de cruce del cruce
     private Map<String, CrossroadStretchModel> crossroadsStretches; // Tramos de cruce | (name -> crossroadStretchModel)
     private Map<Integer, Map<String, Set<String>>> statesCrossroadStretches; // Tramos de cruce abiertos en cada estado | (stateId -> crossroadStretchOrigin -> crossroadStretchDestination)
     private Map<Integer, Map<Integer, Set<String>>> statesTrafficLightsCrossroadStretches; // Tramos de cruce abiertos en cada estado por cada semáforo | (stateId -> trafficLightId -> crossroadStretchNames)
 
-    // Simulación
-    private Boolean optimizeStateTimesPolicy; // Indicador de la política de optimización de tiempos (si es true está activa)
+    // Simulación | Control del tiempo
     private Integer sampleTime; // Tiempo de muestreo
     private LocalTime initialTime; // Hora de inicio de la simulación
     private Integer currentTicks; // Número de ticks realizados en la simulación
@@ -75,9 +86,9 @@ public class CrossroadAgent extends MURATBaseAgent {
     private Integer totalTicksToExitOutOfSystem; // Suma de los ticks que ha tardado cada uno de los vehículos en salir del cruce hacia fuera del sistema
     private Integer totalTicksToExitToAnotherCrossroad; // Suma de los ticks que ha tardado cada uno de los vehículos en salir del cruce hacia otro cruce
 
-    private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; //  (tick -> roadStretchName -> occupation)
+    private Map<Integer, Map<String, Double>> tickRoadStretchOccupation; // Ocupación de cada tramo de calle para cada tick  (tick -> roadStretchName -> occupation)
 
-    // Contadores de vehículos
+    // Simulación | Contadores de vehículos
     private Map<String, Queue<Integer>> currentVehicles; // Número total de vehículos que hay en cada tramo de calle (cada vehículo está representado en la cola con el valor del tick en el que ha sido añadido) | (roadStretchName -> Cola)
     private Integer totalVehiclesIn; // Número total de vehículos que han entrado en el cruce
     private Integer totalVehiclesInFromOutOfSystem; // Número total de vehículos que han entrado en el cruce desde fuera del sistema
@@ -94,44 +105,53 @@ public class CrossroadAgent extends MURATBaseAgent {
     @Override
     protected void setup() {
         super.setup();
+
         status = CrossroadConstant.LOAD_DATA;
+
         cityName = null;
         cityInputMode = null;
+        optimizeStateTimesPolicy = null;
+
         crossroadId = Integer.parseInt(this.getLocalName().split(CrossroadConstant.AGENT_NAME)[1]);
         crossroadModel = null;
-        trafficLights = null;
+
+
         states = null;
         initialState = null;
         currentState = null;
         updateStateTimes = false;
+
+        trafficLights = null;
         trafficLightsColorsPerState = null;
+
+        roadStretches = null;
         roadStretchesIn = null;
         roadStretchesInFromOutOfSystem = null;
         roadStretchesInFromAnotherCrossroad = null;
         roadStretchesOut = null;
         roadStretchesOutToOutOfSystem = null;
         roadStretchesOutToAnotherCrossroad = null;
-        crossroadsIn = new ArrayList<>();
-        crossroadsOut = new ArrayList<>();
+
         crossroadsStretches = null;
         statesCrossroadStretches = null;
         statesTrafficLightsCrossroadStretches = null;
-        optimizeStateTimesPolicy = null;
+
         sampleTime = null;
         initialTime = null;
         currentTicks = 0;
         stateTicks = 0;
         totalTicks = 0;
+
         totalTicksToExit = 0;
         totalTicksToExitOutOfSystem = 0;
         totalTicksToExitToAnotherCrossroad = 0;
-        tickRoadStretchOccupation = new HashMap<>();
-        currentVehicles = null;
 
+        tickRoadStretchOccupation = new HashMap<>();
+
+        currentVehicles = null;
         totalVehiclesIn = 0;
         totalVehiclesInFromOutOfSystem = 0;
         totalVehiclesInFromAnotherCrossroad = 0;
-
         totalVehiclesOut = 0;
         totalVehiclesOutOfSystem = 0;
         totalVehiclesOutToAnotherCrossroad = 0;
@@ -157,24 +177,31 @@ public class CrossroadAgent extends MURATBaseAgent {
     // Cargamos datos
     protected void loadData() {
         Logger.info(ActionConstant.LOADING_DATA, this.getClass().getSimpleName(), this.getLocalName());
+
         // Cargamos datos del cruce
             // Obtenemos el nombre de la ciudad;
         cityName = Simulation.simulation.getCityName();
             // Obtenemos el modo de entrada de vehículos a la simulación
         cityInputMode = Simulation.simulation.getCityConfigurationMode();
+            // Obtenemos si la política de optimización de tiempos de estados está activa o no
+        optimizeStateTimesPolicy = Simulation.simulation.getOptimizeStateTimesPolicy();
             // Obtenemos datos generales del cruce
         crossroadModel = Simulation.simulation.getCrossroadModel(crossroadId);
-            // Obtenemos los semáforos del cruce
-        trafficLights = Simulation.simulation.getCrossroadTrafficLights(crossroadId);
             // Obtenemos los estados del cruce
+                // Información sobre los estados en cada momento de la simulación
         states = Simulation.simulation.getCrossroadStates(crossroadId);
+                // Información sobre los estados iniciales por defecto definidos para la simulación
         initialStates = this.initializeInitialStates();
             // Obtenemos el estado inicial del cruce
         initialState = Simulation.simulation.getCrossroadInitialState(crossroadId);
+            // Obtenemos los semáforos del cruce
+        trafficLights = Simulation.simulation.getCrossroadTrafficLights(crossroadId);
             // Obtenemos los colores de semáforos para cada estado del cruce
         trafficLightsColorsPerState = Simulation.simulation.getCrossroadTrafficLightsColorsPerCrossroadState(crossroadId);
+            // Obtenemos todos los tramos de calle conectados al cruce
+        roadStretches = Simulation.simulation.getCrossroadRoadStretches(crossroadId);
             // Obtenemos los tramos de calle de entrada al cruce
-                // Todos los tramos de entrada al cruce
+                // Todos los tramos de calle entrada al cruce
         roadStretchesIn = Simulation.simulation.getCrossroadRoadStretchesIn(crossroadId);
                 // Tramos de calle de entrada al cruce desde fuera del sistema
         roadStretchesInFromOutOfSystem = Simulation.simulation.getCrossroadRoadStretchesInFromOutOfSystem(crossroadId);
@@ -187,18 +214,12 @@ public class CrossroadAgent extends MURATBaseAgent {
         roadStretchesOutToOutOfSystem = Simulation.simulation.getCrossroadRoadStretchesOutToOutOfSystem(crossroadId);
                 // Tramos de calle de salida desde el cruce hacia otro cruce
         roadStretchesOutToAnotherCrossroad = Simulation.simulation.getCrossroadRoadStretchesOutToAnotherCrossroad(crossroadId);
-            // Obtenemos los cruces que tienen tramos de calle de salida que entran a este cruce
-        crossroadsIn = Simulation.simulation.getCrossroadCrossroadsIn(crossroadId);
-            // Obtenemos los cruces que tienen tramos de calle de entrada que salen de este cruce
-        crossroadsOut = Simulation.simulation.getCrossroadCrossroadsOut(crossroadId);
             // Obtenemos los tramos de cruce del cruce
         crossroadsStretches = Simulation.simulation.getCrossroadCrossroadsStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos en cada estado
         statesCrossroadStretches = Simulation.simulation.getCrossroadStatesCrossroadStretches(crossroadId);
             // Obtenemos los tramos de cruce abiertos por cada semáforo en verde en cada estado
         statesTrafficLightsCrossroadStretches = Simulation.simulation.getCrossroadStatesTrafficLightsCrossroadStretches(crossroadId);
-            // Obtenemos si la política de optimización de tiempos de estados está activa o no
-        optimizeStateTimesPolicy = Simulation.simulation.getOptimizeStateTimesPolicy();
             // Obtenemos datos del tiempo de muestreo
         sampleTime = Simulation.simulation.getCityConfigurationSampleTime();
             // Obtenemos la hora de inicio de la simulación
@@ -207,10 +228,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         totalTicks = Simulation.simulation.getSimulationSeconds();
             // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
         currentVehicles = this.initializeCurrentVehicles();
-        totalVehiclesOutPerTick.put(0, 0); // TODO: initialize
-        totalVehiclesOutOfSystemPerTick.put(0, 0); // TODO: initialize
-        totalVehiclesOutToAnotherCrossroadPerTick.put(0, 0); // TODO: initialize
+
         Logger.info(ActionConstant.LOADED_DATA, this.getClass().getSimpleName(), this.getLocalName());
+
         status = CrossroadConstant.INITIALIZE_TRAFFIC_LIGHTS;
     }
 
@@ -222,13 +242,9 @@ public class CrossroadAgent extends MURATBaseAgent {
                         new AID(TrafficLightConstant.AGENT_NAME + trafficLightId, AID.ISLOCALNAME),
                         TrafficLightConstant.RED.equals(color) ? MessageConstant.SET_LIGHT_TO_RED : MessageConstant.SET_LIGHT_TO_GREEN));
         // Recibimos mensajes de información de los semáforos establecidos
-        MessageTemplate messageTemplate1 = MessageTemplate.MatchContent(MessageConstant.CHANGE_LIGHT);
-        MessageTemplate messageTemplate2 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_RED);
-        MessageTemplate messageTemplate3 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_GREEN);
-        MessageTemplate messageTemplateOr = MessageTemplate.or(messageTemplate1, messageTemplate2);
-        MessageTemplate messageTemplate = MessageTemplate.or(messageTemplateOr, messageTemplate3);
+        MessageTemplate trafficLightMessageTemplate = this.getTrafficLightMessageTemplate();
         for (int i = 0; i < trafficLights.size(); i++) {
-            this.listenMessages(messageTemplate);
+            this.listenMessages(trafficLightMessageTemplate);
         }
         currentState = initialState;
         status = CrossroadConstant.CONTROL_TRAFFIC;
@@ -255,7 +271,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         if (stateTicks.equals(stateDuration)) {
             this.changeToTheNextState();
             // Comprobamos si hay que actualizar los tiempos de los estados y estamos en un nuevo ciclo
-            if (updateStateTimes /*&& this.isNewCycle()*/) {
+            if (updateStateTimes) {
                 states = futureStates;
             }
         }
@@ -291,343 +307,45 @@ public class CrossroadAgent extends MURATBaseAgent {
 
     //*************** Utilidades y otros ***************//
         // Inicializadores
-    // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
-    private Map<String, Queue<Integer>> initializeCurrentVehicles() {
-        Map<String, Queue<Integer>> currentVehicles = new HashMap();
-        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesIn.entrySet()) { // TODO: Refactorizar métodos
-            Queue<Integer> roadStretchQueue = new LinkedList<>();
-            Integer vehicles = roadStretch.getValue().getVehicles();
-            for (int i = 0; i < vehicles; i++) {
-                roadStretchQueue.add(currentTicks);
-            }
-            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
-        }
-        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesOutToOutOfSystem.entrySet()) {
-            Queue<Integer> roadStretchQueue = new LinkedList<>();
-            Integer vehicles = roadStretch.getValue().getVehicles();
-            for (int i = 0; i < vehicles; i++) {
-                roadStretchQueue.add(currentTicks);
-            }
-            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
-        }
-        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretchesOutToAnotherCrossroad.entrySet()) {
-            Queue<Integer> roadStretchQueue = new LinkedList<>();
-            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
-        }
-        return currentVehicles;
-    }
-    // Inicializamos el atributo initialState
+    // Inicializamos el atributo initialStates
     private Map<Integer, StateModel> initializeInitialStates() {
         return this.copyStates(states);
     }
-
-
-    // Escuchamos mensajes
-    private void listenMessages() {
-        this.listenMessages(null);
+    // Inicializamos los vehículos con la ocupación de los tramos de calle de entrada
+    private Map<String, Queue<Integer>> initializeCurrentVehicles() {
+        Map<String, Queue<Integer>> currentVehicles = new HashMap();
+        // Inicializamos los vehículos del cruce
+            // -> Los vehículos que se encuentran en los tramos de calle de entrada
+            // -> Los vehículos que se encuentran en los tramos de calle de salida hacia fuera del sistema
+            // -> No se contabilizan los vehículos que se encuentran en los tramos de calle de salida hacia otro cruce (ya que corresponden al cruce destino)
+        this.initializeCurrentCrossroadVehicles(currentVehicles, roadStretches);
+        return currentVehicles;
     }
-
-    private void listenMessages(MessageTemplate messageTemplate) {
-        if (messageTemplate != null) {
-            this.receiveACLMessage(messageTemplate);
-        } else {
-            this.receiveACLMessage();
-        }
-        switch (incomingMessage.getPerformative()) {
-            case ACLMessage.INFORM -> { // Si la performativa es INFORM
-                // Comprobamos si están enviando vehículos al agente
-                if (incomingMessage.getContent().startsWith(MessageConstant.RECEIVED_ALL_TICK_REPORTS)) {
-                    System.out.println(this.getLocalName() + "::RECEIVED_REPORTS");// TODO: Logger
-                }
-            }
-            case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
-                // Finalizamos el agente
-                if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
-                    status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
-                } else if (incomingMessage.getContent().startsWith(MessageConstant.TRANSFERRED_VEHICLES)) {
-                    String transferredVehiclesMessage = incomingMessage.getContent().replace(MessageConstant.TRANSFERRED_VEHICLES + " ", "");
-                    String roadStretchName = transferredVehiclesMessage.split(" ")[0];
-                    String transferredVehicles = transferredVehiclesMessage.split(" ")[1];
-                    this.processVehiclesReceivedFromAnotherCrossroad(roadStretchName, transferredVehicles);
-                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), incomingMessage.getContent());
-                } else { // Manejamos mensajes no conocidos
-                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
-                }
-            }
-        }
-    }
-
-    private Integer getVehiclesToOut(RoadStretchModel roadStretchesOutModel) {
-        String roadStretchName = roadStretchesOutModel.getName();
-        Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue();
-        Integer roadStretchVehicles = currentVehicles.get(roadStretchName).size();
-        return roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles;
-    }
-
-    // Hacemos que el tráfico avance
-    private void moveTrafficForward() {
-        // Obtenemos los ids de los semáforos en verde
-        Set<Integer> greenTrafficLightsIds = this.getGreenTrafficLightsIds();
-
-        // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno
-        Map<String, Map<String, Double>> crossroadStretches = this.getCrossroadStretches(greenTrafficLightsIds);
-
-        // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo
-        Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
-
-        // Movemos los vehículos fuera del sistema de tráfico o a otros cruces
-        for (Map.Entry<String, RoadStretchModel> roadStretchOut : roadStretchesOut.entrySet()) {
-            String roadStretchOutName = roadStretchOut.getKey();
-            RoadStretchModel roadStretchOutModel = roadStretchOut.getValue();
-            // Integer roadStretchVehicles = currentVehicles.get(roadStretchOutName).size(); // TODO: Explicar porqué
-            Integer roadStretchVehicles = roadStretchOutModel.getVehicles();
-            Integer vehiclesOut = this.getVehiclesToOut(roadStretchOutModel);
-            roadStretchOutModel.setVehicles(roadStretchVehicles - vehiclesOut);
-            totalVehiclesOut += vehiclesOut;
-            if (roadStretchOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
-                totalVehiclesOutOfSystem += vehiclesOut;
-                for (int i = 0; i < vehiclesOut; i++) {
-                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
-                    Integer ticksToExit = currentTicks - inputTick;
-                    totalTicksToExit += ticksToExit;
-                    totalTicksToExitOutOfSystem += ticksToExit;
-                }
-            } else { // Si no es salida del sistema de tráfico | Enviamos vehículos a otros cruces
-                totalVehiclesOutToAnotherCrossroad += vehiclesOut;
-                JsonObject vehiclesTicksJsonObject = new JsonObject();
-                JsonArray jsonArray = new JsonArray();
-                for (int i = 0; i < vehiclesOut; i++) {
-                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
-                    jsonArray.add(inputTick);
-                    Integer ticksToExit = currentTicks - inputTick;
-                    totalTicksToExit += ticksToExit;
-                    totalTicksToExitToAnotherCrossroad += ticksToExit;
-                }
-                vehiclesTicksJsonObject.add("vehicles", jsonArray);
-                String vehiclesTicks = vehiclesTicksJsonObject.toString();
-
-                String transferredVehicles = MessageConstant.TRANSFERRED_VEHICLES + " " + roadStretchOutName + " " + vehiclesTicks;
-                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(), new AID(CrossroadConstant.AGENT_NAME + roadStretchOutModel.getCrossroadDestinationId(), AID.ISLOCALNAME), transferredVehicles);
-                MessageTemplate messageTemplate = MessageTemplate.MatchContent(transferredVehicles);
-                this.listenMessages(messageTemplate);
-                // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
-                // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
-            }
-        }
-
-        // Recibimos vehículos de otros cruces
-        for (int i = 0; i < roadStretchesInFromAnotherCrossroad.entrySet().size(); i++) {
-            this.listenMessages();
-        }
-
-        // Movemos los vehículos haciendo que crucen por un tramo de cruce
-        crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
-            roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
-                if (vehicles > 0) {
-                    Integer roadStretchOriginVehicles = currentVehicles.get(roadStretchOriginName).size();
-                    Integer roadStretchOriginToDestinationVehicles = roadStretchOriginVehicles < vehicles ? roadStretchOriginVehicles : vehicles;
-                    Integer roadStretchDestinationVehicles = roadStretchesOut.get(roadStretchDestinationName).getVehicles();
-                    Integer roadStretchDestinationMaxVehicles = roadStretchesOut.get(roadStretchDestinationName).getMaxVehicles();
-                    Integer roadStretchDestinationFreeSpaces = roadStretchDestinationMaxVehicles - roadStretchDestinationVehicles;
-                    Integer vehiclesToDestination = roadStretchDestinationFreeSpaces < roadStretchOriginToDestinationVehicles ? roadStretchDestinationFreeSpaces : roadStretchOriginToDestinationVehicles;
-                    roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchesIn.get(roadStretchOriginName).getVehicles() - vehiclesToDestination);
-                    roadStretchesOut.get(roadStretchDestinationName).setVehicles(roadStretchDestinationVehicles + vehiclesToDestination);
-                    for (int i = 0; i < vehiclesToDestination; i++) {
-                        currentVehicles.get(roadStretchDestinationName).add(currentVehicles.get(roadStretchOriginName).remove());
-                    }
-                }
-            });
-        });
-    }
-
-    // Obtenemos los ids de los semáforos en verde
-    private Set<Integer> getGreenTrafficLightsIds() {
-        Set<Integer> greenTrafficLightsIds = new HashSet<>();
-        trafficLightsColorsPerState.get(currentState).forEach((trafficLightId, color) -> {
-            if (TrafficLightConstant.GREEN.equals(color)) {
-                greenTrafficLightsIds.add(trafficLightId);
-            }
-        });
-        return greenTrafficLightsIds;
-    }
-
-    // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno para un conjunto de semáforos | (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
-    private Map<String, Map<String, Double>> getCrossroadStretches(Set<Integer> greenTrafficLightsIds) {
-        Map<String, Map<String, Double>> crossroadStretches = new HashMap<>(); // (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
-        greenTrafficLightsIds.forEach((trafficLightId) -> { // Para cada semáforo en verde
-            Map<String, Double> destinationRoadStretch = new HashMap<>(); // (roadStretchDestinationName -> carsPercentageFromOriginToDestination)
-            String originRoadStretchName = trafficLights.get(trafficLightId).getRoadStretchIn(); // Obtenemos la calle que regula, calle origen del cruce asociada al semáforo
-            statesTrafficLightsCrossroadStretches.get(currentState).get(trafficLightId).forEach((crossroadStretchName) -> { // Obtenemos el conjunto de cruces que habilita estando en verde
-                String destinationRoadStretchName = getCrossroadStretchDestination(crossroadStretchName); // Obtenemos la calle de destino
-                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de vehículos interesados a ir a ese destino
-                destinationRoadStretch.put(destinationRoadStretchName, carsPercentageFromOriginToDestination); // Añadimos el destino con el porcentaje asociado
-            });
-            crossroadStretches.put(originRoadStretchName, destinationRoadStretch); // Añadimos el origen con todos los destinos asociados para ese estado y semáforo
-        });
-        return crossroadStretches;
-    }
-
-    // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo | (originRoadStretchName -> destinationRoadStretchName -> vehiclesToDestination)
-    private Map<String, Map<String, Integer>> getCrossroadStretchesVehicles(Map<String, Map<String, Double>> crossroadStretches) {
-        Map<String, Map<String, Integer>> crossroadStretchesVehicles = new HashMap<>();
-        Random random = new Random();
-        crossroadStretches.forEach((originRoadStretchName, destinationRoadStretchNameAndPercentage) -> {
-            Integer originRoadStretchOutputVehicles = roadStretchesIn.get(originRoadStretchName).getOutput().intValue();
-            Integer originRoadStretchVehicles = roadStretchesIn.get(originRoadStretchName).getVehicles();
-            Integer vehicles = originRoadStretchVehicles < originRoadStretchOutputVehicles ? originRoadStretchVehicles : originRoadStretchOutputVehicles;
-            Integer percentagesSum = 0;
-            Map<String, Integer> destinationVehicles = new HashMap<>();
-            for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) {
-                percentagesSum += entry.getValue().intValue();
-                destinationVehicles.put(entry.getKey(), 0);
-            }
-            // Obtenemos a donde debe ir cada uno de los vehículos
+    // Inicializamos los vehículos del cruce
+        // Se inicializan como vehículos del cruce:
+        // -> vehículos que haya en los tramos de calle de entrada del cruce
+        // -> vehículos que haya en los tramos de calle de salida del sistema del cruce
+    private void initializeCurrentCrossroadVehicles(Map<String, Queue<Integer>> currentVehicles, Map<String, RoadStretchModel> roadStretches) {
+        for (Map.Entry<String, RoadStretchModel> roadStretch : roadStretches.entrySet()) { // Para cada tramo de calle
+            RoadStretchModel roadStretchModel = roadStretch.getValue();
+            Integer vehicles = !this.isInner(roadStretchModel) || this.AmIDestination(roadStretchModel) // Si no es interno o el cruce actual es destino
+                    ? roadStretch.getValue().getVehicles() : 0;
+            Queue<Integer> roadStretchQueue = new LinkedList<>();
             for (int i = 0; i < vehicles; i++) {
-                int randomNum = !percentagesSum.equals(0) ? 1 + random.nextInt(percentagesSum) : 0;
-                Integer previousPercentage = null;
-                Integer lowerIntervalValue = 0;
-                Integer upperIntervalValue = 0;
-                for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) { // Para cada calle de destino
-                    String destinationRoadStretchName = entry.getKey(); // Calle de destino
-                    Integer currentPercentage = entry.getValue().intValue(); // Porcentaje de vehículo que van hacia esa calle de destino
-                    Integer vehiclesToDestination = destinationVehicles.get(destinationRoadStretchName); // Vehículos que por ahora van hacia esa calle de destino
-                    lowerIntervalValue += previousPercentage == null ? 1 : previousPercentage;
-                    upperIntervalValue += currentPercentage;
-                    if (lowerIntervalValue <= randomNum && randomNum <= upperIntervalValue) {
-                        destinationVehicles.put(destinationRoadStretchName, vehiclesToDestination + 1); // Añadimos un vehículo para que vaya a la calle de destino
-                    }
-                    previousPercentage = currentPercentage;
-                }
+                roadStretchQueue.add(currentTicks);
             }
-            crossroadStretchesVehicles.put(originRoadStretchName, destinationVehicles);
-        });
-        return crossroadStretchesVehicles;
-    }
-
-    // Obtenemos el origen del cruce | Para la forma RSN-RSM obtenemos RSN // TODO: Revisar código repetido, también está en la clase Simulation
-    private String getCrossroadStretchOrigin(String crossroadStretchName) {
-        return crossroadStretchName.split("-")[0];
-    }
-
-    // Obtenemos el destino del cruce | Para la forma RSN-RSM obtenemos RSM
-    private String getCrossroadStretchDestination(String crossroadStretchName) {
-        return crossroadStretchName.split("-")[1];
-    }
-
-    // Añadimos tráfico a la simulación
-    private void addTraffic() {
-        roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
-            if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de calle de origen)
-                Double vehiclesPerSecond = roadStretchInModel.getInput(); // Vehículos por segundo que pueden entrar al tramo de calle
-                Double secondsPerVehicle = 1 / roadStretchInModel.getInput(); // Segundos que tarda un vehículo en poder entrar al tramo de calle
-
-                // Comprobamos si la simulación está en alguno de los modos pico y si está en alguna de las horas pico
-                if (this.isOnPeakModeAndInPeakHour()) { // Modificamos la cantidad de vehículos por hora pico
-                    vehiclesPerSecond *= CityConfigurationConstant.PEAK_FACTOR;
-                    secondsPerVehicle /= CityConfigurationConstant.PEAK_FACTOR;
-                }
-
-                // Comprobamos si se añaden uno o más vehículos por segundo al tramo de calle
-                Boolean oneOrMoreVehiclesPerSecond = secondsPerVehicle <= 1.0;
-                // Calculamos la cantidad de vehículos que quieren entrar al tramo de calle:
-                    // --> Si el número de vehículos por segundo es mayor o igual a uno se quiere añadir esa cantidad. Se añade en cada tick.
-                    // --> Si el número de vehículos por segundo es menor que uno se quiere añadir uno cada N número de segundos. Se añade cada determinados ticks.
-                Integer roadStretchInputVehicles = oneOrMoreVehiclesPerSecond ? vehiclesPerSecond.intValue() : 1; // Cantidad de vehículos que quieren entrar al tramo de calle
-                // Comprobamos si en este tick hay que añadir vehículos
-                if (this.isTimeToAddTraffic(secondsPerVehicle.intValue())) {
-                    this.addVehiclesIfPossible(roadStretchInputVehicles, roadStretchInModel);
-                }
-            }
-        });
-    }
-
-    // Comprobamos si estamos en alguno de los modos peak y si estamos en alguna de las horas peak
-    private Boolean isOnPeakModeAndInPeakHour() {
-        return  CityConfigurationConstant.SINGLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
-                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
-                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(14, 15);
-    }
-
-    // Comprobamos si el instante actual pertenece a la hora pico en intervalo cerrado
-    private Boolean isPeakHour(Integer startHour, Integer endHour) {
-        LocalTime currentHour = initialTime.plusSeconds(currentTicks);
-        LocalTime startPeakHour = LocalTime.of(startHour, 0, 0);
-        LocalTime endPeakHour = LocalTime.of(endHour, 0, 0);
-        return (currentHour.isAfter(startPeakHour) && currentHour.isBefore(endPeakHour)) || currentHour.equals(startPeakHour) || currentHour.equals(endPeakHour);
-    }
-
-    // Comprobamos si en el tick actual hay que añadir tráfico a la simulación
-    private Boolean isTimeToAddTraffic(Integer secondsPerVehicle) {
-        return secondsPerVehicle <= 1 || currentTicks % secondsPerVehicle == 0;
-    }
-
-    // Añadimos una cantidad de vehículos al tramo de calle si es posible en función de su ocupación y capacidad máxima
-    private void addVehiclesIfPossible(Integer roadStretchInputVehicles, RoadStretchModel roadStretchInModel) {
-        Integer roadStretchVehicles = roadStretchInModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
-        Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
-        Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres para vehículos que hay en el tramo de calle
-        Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles; // Cantidad de vehículos que se puede añadir al tramo de calle
-        // Si el tramo de calle no está lleno añadimos los vehículos
-        if (!this.isRoadStretchFull(roadStretchInModel)) {
-            roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
-            totalVehiclesIn += roadStretchIncomingVehicles;
-            totalVehiclesInFromOutOfSystem += roadStretchIncomingVehicles;
-            for (int i = 0; i < roadStretchIncomingVehicles; i++) {
-                currentVehicles.get(roadStretchInModel.getName()).add(currentTicks);
-            }
+            currentVehicles.put(roadStretch.getValue().getName(), roadStretchQueue);
         }
     }
-
-    // Comprobamos si una calle está llena de vehículos
-    private Boolean isRoadStretchFull(RoadStretchModel roadStretchModel) {
-        Integer roadStretchVehicles = roadStretchModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
-        Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
-        return !(roadStretchVehicles < roadStretchMaxVehicles);
+    // Evaluamos si el tramo de calle es interno al sistema
+    private Boolean isInner(RoadStretchModel roadStretchModel) {
+        return CommonConstant.INNER.equals(roadStretchModel.getType());
     }
-
-    // Cambiamos al siguiente estado del cruce
-    private void changeToTheNextState() {
-        this.changeToState(currentState == states.size() ? 1 : currentState + 1);
+    // Evaluamos si el cruce actual es destino del tramo de calle
+    private Boolean AmIDestination(RoadStretchModel roadStretchModel) {
+        return roadStretchModel.getCrossroadDestinationId().equals(crossroadId);
     }
-
-    // Cambiamos a cualquier estado del cruce
-    private void changeToState(Integer newState) {
-        // Comprobamos si el estado no es el actual y si existe
-        if (!currentState.equals(newState) && states.containsKey(newState)) {
-            Map<Integer, String> trafficLightsColorsCurrentState = trafficLightsColorsPerState.get(currentState);
-            Map<Integer, String> trafficLightsColorsNewState = trafficLightsColorsPerState.get(newState);
-            Set<Integer> changingTrafficLights = new HashSet<>();
-            // Obtenemos los ids de los semáforos que cambian de color de un estado a otro
-            trafficLightsColorsCurrentState.forEach((trafficLightId, color) -> {
-                if (!color.equals(trafficLightsColorsNewState.get(trafficLightId))) {
-                    changingTrafficLights.add(trafficLightId);
-                }
-            });
-            // Enviamos mensajes de cambio de color a los semáforos que cambian
-            changingTrafficLights.forEach((trafficLightId) ->
-                    this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
-                            new AID(TrafficLightConstant.AGENT_NAME + trafficLightId, AID.ISLOCALNAME),
-                            MessageConstant.CHANGE_LIGHT));
-            // Recibimos mensajes de información de cambio de color de los semáforos que cambian
-            for (int i = 0; i < changingTrafficLights.size(); i++) {
-                this.listenMessages();
-            }
-
-            Logger.info(ActionConstant.STATE_CHANGED, this.getClass().getSimpleName(), this.getLocalName(), "||Previous::" + currentState + "||New::" + newState);
-            currentState = newState;
-            stateTicks = 0;
-        }
-    }
-
-    private Boolean isNewCycle() {
-        return currentState.equals(1);
-    }
-
-    // Evaluamos si la simulación ha llegado a su fin
-    private Boolean hasSimulationFinished() {
-        return currentTicks > totalTicks;
-    }
-
+        // Ciclo de vida
     // Escribimos el estado actual del cruce
     private String writeCurrentState() {
         String state = "" +
@@ -688,7 +406,6 @@ public class CrossroadAgent extends MURATBaseAgent {
 
         return state;
     }
-
     // Almacenamos el estado actual de ocupación de los tramos de calle del cruce
     private void storeCurrentState() {
         Map<String, Double> roadStretchOccupation = new HashMap<>();
@@ -699,7 +416,6 @@ public class CrossroadAgent extends MURATBaseAgent {
         totalVehiclesOutOfSystemPerTick.put(currentTicks, totalVehiclesOutOfSystem);
         totalVehiclesOutToAnotherCrossroadPerTick.put(currentTicks, totalVehiclesOutToAnotherCrossroad);
     }
-
     // Informamos al agente ciudad del estado actual del cruce
     private void reportCurrentState() {
         // Construimos el objeto JSON con los datos de la simulación
@@ -710,7 +426,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         // Añadimos información sobre la ocupación de cada uno de los tramos de calle
         tickRoadStretchOccupation.get(currentTicks).forEach((roadStretchName, occupation) -> tickDataJsonObject.add(roadStretchName, String.format("%.2f", occupation)));
         // Añadimos información del total de vehículos en el cruce
-        tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_TOTAL), String.format("%s", this.calculateTotalVehicles()));
+        tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_TOTAL), String.format("%s", this.getTotalVehicles()));
         // Añadimos información de los vehículos que han entrado en el cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_IN), String.format("%s", totalVehiclesIn));
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_IN_FROM_OUT_OF_SYSTEM), String.format("%s", totalVehiclesInFromOutOfSystem));
@@ -720,17 +436,17 @@ public class CrossroadAgent extends MURATBaseAgent {
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_OF_SYSTEM), String.format("%s", totalVehiclesOutOfSystem));
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesOutToAnotherCrossroad));
         // Añadimos información sobre el tiempo que los vehículos han tardado en salir del cruce
-            // Media de ticks de los vehículos que salen del cruce durante la última muestra
+        // Media de ticks de los vehículos que salen del cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutPerTick)));
-            // Media de ticks acumulada de los vehículos que salen del cruce
+        // Media de ticks acumulada de los vehículos que salen del cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT), String.format("%s", totalVehiclesOut == 0 ? 0 : totalTicksToExit / totalVehiclesOut));
-            // Media de ticks de los vehículos que salen del sistema por el cruce durante la última muestra
+        // Media de ticks de los vehículos que salen del sistema por el cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_OF_SYSTEM), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutOfSystemPerTick)));
-            // Media de ticks acumulada de los vehículos que salen del sistema por el cruce
+        // Media de ticks acumulada de los vehículos que salen del sistema por el cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_OF_SYSTEM), String.format("%s", totalVehiclesOutOfSystem == 0 ? 0 : totalTicksToExitOutOfSystem / totalVehiclesOutOfSystem));
-            // Media de ticks de los vehículos que salen desde el cruce hacia otro cruce durante la última muestra
+        // Media de ticks de los vehículos que salen desde el cruce hacia otro cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutToAnotherCrossroadPerTick)));
-            // Media de ticks acumulada de los vehículos que salen desde el cruce hacia otro cruce
+        // Media de ticks acumulada de los vehículos que salen desde el cruce hacia otro cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesOutToAnotherCrossroad == 0 ? 0 : totalTicksToExitToAnotherCrossroad / totalVehiclesOutToAnotherCrossroad));
         reportJsonObject.add(currentTicks.toString(), tickDataJsonObject);
 
@@ -742,14 +458,142 @@ public class CrossroadAgent extends MURATBaseAgent {
         MessageTemplate messageTemplate = MessageTemplate.MatchContent(MessageConstant.RECEIVED_ALL_TICK_REPORTS);
         this.blockingReceive(messageTemplate);
     }
-
-    private Double getTicksAveragePerSample(Integer currentTick, Map<Integer, Integer> totalVehiclesPerTick) {
-        Integer previousSampleTick = Math.max((currentTick - sampleTime), 0);
-        Double previousVehicles = Double.valueOf(totalVehiclesPerTick.get(previousSampleTick));
-        Double currentVehicles = Double.valueOf(totalVehiclesPerTick.get(currentTick));
-        return sampleTime != 0 ? (currentVehicles - previousVehicles) / sampleTime : 0;
+    // Evaluamos si la simulación ha llegado a su fin
+    private Boolean hasSimulationFinished() {
+        return currentTicks > totalTicks;
     }
+    // Cambiamos al siguiente estado del cruce
+    private void changeToTheNextState() {
+        this.changeToState(currentState == states.size() ? 1 : currentState + 1);
+    }
+    // Cambiamos a cualquier estado del cruce
+    private void changeToState(Integer newState) {
+        // Comprobamos si el estado no es el actual y si existe
+        if (!currentState.equals(newState) && states.containsKey(newState)) {
+            Map<Integer, String> trafficLightsColorsCurrentState = trafficLightsColorsPerState.get(currentState);
+            Map<Integer, String> trafficLightsColorsNewState = trafficLightsColorsPerState.get(newState);
+            Set<Integer> changingTrafficLights = new HashSet<>();
+            // Obtenemos los ids de los semáforos que cambian de color de un estado a otro
+            trafficLightsColorsCurrentState.forEach((trafficLightId, color) -> {
+                if (!color.equals(trafficLightsColorsNewState.get(trafficLightId))) {
+                    changingTrafficLights.add(trafficLightId);
+                }
+            });
+            // Enviamos mensajes de cambio de color a los semáforos que cambian
+            changingTrafficLights.forEach((trafficLightId) ->
+                    this.sendACLMessage(ACLMessage.REQUEST, this.getAID(),
+                            new AID(TrafficLightConstant.AGENT_NAME + trafficLightId, AID.ISLOCALNAME),
+                            MessageConstant.CHANGE_LIGHT));
+            // Recibimos mensajes de información de cambio de color de los semáforos que cambian
+            for (int i = 0; i < changingTrafficLights.size(); i++) {
+                this.listenMessages();
+            }
 
+            Logger.info(ActionConstant.STATE_CHANGED, this.getClass().getSimpleName(), this.getLocalName(), "||Previous::" + currentState + "||New::" + newState);
+            currentState = newState;
+            stateTicks = 0;
+        }
+    }
+    // Hacemos que el tráfico avance
+    private void moveTrafficForward() {
+        // Obtenemos los ids de los semáforos en verde
+        Set<Integer> greenTrafficLightsIds = this.getGreenTrafficLightsIds();
+
+        // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno
+        Map<String, Map<String, Double>> crossroadStretches = this.getCrossroadStretches(greenTrafficLightsIds);
+
+        // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo
+        Map<String, Map<String, Integer>> crossroadStretchesVehicles = this.getCrossroadStretchesVehicles(crossroadStretches); // (origen -> destino -> número de vehículos)
+
+        // Movemos los vehículos fuera del sistema de tráfico o a otros cruces
+        for (Map.Entry<String, RoadStretchModel> roadStretchOut : roadStretchesOut.entrySet()) {
+            String roadStretchOutName = roadStretchOut.getKey();
+            RoadStretchModel roadStretchOutModel = roadStretchOut.getValue();
+            Integer roadStretchVehicles = roadStretchOutModel.getVehicles();
+            Integer vehiclesOut = this.getVehiclesToOut(roadStretchOutModel);
+            roadStretchOutModel.setVehicles(roadStretchVehicles - vehiclesOut);
+            totalVehiclesOut += vehiclesOut;
+            if (roadStretchOutModel.getCrossroadDestinationId() == null) { // Si es salida del sistema de tráfico
+                totalVehiclesOutOfSystem += vehiclesOut;
+                for (int i = 0; i < vehiclesOut; i++) {
+                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
+                    Integer ticksToExit = currentTicks - inputTick;
+                    totalTicksToExit += ticksToExit;
+                    totalTicksToExitOutOfSystem += ticksToExit;
+                }
+            } else { // Si no es salida del sistema de tráfico | Enviamos vehículos a otros cruces
+                totalVehiclesOutToAnotherCrossroad += vehiclesOut;
+                JsonObject vehiclesTicksJsonObject = new JsonObject();
+                JsonArray jsonArray = new JsonArray();
+                for (int i = 0; i < vehiclesOut; i++) {
+                    Integer inputTick = currentVehicles.get(roadStretchOutName).remove();
+                    jsonArray.add(inputTick);
+                    Integer ticksToExit = currentTicks - inputTick;
+                    totalTicksToExit += ticksToExit;
+                    totalTicksToExitToAnotherCrossroad += ticksToExit;
+                }
+                vehiclesTicksJsonObject.add("vehicles", jsonArray);
+                String vehiclesTicks = vehiclesTicksJsonObject.toString();
+
+                String transferredVehicles = MessageConstant.TRANSFERRED_VEHICLES + " " + roadStretchOutName + " " + vehiclesTicks;
+                this.sendACLMessage(ACLMessage.REQUEST, this.getAID(), new AID(CrossroadConstant.AGENT_NAME + roadStretchOutModel.getCrossroadDestinationId(), AID.ISLOCALNAME), transferredVehicles);
+                MessageTemplate messageTemplate = MessageTemplate.MatchContent(transferredVehicles);
+                this.listenMessages(messageTemplate);
+                // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
+                // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
+            }
+        }
+
+        // Recibimos vehículos de otros cruces
+        for (int i = 0; i < roadStretchesInFromAnotherCrossroad.entrySet().size(); i++) {
+            this.listenMessages();
+        }
+
+        // Movemos los vehículos haciendo que crucen por un tramo de cruce
+        crossroadStretchesVehicles.forEach((roadStretchOriginName, roadStretchesDestination) -> {
+            roadStretchesDestination.forEach((roadStretchDestinationName, vehicles) -> {
+                if (vehicles > 0) {
+                    Integer roadStretchOriginVehicles = currentVehicles.get(roadStretchOriginName).size();
+                    Integer roadStretchOriginToDestinationVehicles = roadStretchOriginVehicles < vehicles ? roadStretchOriginVehicles : vehicles;
+                    Integer roadStretchDestinationVehicles = roadStretchesOut.get(roadStretchDestinationName).getVehicles();
+                    Integer roadStretchDestinationMaxVehicles = roadStretchesOut.get(roadStretchDestinationName).getMaxVehicles();
+                    Integer roadStretchDestinationFreeSpaces = roadStretchDestinationMaxVehicles - roadStretchDestinationVehicles;
+                    Integer vehiclesToDestination = roadStretchDestinationFreeSpaces < roadStretchOriginToDestinationVehicles ? roadStretchDestinationFreeSpaces : roadStretchOriginToDestinationVehicles;
+                    roadStretchesIn.get(roadStretchOriginName).setVehicles(roadStretchesIn.get(roadStretchOriginName).getVehicles() - vehiclesToDestination);
+                    roadStretchesOut.get(roadStretchDestinationName).setVehicles(roadStretchDestinationVehicles + vehiclesToDestination);
+                    for (int i = 0; i < vehiclesToDestination; i++) {
+                        currentVehicles.get(roadStretchDestinationName).add(currentVehicles.get(roadStretchOriginName).remove());
+                    }
+                }
+            });
+        });
+    }
+    // Añadimos tráfico a la simulación
+    private void addTraffic() {
+        roadStretchesIn.forEach((roadStretchInName, roadStretchInModel) -> {
+            if (roadStretchInModel.getCrossroadOriginId() == null) { // Si es un tramo de calle de entrada al sistema (no tiene tramo de calle de origen)
+                Double vehiclesPerSecond = roadStretchInModel.getInput(); // Vehículos por segundo que pueden entrar al tramo de calle
+                Double secondsPerVehicle = 1 / roadStretchInModel.getInput(); // Segundos que tarda un vehículo en poder entrar al tramo de calle
+
+                // Comprobamos si la simulación está en alguno de los modos pico y si está en alguna de las horas pico
+                if (this.isOnPeakModeAndInPeakHour()) { // Modificamos la cantidad de vehículos por hora pico
+                    vehiclesPerSecond *= CityConfigurationConstant.PEAK_FACTOR;
+                    secondsPerVehicle /= CityConfigurationConstant.PEAK_FACTOR;
+                }
+
+                // Comprobamos si se añaden uno o más vehículos por segundo al tramo de calle
+                Boolean oneOrMoreVehiclesPerSecond = secondsPerVehicle <= 1.0;
+                // Calculamos la cantidad de vehículos que quieren entrar al tramo de calle:
+                // --> Si el número de vehículos por segundo es mayor o igual a uno se quiere añadir esa cantidad. Se añade en cada tick.
+                // --> Si el número de vehículos por segundo es menor que uno se quiere añadir uno cada N número de segundos. Se añade cada determinados ticks.
+                Integer roadStretchInputVehicles = oneOrMoreVehiclesPerSecond ? vehiclesPerSecond.intValue() : 1; // Cantidad de vehículos que quieren entrar al tramo de calle
+                // Comprobamos si en este tick hay que añadir vehículos
+                if (this.isTimeToAddTraffic(secondsPerVehicle.intValue())) {
+                    this.addVehiclesIfPossible(roadStretchInputVehicles, roadStretchInModel);
+                }
+            }
+        });
+    }
     // Mejoramos los tiempos de los estados
     private void optimizeStateTimes(Boolean active) {
         if (active) {
@@ -800,11 +644,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                     // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es menor o igual que el máximo, pasar a valorar las puntuaciones
                     // --> Si el tiempo actual del estado candidato más lo que se va a aumentar es mayor que el máximo, pasar al siguiente candidato a mejor estado
                     if (this.isPossibleToIncreaseStateTime(bestStateCandidate)) {
-                        Double currentScore = 0.0; // TODO: Refactorizar si es posible, extraer código a una función (ref 1.0)
-                        for (Map.Entry<String, Double> stateRoadStretchesCongestionScores : statesRoadStretchesCongestionScores.get(bestStateCandidate).entrySet()) {
-                            Double congestionScore = stateRoadStretchesCongestionScores.getValue();
-                            currentScore += congestionScore;
-                        }
+                        Double currentScore = this.getStateCongestionScore(statesRoadStretchesCongestionScores, bestStateCandidate); // Obtenemos la puntuación de congestión para el candidato a mejor estado
                         if (bestStateScore < currentScore) {
                             bestState = bestStateCandidate;
                             bestStateScore = currentScore;
@@ -819,11 +659,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                     // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es mayor o igual que el mínimo, pasar a valorar las puntuaciones
                     // --> Si el tiempo actual del estado candidato menos lo que se va a disminuir es menor que el mínimo, pasar al siguiente candidato a peor estado
                     if(this.isPossibleToReduceStateTime(worstStateCandidate)) {
-                        Double currentScore = 0.0;
-                        for (Map.Entry<String, Double> stateRoadStretchesCongestionScores : statesRoadStretchesCongestionScores.get(worstStateCandidate).entrySet()) {
-                            Double congestionScore = stateRoadStretchesCongestionScores.getValue();
-                            currentScore += congestionScore;
-                        }
+                        Double currentScore = this.getStateCongestionScore(statesRoadStretchesCongestionScores, worstStateCandidate); // Obtenemos la puntuación de congestión para el candidato a peor estado
                         if (worstStateScore > currentScore) {
                             worstState = worstStateCandidate;
                             worstStateScore = currentScore;
@@ -836,7 +672,178 @@ public class CrossroadAgent extends MURATBaseAgent {
             }
         }
     }
-
+        // Comunicación
+    // Escuchamos mensajes
+    private void listenMessages() {
+        this.listenMessages(null);
+    }
+    // Escuchamos mensajes
+    private void listenMessages(MessageTemplate messageTemplate) {
+        if (messageTemplate != null) {
+            this.receiveACLMessage(messageTemplate);
+        } else {
+            this.receiveACLMessage();
+        }
+        switch (incomingMessage.getPerformative()) {
+            case ACLMessage.INFORM -> { // Si la performativa es INFORM
+                // Recibimos mensaje del agente ciudad diciendo que se han recibido todos los reports para el tick actual
+                if (incomingMessage.getContent().startsWith(MessageConstant.RECEIVED_ALL_TICK_REPORTS)) {
+                    Logger.info(MessageConstant.RECEIVED_ALL_TICK_REPORTS, this.getClass().getSimpleName(), this.getLocalName());
+                }
+            }
+            case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
+                // Finalizamos el agente
+                if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) { // Si el mensaje es de finalización
+                    status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
+                } else if (incomingMessage.getContent().startsWith(MessageConstant.TRANSFERRED_VEHICLES)) { // Si el mensaje es de transferencia de vehículos
+                    String transferredVehiclesMessage = incomingMessage.getContent().replace(MessageConstant.TRANSFERRED_VEHICLES + " ", "");
+                    String roadStretchName = transferredVehiclesMessage.split(" ")[0]; // Obtenemos el tramo de calle
+                    String transferredVehicles = transferredVehiclesMessage.split(" ")[1]; // Obtenemos los vehículos transferidos
+                    this.processVehiclesReceivedFromAnotherCrossroad(roadStretchName, transferredVehicles); // Procesamos los vehículos transferidos
+                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), incomingMessage.getContent()); // Informamos de que hemos transferido los vehículos
+                } else { // Manejamos mensajes no conocidos
+                    Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
+                }
+            }
+            default -> Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
+        }
+    }
+    // Obtenemos el modelo de mensajes del agente semáforo
+    private MessageTemplate getTrafficLightMessageTemplate() {
+        MessageTemplate messageTemplate1 = MessageTemplate.MatchContent(MessageConstant.CHANGE_LIGHT);
+        MessageTemplate messageTemplate2 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_RED);
+        MessageTemplate messageTemplate3 = MessageTemplate.MatchContent(MessageConstant.SET_LIGHT_TO_GREEN);
+        MessageTemplate messageTemplateOr = MessageTemplate.or(messageTemplate1, messageTemplate2);
+        MessageTemplate trafficLightMessageTemplate = MessageTemplate.or(messageTemplateOr, messageTemplate3);
+        return trafficLightMessageTemplate;
+    }
+        // Movimiento del tráfico hacia delante
+    // Obtenemos los ids de los semáforos en verde
+    private Set<Integer> getGreenTrafficLightsIds() {
+        Set<Integer> greenTrafficLightsIds = new HashSet<>();
+        trafficLightsColorsPerState.get(currentState).forEach((trafficLightId, color) -> {
+            if (TrafficLightConstant.GREEN.equals(color)) {
+                greenTrafficLightsIds.add(trafficLightId);
+            }
+        });
+        return greenTrafficLightsIds;
+    }
+    // Obtenemos los cruces abiertos (calle origen y calle destino) y el porcentaje de vehículos interesados en ir por cada uno para un conjunto de semáforos | (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
+    private Map<String, Map<String, Double>> getCrossroadStretches(Set<Integer> greenTrafficLightsIds) {
+        Map<String, Map<String, Double>> crossroadStretches = new HashMap<>(); // (roadStretchOriginName -> roadStretchDestinationName -> carsPercentageFromOriginToDestination)
+        greenTrafficLightsIds.forEach((trafficLightId) -> { // Para cada semáforo en verde
+            Map<String, Double> destinationRoadStretch = new HashMap<>(); // (roadStretchDestinationName -> carsPercentageFromOriginToDestination)
+            String originRoadStretchName = trafficLights.get(trafficLightId).getRoadStretchIn(); // Obtenemos la calle que regula, calle origen del cruce asociada al semáforo
+            statesTrafficLightsCrossroadStretches.get(currentState).get(trafficLightId).forEach((crossroadStretchName) -> { // Obtenemos el conjunto de cruces que habilita estando en verde
+                String destinationRoadStretchName = Helper.getCrossroadStretchDestination(crossroadStretchName); // Obtenemos el tramo de calle de destino
+                Double carsPercentageFromOriginToDestination = crossroadsStretches.get(crossroadStretchName).getCarsPercentageFromOriginToDestination(); // Obtenemos el porcentaje de vehículos interesados a ir a ese destino
+                destinationRoadStretch.put(destinationRoadStretchName, carsPercentageFromOriginToDestination); // Añadimos el destino con el porcentaje asociado
+            });
+            crossroadStretches.put(originRoadStretchName, destinationRoadStretch); // Añadimos el origen con todos los destinos asociados para ese estado y semáforo
+        });
+        return crossroadStretches;
+    }
+    // Obtenemos los vehículos que van a cruzar y hacia qué calle va cada vehículo | (originRoadStretchName -> destinationRoadStretchName -> vehiclesToDestination)
+    private Map<String, Map<String, Integer>> getCrossroadStretchesVehicles(Map<String, Map<String, Double>> crossroadStretches) {
+        Map<String, Map<String, Integer>> crossroadStretchesVehicles = new HashMap<>();
+        Random random = new Random();
+        crossroadStretches.forEach((originRoadStretchName, destinationRoadStretchNameAndPercentage) -> {
+            Integer originRoadStretchOutputVehicles = roadStretchesIn.get(originRoadStretchName).getOutput().intValue();
+            Integer originRoadStretchVehicles = roadStretchesIn.get(originRoadStretchName).getVehicles();
+            Integer vehicles = originRoadStretchVehicles < originRoadStretchOutputVehicles ? originRoadStretchVehicles : originRoadStretchOutputVehicles;
+            Integer percentagesSum = 0;
+            Map<String, Integer> destinationVehicles = new HashMap<>();
+            for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) {
+                percentagesSum += entry.getValue().intValue();
+                destinationVehicles.put(entry.getKey(), 0);
+            }
+            // Obtenemos a donde debe ir cada uno de los vehículos
+            for (int i = 0; i < vehicles; i++) {
+                int randomNum = !percentagesSum.equals(0) ? 1 + random.nextInt(percentagesSum) : 0;
+                Integer previousPercentage = null;
+                Integer lowerIntervalValue = 0;
+                Integer upperIntervalValue = 0;
+                for (var entry : destinationRoadStretchNameAndPercentage.entrySet()) { // Para cada calle de destino
+                    String destinationRoadStretchName = entry.getKey(); // Calle de destino
+                    Integer currentPercentage = entry.getValue().intValue(); // Porcentaje de vehículo que van hacia esa calle de destino
+                    Integer vehiclesToDestination = destinationVehicles.get(destinationRoadStretchName); // Vehículos que por ahora van hacia esa calle de destino
+                    lowerIntervalValue += previousPercentage == null ? 1 : previousPercentage;
+                    upperIntervalValue += currentPercentage;
+                    if (lowerIntervalValue <= randomNum && randomNum <= upperIntervalValue) {
+                        destinationVehicles.put(destinationRoadStretchName, vehiclesToDestination + 1); // Añadimos un vehículo para que vaya a la calle de destino
+                    }
+                    previousPercentage = currentPercentage;
+                }
+            }
+            crossroadStretchesVehicles.put(originRoadStretchName, destinationVehicles);
+        });
+        return crossroadStretchesVehicles;
+    }
+    // Obtenemos el número de vehículos que salen del tramo de calle
+    private Integer getVehiclesToOut(RoadStretchModel roadStretchesOutModel) {
+        String roadStretchName = roadStretchesOutModel.getName();
+        Integer roadStretchOutgoingVehicles = roadStretchesOutModel.getOutput().intValue(); // Obtenemos el número de vehículos que como máximo pueden salir
+        Integer roadStretchVehicles = currentVehicles.get(roadStretchName).size(); // Obtenemos el número de vehículos disponibles en el cruce para el tramo de calle
+        return roadStretchVehicles < roadStretchOutgoingVehicles ? roadStretchVehicles : roadStretchOutgoingVehicles; // Obtenemos el número de vehículos que salen del tramo de calle
+    }
+    // Procesamos los vehículos recibimos desde otro cruce
+    private void processVehiclesReceivedFromAnotherCrossroad(String roadStretchName, String transferredVehicles) {
+        JsonObject transferredVehiclesJsonObject = Json.parse(transferredVehicles).asObject();
+        JsonArray transferredVehiclesJsonArray = transferredVehiclesJsonObject.get("vehicles").asArray();
+        Integer numberOfTransferredVehicles = 0;
+        for(JsonValue transferredVehicleJsonValue : transferredVehiclesJsonArray) {
+            Integer vehicleTick = transferredVehicleJsonValue.asInt();
+            currentVehicles.get(roadStretchName).add(vehicleTick); // Añadimos los vehículos al cruce
+            numberOfTransferredVehicles++;
+        }
+        RoadStretchModel roadStretchModel = roadStretchesIn.get(roadStretchName);
+        Integer previousNumberOfVehicles = roadStretchModel.getVehicles();
+        Integer numberOfVehicles = previousNumberOfVehicles + numberOfTransferredVehicles; // Calculamos el número de vehículos que hay en el tramo de calle
+        roadStretchModel.setVehicles(numberOfVehicles); // Actualizamos el total de vehículos en el tramo de calle
+        totalVehiclesIn += numberOfTransferredVehicles; // Aumentamos el total de vehículos que han entrado al cruce
+        totalVehiclesInFromAnotherCrossroad += numberOfTransferredVehicles; // Aumentamos el total de vehículos que han entrado al cruce desde otro cruce
+    }
+        // Adición de tráfico a la simulación
+    // Comprobamos si estamos en alguno de los modos peak y si estamos en alguna de las horas peak
+    private Boolean isOnPeakModeAndInPeakHour() {
+        return  CityConfigurationConstant.SINGLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
+                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(8, 9) ||
+                CityConfigurationConstant.DOUBLE_PEAK.equals(cityInputMode) && isPeakHour(14, 15);
+    }
+    // Comprobamos si el instante actual pertenece a la hora pico en intervalo cerrado
+    private Boolean isPeakHour(Integer startHour, Integer endHour) {
+        LocalTime currentHour = initialTime.plusSeconds(currentTicks);
+        LocalTime startPeakHour = LocalTime.of(startHour, 0, 0);
+        LocalTime endPeakHour = LocalTime.of(endHour, 0, 0);
+        return (currentHour.isAfter(startPeakHour) && currentHour.isBefore(endPeakHour)) || currentHour.equals(startPeakHour) || currentHour.equals(endPeakHour);
+    }
+    // Comprobamos si en el tick actual hay que añadir tráfico a la simulación
+    private Boolean isTimeToAddTraffic(Integer secondsPerVehicle) {
+        return secondsPerVehicle <= 1 || currentTicks % secondsPerVehicle == 0;
+    }
+    // Añadimos una cantidad de vehículos al tramo de calle si es posible en función de su ocupación y capacidad máxima
+    private void addVehiclesIfPossible(Integer roadStretchInputVehicles, RoadStretchModel roadStretchInModel) {
+        Integer roadStretchVehicles = roadStretchInModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
+        Integer roadStretchMaxVehicles = roadStretchInModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
+        Integer roadStretchFreeSpaces = roadStretchMaxVehicles - roadStretchVehicles; // Cantidad de espacios libres para vehículos que hay en el tramo de calle
+        Integer roadStretchIncomingVehicles = roadStretchFreeSpaces < roadStretchInputVehicles ? roadStretchFreeSpaces : roadStretchInputVehicles; // Cantidad de vehículos que se puede añadir al tramo de calle
+        // Si el tramo de calle no está lleno añadimos los vehículos
+        if (!this.isRoadStretchFull(roadStretchInModel)) {
+            roadStretchInModel.setVehicles(roadStretchVehicles + roadStretchIncomingVehicles);
+            totalVehiclesIn += roadStretchIncomingVehicles;
+            totalVehiclesInFromOutOfSystem += roadStretchIncomingVehicles;
+            for (int i = 0; i < roadStretchIncomingVehicles; i++) {
+                currentVehicles.get(roadStretchInModel.getName()).add(currentTicks);
+            }
+        }
+    }
+    // Comprobamos si una calle está llena de vehículos
+    private Boolean isRoadStretchFull(RoadStretchModel roadStretchModel) {
+        Integer roadStretchVehicles = roadStretchModel.getVehicles(); // Cantidad de vehículos que hay en el tramo de calle
+        Integer roadStretchMaxVehicles = roadStretchModel.getMaxVehicles(); // Cantidad máxima de vehículos que puede haber en el tramo de calle
+        return !(roadStretchVehicles < roadStretchMaxVehicles);
+    }
+        // Optimización de tiempos de estados
     // Obtenemos los tramos de calle de entrada congestionados y sus puntuaciones de congestión asociadas
     private Map<String, Double> getCongestedRoadStretchesIn() {
         Map<String, Double> congestedRoadStretchesIn = new HashMap<>();
@@ -850,9 +857,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         });
         return congestedRoadStretchesIn;
     }
-
+    // Obtenemos para cada estado los tramos de calle de entrada congestionados que habilita y sus puntuaciones de congestión asociadas | (stateId -> roadStretchOrigin -> congestionScore)
     private Map<Integer, Map<String, Double>> getStatesRoadStretchesCongestionScores(Map<String, Double> congestedRoadStretchesIn) {
-        Map<Integer, Map<String, Double>> statesRoadStretchesCongestionScores = new HashMap<>(); // | (stateId -> roadStretchOrigin -> congestionScore)
+        Map<Integer, Map<String, Double>> statesRoadStretchesCongestionScores = new HashMap<>();
         statesCrossroadStretches.forEach((stateId, roadStretches) -> {
             Map<String, Double> roadStretchCongestionScore = new HashMap<>();
             for (Map.Entry<String, Set<String>> roadStretch : roadStretches.entrySet()) {
@@ -865,7 +872,7 @@ public class CrossroadAgent extends MURATBaseAgent {
         });
         return statesRoadStretchesCongestionScores;
     }
-
+    // Ajustamos los tiempos de los estados
     private Boolean adjustStateTimes(Integer bestState, Integer worstState) {
         Boolean adjustedStateTimes = false;
         if (bestState != -1 && worstState != -1) {
@@ -886,22 +893,32 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
         return adjustedStateTimes;
     }
-
-    private Boolean isPossibleToIncreaseStateTime(Integer stateId) { // TODO: Pensar si quitar o añadir limitación
+    // Comprobamos si es posible incrementar el tiempo del estado stateId
+    private Boolean isPossibleToIncreaseStateTime(Integer stateId) {
         Integer currentStateTime = states.get(stateId).getDurationTime();
         Integer futureStateTime = currentStateTime + CrossroadConstant.STATE_TIME_VARIATION;
         Integer maxStateTime;
         return true;
     }
-
+    // Comprobamos si es posible reducir el tiempo del estado stateId
     private Boolean isPossibleToReduceStateTime(Integer stateId) {
         Integer currentStateTime = states.get(stateId).getDurationTime();
         Integer futureStateTime = currentStateTime - CrossroadConstant.STATE_TIME_VARIATION;
         Integer minStateTime = crossroadModel.getMinimumStateTime();
         return futureStateTime >= minStateTime;
     }
-
-    private Integer calculateTotalVehicles() {
+    // Obtenemos para un estado la suma de las puntuaciones de congestión de los tramos de calle desde los que pueden salir vehículos en relación con los tramos cruce habilitados en el estado
+    private Double getStateCongestionScore(Map<Integer, Map<String, Double>> statesRoadStretchesCongestionScores, Integer candidate) {
+        Double stateCongestionScore = 0.0;
+        for (Map.Entry<String, Double> stateRoadStretchesCongestionScores : statesRoadStretchesCongestionScores.get(candidate).entrySet()) {
+            Double congestionScore = stateRoadStretchesCongestionScores.getValue();
+            stateCongestionScore += congestionScore;
+        }
+        return stateCongestionScore;
+    }
+        // Cálculo de valores para el informe
+    // Obtenemos el total de vehículos que hay en el cruce
+    private Integer getTotalVehicles() {
         Integer totalVehicles = 0;
         for (Map.Entry<String, Queue<Integer>> entry : currentVehicles.entrySet()) {
             Integer vehicles = entry.getValue().size();
@@ -909,7 +926,15 @@ public class CrossroadAgent extends MURATBaseAgent {
         }
         return totalVehicles;
     }
-
+    // Obtenemos la media de ticks que han tardado en salir los vehículos que han salido durante el intervalo correspondiente al tiempo de muestreo
+    private Double getTicksAveragePerSample(Integer currentTick, Map<Integer, Integer> totalVehiclesPerTick) {
+        Integer previousSampleTick = Math.max((currentTick - sampleTime), 0);
+        Double previousVehicles = Double.valueOf(totalVehiclesPerTick.get(previousSampleTick));
+        Double currentVehicles = Double.valueOf(totalVehiclesPerTick.get(currentTick));
+        return sampleTime != 0 ? (currentVehicles - previousVehicles) / sampleTime : 0;
+    }
+        // Otros
+    // Copiamos un mapa de estados a otra instancia con la misma información
     private Map<Integer, StateModel> copyStates(Map<Integer, StateModel> states) {
         Map<Integer, StateModel> copyStates = new HashMap<>();
         states.forEach((stateId, stateModel) -> {
@@ -918,31 +943,9 @@ public class CrossroadAgent extends MURATBaseAgent {
         });
         return copyStates;
     }
-
-    private void processVehiclesReceivedFromAnotherCrossroad(String roadStretchName, String transferredVehicles) {
-        JsonObject transferredVehiclesJsonObject = Json.parse(transferredVehicles).asObject();
-        JsonArray transferredVehiclesJsonArray = transferredVehiclesJsonObject.get("vehicles").asArray();
-        Integer numberOfTransferredVehicles = 0;
-        for(JsonValue transferredVehicleJsonValue : transferredVehiclesJsonArray) {
-            Integer vehicleTick = transferredVehicleJsonValue.asInt();
-            currentVehicles.get(roadStretchName).add(vehicleTick);
-            numberOfTransferredVehicles++;
-        }
-        RoadStretchModel roadStretchModel = roadStretchesIn.get(roadStretchName);
-        Integer previousNumberOfVehicles = roadStretchModel.getVehicles();
-        Integer numberOfVehicles = previousNumberOfVehicles + numberOfTransferredVehicles;
-        roadStretchModel.setVehicles(numberOfVehicles);
-        totalVehiclesIn += numberOfTransferredVehicles;
-        totalVehiclesInFromAnotherCrossroad += numberOfTransferredVehicles;
-    }
-
+    // Obtenemos el nombre del agente junto al nombre del atributo, formando el nombre de la columna
     private String getColumnName(String name) {
         return this.getLocalName() + name;
-    }
-
-    // TODO: Refactorizar o eliminar (ref 1.0)
-    private Integer getBestState(Integer bestStateCandidates, Double bestStateScore) {
-        return 0;
     }
     //**************************************************//
 }

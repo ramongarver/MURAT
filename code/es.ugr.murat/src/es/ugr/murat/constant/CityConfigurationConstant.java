@@ -10,7 +10,6 @@ public class CityConfigurationConstant {
     public static final String LINEAR = "LINEAR";
     public static final String SINGLE_PEAK = "SINGLE PEAK";
     public static final String DOUBLE_PEAK = "DOUBLE PEAK";
-    public static final String TRIPLE_PEAK = "TRIPLE PEAK"; // TODO: Valorar si dejar o no
 
     public static final Double PEAK_FACTOR = 40.0;
 

@@ -82,14 +82,6 @@ public class TrafficLightAgent extends MURATBaseAgent {
     private void listenMessages() {
         this.receiveACLMessage();
         switch (incomingMessage.getPerformative()) {
-            case ACLMessage.INFORM -> { // Si la performativa es INFORM
-                // Saludamos al cruce TODO: No usado
-                if (MessageConstant.HELLO.equals(incomingMessage.getContent())) {
-                    Logger.info(ActionConstant.HELLO_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
-                    this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), MessageConstant.HELLO);
-                    Logger.info(ActionConstant.HELLO_SENT, this.getClass().getSimpleName(), this.getLocalName());
-                }
-            }
             case ACLMessage.REQUEST -> { // Si la performativa es REQUEST
                 // Cambiamos el color del semáforo
                 if (MessageConstant.CHANGE_LIGHT.equals(incomingMessage.getContent())) {
@@ -115,6 +107,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
                     Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
                 }
             }
+            default -> Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
         }
     }
     //**************************************************//
