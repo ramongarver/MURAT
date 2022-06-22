@@ -1,36 +1,86 @@
-\chapter{TODO: CapOne}
+\chapter{Introducción, motivaciones, objetivos y organización}
+    \label{chap:one}
+
 \section{Introducción}
 
 \section{Motivaciones}
+\epigraph{Elige un trabajo que te guste y no tendrás que trabajar ni un día de tu vida.}{\textit{Confucio}}
+
+A Confucio se le atribuye uno de los proverbios chinos más conocidos en relación al trabajo. En mi opinión, no le falta razón. Con esta filosofía se realizó la elección de este tema como trabajo de fin de grado.
+
+Mi primer contacto con el desarrollo de agentes fue en la asignatura \textit{Inteligencia Artificial}, estudiada durante el curso académico 2019/2020. Durante el transcurso de esta asignatura aprendí de forma superficial determinados aspectos sobre la disciplina del desarrollo de agentes en informática.
+
+No obstante, no fue hasta el pasado semestre mientras cursaba la asignatura \textit{Desarrollo Basado en Agentes} cuando decidí seleccionar el tema del proyecto. Esta asignatura me aportó una visión mucho más global sobre este tipo de sistemas software. Además de la definición básica de agente como sistema autónomo situado en un entorno capaz de actuar para conseguir unos objetivos, aprendí cosas tan importantes como la comunicación, cooperación, coordinación y negociación entre agentes. Me fascinó y me fascina que, aunque hablemos de software, la comunicación y la interacción entre agentes estén intrínsecamente relacionadas con diferentes modelos sociales reales. Todo esto, combinado con un excelente planteamiento de la asignatura, por parte del profesor y tutor de TFG, Luis Castillo Vidal, basado en la consecución de objetivos y en la libertad para marcar objetivos propios en base a los diferentes retos me ha permitido adquirir un interés especial por todo lo relacionado con el mundo de los agentes.
+    
+En definitiva, ¿qué mejor forma de afrontar un proyecto que trabajando sobre un tema en el que estoy interesado e intentando resolver un problema que afecta a una gran parte de la población?
 
 \section{Objetivos}
+El sistema \acrshort{murat} pretende aumentar el flujo de tráfico que es capaz de pasar por un ciudad gracias a la optimización de los tiempos de los estados de los diferentes cruces de la ciudad.
+
+La consecución del objetivo principal implica la consecución de varios objetivos específicos. Estos objetivos específicos se plantean de forma incremental y permiten ir logrando avances para situaciones de cada vez mayor complejidad.
+
+En primer lugar y, con el objetivo de lograr una primera aproximación válida que cumpla el objetivo principal del proyecto se debe:
+\begin{itemize}
+    \item \textbf{Representar un modelo de cruce simple}. En esta intersección se cruzan dos calles: el flujo de tráfico de la primera de ellas pasa por el cruce en sentido oeste a este; y el flujo de tráfico de la segunda de ellas de ellas pasa por el cruce en sentido note a sur. Cada una de las mencionadas calles está regulada por un semáforo de entrada al cruce.
+    \item \textbf{Simular el flujo de tráfico} en un \textbf{cruce simple} durante un intervalo determinado de tiempo.
+    \item \textbf{Aumentar la cantidad de vehículos} que puede procesar un cruce aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
+\end{itemize}
+
+Posteriormente, con el objetivo de aumentar la complejidad pudiendo representar topologías de cruce más complejas y variaciones en la simulación se debe:
+\begin{itemize}
+    \item \textbf{Representar un modelo de cruce estándar}. En esta intersección se cruzan dos calles, sin embargo, a diferencia del modelo de cruce simple, el cruce estándar posee dos carriles por calle, uno en cada sentido: el flujo de tráfico de la primera de ellas pasa por el cruce en sentido oeste a este y este a oeste; y el flujo de tráfico de la segunda de ellas de ellas pasa por el cruce en sentido norte a sur y sur a norte.
+    \item \textbf{Simular el flujo de tráfico} durante un intervalo determinado de tiempo en un \textbf{cruce estándar} y \textbf{aumentar la cantidad de vehículos} que procesa el cruce aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
+    \item \textbf{Establecer intervalos pico} donde se añade un número más alto de vehículos a la simulación. Estos intervalos representan las horas de mayor concurrencia de vehículos en la realidad.
+\end{itemize}
+
+Más tarde, con el objetivo de extender la simulación a más de un cruce, se debe:
+\begin{itemize}
+    \item \textbf{Representar un modelo de ciudad con varios cruces}. Una ciudad contiene varios cruces conectados entre sí.
+    \item \textbf{Simular el flujo de tráfico} durante un intervalo determinado de tiempo en una \textbf{ciudad} y \textbf{aumentar la cantidad de vehículos} que procesa la ciudad aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
+\end{itemize}
+
+Como última aproximación, con el objetivo de representar una situación lo más real posible se debe:
+\begin{itemize}
+    \item \textbf{Representar un modelo de ciudad real}. Este modelo de ciudad está basado en las intersecciones que se producen entre la Avenida de Andalucía, la Avenida Doctor Olóriz y la Avenida Andaluces.
+    \item \textbf{Simular el flujo de tráfico} durante un intervalo determinado de tiempo en el \textbf{escenario real} y \textbf{aumentar la cantidad de vehículos} que procesa la ciudad aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
+\end{itemize}
+
+Además, independientemente del grado de complejidad alcanzando, al final de la elaboración del proyecto se debe:
+\begin{itemize}
+    \item \textbf{Demostrar} a través de un gráfico que el \textbf{número de vehículos} que han pasado por el escenario de simulación es \textbf{mayor} si se aplica la \textbf{política de tiempos variables} que si se aplica la política de tiempos fijos.
+\end{itemize}
 
 \section{¿Cómo está organizado este TFG?}
-Este trabajo de fin de grado está organizado en x partes, y capítulos e información adicional como: una portada, una autorización para la ubicación del mismo en la biblioteca, una autorización para su defensa, un resumen en español junto a sus palabras clave, un resumen en inglés junto a sus palabras clave, unos agradecimientos, un índice general, un índice de figuras, un índice de tablas y una bibliografía.
+Este trabajo de fin de grado está organizado en 5 partes, 9 capítulos e información adicional como: una portada, una autorización para la ubicación del mismo en la biblioteca, una autorización para su defensa, un resumen en español junto a sus palabras clave, un resumen en inglés junto a sus palabras clave, unos agradecimientos, un índice general, un índice de figuras, una bibliografía, un glosario de términos y un glosario de acrónimos.
 
 Las partes y capítulos están organizados de la siguiente forma:
 \begin{itemize}
-    \item Parte I: Motivación e introducción. 
+    \item \textbf{Parte I}: Motivación e introducción. 
     \begin{itemize}
-        \item Capítulo 1: Blablabla.
+        \item \textit{\autoref{chap:one}}: Introducción, motivaciones, objetivos y organización. Cubre la puesta en contexto genérica del proyecto junto a las motivaciones existentes para la realización del mismo, además de los objetivos a conseguir y la organización de la memoria. 
     \end{itemize}
 
-    \item Parte II: Lorem ipsum.
+    \item \textbf{\autoref{part:two}}: Estado del arte.
     \begin{itemize}
-        \item Capítulo 2: Blablabla.
-        \item Capítulo 3: Blablabla.
-        \item Capítulo 4: Blablabla.
+        \item \textit{\autoref{chap:two}}: Sistemas para el control del tráfico. Una mirada a la historia. Explica la evolución de los sistemas para el control del tráfico con una perspectiva histórica, desde hace décadas hasta la actualidad, en relación a lo que se quiere conseguir con este proyecto y a las aportaciones científicas actuales más populares.
     \end{itemize}
 
-    \item Parte III: Lorem ipsum.
+    \item \textbf{\autoref{part:three}}: Construcción del sistema \acrshort{murat}.
     \begin{itemize}
-        \item Capítulo 5: Blablabla.
-        \item Capítulo 6: Blablabla.
-        \item Capítulo 7: Blablabla.
+        \item \textit{\autoref{chap:three}}: Planificación y presupuesto. Expone la metodología seguida para la realización del proyecto junto a las herramientas utilizadas para cada una de las tareas del mismo. Además, presenta la planificación temporal del proyecto en sus diferentes fases y el presupuesto asociado en relación a la elaboración del mismo.
+        \item \textit{\autoref{chap:four}}: Análisis y diseño. Ilustra los fundamentos del diseño basado en agentes necesarios para el proyecto, plantea en detalle el problema a resolver y explica el diseño realizado para la solución del mismo.  
+        \item \textit{\autoref{chap:five}}: Implementación. Ofrece detalles y explicaciones sobre la implementación del sistema \acrshort{murat}, explica las diferentes partes de las que está constituido el software de simulación.
     \end{itemize}
 
-    \item Parte IV: Lorem ipsum.
+    \item \textbf{\autoref{part:four}}: Simulación de tráfico y resultados.
     \begin{itemize}
-        \item Capítulo 8: Blablabla.
+        \item \textit{\autoref{chap:six}}: Escenarios. Ilustra los diferentes conjuntos de cruces y configuraciones para cada simulación sobre los que se van a realizar las pruebas.
+        \item \textit{\autoref{chap:seven}}: Análisis de los resultados obtenidos. Expone y explica de forma analítica diferentes datos obtenidos de simulaciones. También, muestra los resultados del seguimiento del proyecto.  
+    \end{itemize}
+    
+    \item \textbf{\autoref{part:five}}: Conclusiones y vías futuras.
+    \begin{itemize}
+        \item \textit{\autoref{chap:eight}}: Conclusiones. Repasa los objetivos específicos planteados en el proyecto, uno por uno, resumiendo cómo se han abordado y cuáles son sus grados de cumplimiento.
+        \item \textit{\autoref{chap:nine}}: Vías futuras. Expone puntos que no son parte de los objetivos iniciales del proyecto y que se podrían realizar en un futuro con el objetivo de mejorar el trabajo.
     \end{itemize}
 \end{itemize}
