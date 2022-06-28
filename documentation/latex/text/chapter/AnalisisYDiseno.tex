@@ -4,16 +4,60 @@
 \section{¿Qué es un agente?}
 \subsection{Estructura de un agente}
 \subsection{Comunicación entre agentes}
-\Gls{fipa} \acrfull{kiss} 
 
-\cite{texbook}
-\cite{atlassian}
-\cite{ramon}
 
 \newpage
 \section{Planteamiento del problema}
+    \label{section:problem}
+La construcción de un sistema multiagente para el control del tráfico es algo complicado, sin embargo, no es necesario abordar todos las casuísticas que se plantean con respecto a este tema desde un principio. Con las tecnologías que se tienen en el momento, es seguro que existen un gran cantidad de formas diferentes de abordar este reto.
 
+Intentar construir el sistema completo, desde un inicio y con toda su complejidad, podría ser abrumador. Por ello, es necesario dividir el problema en pequeñas partes que ir abordando de forma individual hasta la consecución de los objetivos planteados. Esta es la filosofía a seguir.
+
+Además de dividir en pequeñas tareas, es necesario definir un conjunto de simplificaciones para la construcción del sistema. Son las siguientes:
+\begin{itemize}
+    \item \textbf{Modelos simple y estándar de cruce}. Desde un modelo de cruce simple se evolucionará a un modelo de cruce estándar. Se modelarán cruces cuya representación sea posible en base al modelo planteado para los tipos de cruce mencionados. Hay que tener muy en cuenta que el sistema construido debe ser escalable, es decir, su arquitectura debe permitir representar diferentes escenarios de forma eficaz, desde los más triviales hasta los más complejos.
+    \item \textbf{Tiempo de ciclo fijo}. El tiempo que dura el paso entre todos los estados de un cruce es fijo, es decir, el tiempo que pasa desde que un cruce inicia en un estado hasta que vuelve a ese mismo estado habiendo pasado por todos los demás.
+    \item \textbf{Los semáforos únicamente regulan la entrada al cruce, no la salida}. No existen semáforos que no estén dedicados exclusivamente a regular la entrada de tráfico a un cruce.
+    \item \textbf{Los vehículos tardan un instante en pasar el cruce}. Los vehículos tardan un segundo en ir desde un tramo de calle origen hasta otro tramo de calle destino a través del cruce, es decir, tardan un segundo en recorrer un tramo de cruce.
+    \item \textbf{No existen aparcamientos, es decir, todo vehículo que entra al sistema sale de él}. En el sistema entran y salen vehículos. Ningún vehículo puede permanecer en el sistema al final de una simulación a no ser que no le haya dado tiempo a ir desde la entrada hasta una salida.
+    \item \textbf{No existen peatones ni ningún tipo de infraestructura asociada a los mismos}. Los peatones no se contemplan en el sistema \acrshort{murat}, para el sistema no existen.
+\end{itemize}
+
+Teniendo en cuenta las simplificaciones planteadas, se va a obtener la información funcional necesaria para construir el sistema a través de diferentes preguntas.
+
+Una pregunta muy importante a responder es: \textit{¿qué se quiere representar?} Simplificando, se quieren representar dos cosas:
+\begin{itemize}
+    \item el \textbf{lugar físico} (el mundo) por donde circulan los vehículos: calles, cruces y semáforos;
+    \item y el propio \textbf{tráfico}, el cual debe respetar sus propias reglas y las del lugar físico.
+\end{itemize}
+
+A partir de lo anterior, en relación al primer punto, surge la siguiente pregunta: \textit{¿qué es una ciudad, escenario, lugar físico o mundo para el sistema?} Es un conjunto de uno o más cruces que pueden ser: entradas al sistema, lugares internos al sistema y/o salidas del sistema. El modelo de ciudad es un grafo dirigido donde los nodos son las calles y las aristas las conexiones entre las mismas. En este momento aparece otra pregunta: \textit{¿qué elementos forman una ciudad y sus cruces, es decir, el entorno?} El entorno está formado por los siguientes elementos:
+\begin{itemize}
+    \item \textbf{Ciudad/Escenario}: Es el entorno del sistema.
+    \begin{itemize}
+        \item \textbf{Tramo de calle}: Es cada una de las partes de una calle en la que los vehículos circulan en un sentido. Puede estar constituido por uno o varios carriles. Sirve de entrada al sistema, de conexión entre dos cruces o de salida del sistema. En la figura \ref{fig:cruce_simple_topologia} son tramos de calle RS1, RS2, RS3 y RS4. Si el tramo de calle es de entrada al cruce está regulado por un semáforo. En la figura \ref{fig:cruce_simple_topologia} están regulados por semáforos los tramos de calle RS2, por TL1, y RS3, por TL2. \newline 
+        Un tramo de calle tiene una longitud y un número de carriles. Con estos valores y una constante que define la longitud de los vehículos se puede calcular la capacidad máxima de vehículos de los tramos de calle. El porcentaje de ocupación de un tramo de calle es la relación existente entre la cantidad de vehículos del tramo de calle y la capacidad máxima de vehículos de ese tramo de calle.
+        \item \textbf{Cruce}: Es una intersección de varias calles. Al cruce llegan tramos de calle y del cruce salen tramos de calle. Contiene semáforos que habilitan o no tramos de cruce para pasar de un lado a otro del cruce. En el sistema es un agente.
+        \begin{itemize}
+            \item \textbf{Semáforo}: Regula el tráfico de vehículos proveniente de un tramo de calle de entrada a un cruce. En el sistema es un agente.
+            \item \textbf{Tramo de cruce}: Es cada uno de los recorridos que puede hacer un vehículo para pasar un cruce. Está definido por un tramo de calle de origen y un tramo de calle destino. En la figura \ref{fig:cruce_simple_estado_1} es un tramo de calle RS3-RS1.
+            \item \textbf{Estado}: Define los colores de los semáforos y habilita determinados tramos de cruce. En las figuras \ref{fig:cruce_simple_estado_1} y \ref{fig:cruce_simple_estado_2} se pueden ver dos estados para el mismo cruce. 
+        \end{itemize}
+    \end{itemize}
+\end{itemize}
+
+En este punto, en relación a la segunda cuestión, surge otra pregunta: \textit{¿cómo es añadido el tráfico al sistema?} El tráfico se añade a los tramos de calle que no tengan cruce de origen y tengan cruce de destino, es decir, los vehículos entran por los nodos raíz. Para saber el instante en el que añadir tráfico al sistema se utiliza una constante denominada ratio de entrada de tráfico al sistema. Si el tráfico entra, el tráfico tiene que salir, entonces: \textit{¿cómo sale el tráfico del sistema?} El tráfico sale del sistema por los tramos de calle que tienen cruce de origen pero no tienen cruce de destino, es decir, los vehículos salen por los nodos hoja. \newline
+En relación al tráfico, también, es necesario preguntarse: \textit{¿qué vehículos van hacia qué tramo de calle en el cruce?} A priori, como no se sabe, se puede partir de un modelo equiprobable. En función de la capacidad de los tramos de calle girarán más o menos vehículos (si un tramo de calle tiene más capacidad se supone que es porque van a entrar más vehículos). En relación a lo anterior se establece la ratio de desvío, que es el porcentaje de vehículos que giran en los cruces a cada tramo de calle.
+
+Una vez se ha explicado todo lo relacionado a la representación de la realidad en el sistema, es necesario hablar sobre lo que se quiere conseguir con \acrshort{murat}. El principal objetivo es aumentar el número de vehículos que pueden procesarse en una simulación, pero \textit{¿cómo se puede conseguir el objetivo principal del sistema?} Optimizando los tiempos de los estados de los cruces, beneficiando aquellos que permitan el paso de vehículos desde tramos de calle saturados. Es decir, aumentando el tiempo de los estados mencionados y disminuyendo el tiempo de los estados cuyos tramos de calle tengan menos ocupación, respetando el límite mínimo de tiempo de duración de un estado.
+
+\newpage
 \subsection{Cruce simple}
+Lo que se puede apreciar en la figura \ref{fig:cruce_simple_topologia} es lo que se ha denominado como cruce simple. En este cruce se produce una intersección vial de dos calles: 
+\begin{itemize}
+    \item el flujo de tráfico de la primera de ellas, regulado por el semáforo \textbf{TL2} y representada por \textbf{RS3} y \textbf{RS1}, pasa por el cruce en sentido oeste a este; 
+    \item y el flujo de tráfico de la segunda de ellas, regulado por el semáforo \textbf{TL1} y representada por \textbf{RS2} y \textbf{RS4} pasa por el cruce en sentido norte a sur.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Topologia.pdf}
@@ -21,6 +65,14 @@
     \label{fig:cruce_simple_topologia}
 \end{figure}
 
+\newpage
+El cruce simple posee dos estados diferentes en función del color de los semáforos, los cuales habilitan o bloquean el tránsito de vehículos desde unos tramos de calle hasta otros.
+
+El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_simple_estado_1}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS4}, es decir, habilita los tramos de cruce \textbf{RS2-RS1} y \textbf{RS2-RS4};
+    \item y bloquea el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS4}, es decir, bloquea los tramos de cruce \textbf{RS3-RS1} y \textbf{RS3-RS4}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado1.pdf}
@@ -28,6 +80,11 @@
     \label{fig:cruce_simple_estado_1}
 \end{figure}
 
+El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_simple_estado_2}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS4}, es decir, habilita los tramos de cruce \textbf{RS3-RS1} y \textbf{RS3-RS4};
+    \item y bloquea el tránsito de vehículos desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS4}, es decir, bloquea los tramos de cruce \textbf{RS2-RS1} y \textbf{RS2-RS4}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado2.pdf}
@@ -37,6 +94,12 @@
 
 \newpage
 \subsection{Cruce estándar}
+Lo que se puede apreciar en la figura \ref{fig:cruce_estandar_topologia} es lo que se ha denominado como cruce estándar. Como se puede observar, el cruce estándar posee una mayor complejidad, teniendo tramos de calle con flujo de coches en diferentes sentidos y varios carriles. En este cruce, también, se produce una intersección vial de dos calles: 
+\begin{itemize}
+    \item el flujo de tráfico de la primera de ellas, regulado por los semáforos \textbf{TL1} (entrada al cruce desde el este por \textbf{RS1}) y \textbf{TL3} (entrada al cruce desde el oeste por \textbf{RS5}); 
+    \item y el flujo de tráfico de la segunda de ellas, regulado por los semáforos \textbf{TL2} (entrada al cruce desde el norte por \textbf{RS3}) y \textbf{TL4} (entrada al cruce desde el sur por \textbf{RS7}).
+\end{itemize}
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Topologia.pdf}
@@ -44,6 +107,13 @@
     \label{fig:cruce_estandar_topologia}
 \end{figure}
 
+El cruce estándar posee seis estados diferentes en función del color de los semáforos, los cuales habilitan o bloquean el tránsito de vehículos desde unos tramos de calle hasta otros.
+
+El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_1}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta los tramos de calle \textbf{RS4} y \textbf{RS6} y desde el tramo de calle \textbf{RS7} hasta los tramos de calle \textbf{RS2} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS3-RS4}, \textbf{RS3-RS6}, \textbf{RS7-RS2} y \textbf{RS7-RS8};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1} y \textbf{RS5}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado1.pdf}
@@ -51,6 +121,12 @@
     \label{fig:cruce_estandar_estado_1}
 \end{figure}
 
+\newpage
+El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_2}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta los tramos de calle \textbf{RS4}, \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS3-RS4}, \textbf{RS3-RS6} y \textbf{RS3-RS8};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS5} y \textbf{RS7}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado2.pdf}
@@ -58,6 +134,12 @@
     \label{fig:cruce_estandar_estado_2}
 \end{figure}
 
+\newpage
+El \textbf{tercer estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_3}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS7} hasta los tramos de calle \textbf{RS2}, \textbf{RS4} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS7-RS2}, \textbf{RS7-RS4} y \textbf{RS7-RS8};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS3} y \textbf{RS5}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado3.pdf}
@@ -65,6 +147,12 @@
     \label{fig:cruce_estandar_estado_3}
 \end{figure}
 
+\newpage
+El \textbf{cuarto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_4}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS1} hasta los tramos de calle \textbf{RS2} y \textbf{RS4} y desde el tramo de calle \textbf{RS5} hasta los tramos de calle \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS1-RS2}, \textbf{RS1-RS4}, \textbf{RS5-RS6} y \textbf{RS5-RS8};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS3} y \textbf{RS7}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado4.pdf}
@@ -72,6 +160,12 @@
     \label{fig:cruce_estandar_estado_4}
 \end{figure}
 
+\newpage
+El \textbf{quinto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_5}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS1} hasta los tramos de calle \textbf{RS2}, \textbf{RS4} y \textbf{RS6}, es decir, habilita los tramos de cruce \textbf{RS1-RS2}, \textbf{RS1-RS4} y \textbf{RS1-RS6};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS3}, \textbf{RS5} y \textbf{RS7}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado5.pdf}
@@ -79,6 +173,12 @@
     \label{fig:cruce_estandar_estado_5}
 \end{figure}
 
+\newpage
+El \textbf{sexto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_6}:
+\begin{itemize}
+    \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS5} hasta los tramos de calle \textbf{RS2}, \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS5-RS2}, \textbf{RS5-RS6} y \textbf{RS5-RS8};
+    \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS3} y \textbf{RS7}.
+\end{itemize}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado6.pdf}
@@ -88,7 +188,7 @@
 
 \newpage
 \section{Sociedad de agentes}
-El sistema MURAT es una construcción software basada en una arquitectura multiagente. Esto implica que existen uno o más tipos de agentes con roles definidos y propósitos específicos. Asimismo, existen uno o más agentes de cada tipo. Estos agentes, para el cumplimientos de sus objetivos, se encuentran organizados en una sociedad.
+El sistema MURAT es una construcción software basada en una arquitectura multiagente. Esto implica que existen uno o más tipos de agentes con roles definidos y propósitos específicos. Asimismo, existen uno o más agentes de cada tipo. Estos agentes, para el cumplimiento de sus objetivos, se encuentran organizados en una sociedad.
 
 // TODO: Introducir sociedad de agentes
 
@@ -100,7 +200,7 @@ El sistema MURAT es una construcción software basada en una arquitectura multia
 \end{figure}
 
 \subsection{Agente Semáforo (TrafficLight)}
-El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Su capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
+El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Sus capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
 
 \subsubsection{Estados del agente}
 \begin{enumerate}
@@ -110,7 +210,7 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
         \item Se obtienen los datos del tramo de calle que regula.
     \end{itemize}
     Una vez se ha cargado la información el semáforo cambia al siguiente estado.
-    \item \textbf{Escuchar al cruce} \footnotesize(LISTEN\_CROSSROAD)\normalsize: Estado en el que se escuchan mensajes para recibir mensajes provenientes del cruce. Mientras que el agente se encuentra en este estado permanece en una escucha continua de mensajes.
+    \item \textbf{Escuchar al cruce} \footnotesize(LISTEN\_CROSSROAD)\normalsize: Estado en el que se escuchan mensajes para recibir mensajes provenientes del cruce. Mientras que el agente se encuentra en este estado permanece en una escucha continua de mensajes. Hay que tener en cuenta que el semáforo no puede saber por sí mismo si el estado que posee es correcto en relación al resto de sistema, únicamente lo puede saber cuando se lo dice el cruce.
     \begin{itemize}
         \item Espera la inicialización por parte del agente \textit{Cruce}.
         \item TODO...
@@ -296,11 +396,41 @@ Atributos:
 \textbf{Clave primaria}: \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{state\_id}, \textit{traffic\_light\_id}\}. \\
 \textbf{Claves foráneas}: Simples ya añadidas, \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{state\_id}\} de (\textit{state}), \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{traffic\_light\_id}\} de (\textit{traffic\_light}) y \newline \{\textit{crossroad\_stretch\_name}\} de (\textit{crossroad\_stretch.name}).
 
-\subsection{Representación en JSON}
-La representación se realiza a través de un objeto de tipo JSON basado en las tablas anteriormente descritas.
+\subsection{Representación en \acrshort{json}}
+Finalmente, se ha decidido almacenar la información de los escenarios en un objeto de tipo \acrshort{json} basado en las tablas anteriormente descritas. 
 
-//TODO: explicar
-\lstinputlisting[language=json, linerange={1-10}]{text/data/CITY1.json}
+\subsubsection{Análisis del almacenamiento del escenario correspondiente al cruce simple en un objeto de tipo JSON}
+En primer lugar, se puede observar información relativa a la ciudad (o escenario): su nombre y una breve descripción.
+\lstinputlisting[language=json, linerange={1-5}]{text/data/CITY1.json}
+
+Inmediatamente después, se definen las configuraciones de la ciudad. En este caso existen dos configuraciones. 
+Para la misma ciudad se pueden realizar varias simulaciones que empiecen y/o terminen a horas diferentes, que tengan diferentes flujos de entrada de vehículos al sistema, cuyos cruces tengan estados iniciales diferentes, etc. Aquí es donde se especifica ese tipo de información.
+\lstinputlisting[language=json, linerange={6-41}, firstnumber=6]{text/data/CITY1.json}
+
+Tras la información de la ciudad y de las posibles configuraciones de la misma, se añaden los diferentes elementos que la constituyen: En primer lugar, los cruces \textit({crossroad}), que incluyen sus semáforos (\textit{trafficLight}), estados (\textit{state}) y tramos de cruce (\textit{crossroadStretch}); y posteriormente los tramos de calle \textit({roadStretch}), que son globales a toda la ciudad.
+
+Aquí, se puede observar la información genérica de un cruce: id, nombre, tiempo mínimo que debe durar un estado y el tiempo de ciclo de estados.
+\lstinputlisting[language=json, linerange={42-47}, firstnumber=42]{text/data/CITY1.json}
+
+Además de la información anteriormente mencionada, un cruce posee información sobre sus semáforos, cada semáforo posee información sobre el semáforo en cuestión y la referencia el tramo de calle de entrada que regula.
+\lstinputlisting[language=json, linerange={48-59}, firstnumber=48]{text/data/CITY1.json}
+
+Un cruce, a su vez, posee información sobre sus estados. Cada estado tiene un duración determinada y establece una combinación de colores para los semáforos del cruce. Estos semáforos pueden o no habilitar, en función del color de las luces, determinados tramos de cruce a través de los cuales pueden pasar los vehículos. Es necesario especificar los tramos de cruce habilitados por estado porque un semáforo en verde no tiene porqué habilitar siempre los mismos tramos de cruce, en función del estado se habilitarán unos u otros.
+\lstinputlisting[language=json, linerange={60-109}, firstnumber=60]{text/data/CITY1.json}
+
+Complementando a la información anterior, un cruce incluye información sobre sus tramos de cruce. Aquí, se específica qué porcentaje del total de vehículos de cada tramo de calle de origen está interesado en ir por ese tramo de cruce. Lógicamente, la suma de los porcentajes de los tramos de cruce que comparten tramo de calle de origen debe ser 100.
+\lstinputlisting[language=json, linerange={110-137}, firstnumber=110]{text/data/CITY1.json}
+
+Por último, pero no menos importante, se define la información de los tramos de calle. Estos datos están al nivel de los cruces en una ciudad, es decir, son globales a la misma. Los tramos de calle establecen las entradas y salidas del sistema y la conexiones entre diferentes cruces. Además, son los lugares físicos en los que están los vehículos.
+\lstinputlisting[language=json, linerange={138-176}, firstnumber=138]{text/data/CITY1.json}
 
 \subsection{Carga de datos en la inicialización}
-El sistema MURAT se sirve en su arranque de información que representa a una ciudad junto a sus calles, cruces y semáforos, además de la información de su configuración, variables relativas a la simulación de tráfico en la ciudad. Los datos cargados en el sistema para realizar una simulación de tráfico se indexan por el identificador de ciudad e identificador de configuración a través de la selección de uno de los archivos \textit{.json} existentes y una de sus configuraciones.
+El sistema MURAT se sirve en su arranque de datos que representan a una ciudad junto a sus calles, cruces y semáforos, además de la información de su configuración, que son datos relativos a la simulación de tráfico en la ciudad. Los datos cargados en el sistema para realizar una simulación de tráfico se indexan por el identificador de ciudad e identificador de configuración a través de la selección de uno de los archivos \textit{.json} existentes y una de sus configuraciones.
+
+Si bien es cierto que el inicio del diseño se ha comenzado a realizar a través de un modelo relacional de tablas, finalmente se  ha optado por realizar la carga de información a través de archivos \textit{.json}. Pero, \textit{¿por qué?} Existen algunos puntos que explican el haber seleccionado la segunda opción y no la primera:
+\begin{itemize}
+    \item \textbf{Facilidad en el uso}. La sintaxis de un objeto de tipo JSON es sencilla de entender, lo cual implica facilidad en la construcción y almacenamiento de datos estructurados en base a este tipo de objeto.
+    \item \textbf{Flexibilidad}. El poder modificar la estructura sin tener que hacer consultas complejas agiliza el desarrollo en etapas tempranas del proyecto.
+    \item \textbf{Sin persistencia}. En \acrshort{murat} no existe la persistencia de información. Se quiere hacer una simulación que cargue unos datos al inicio, pero no se quiere mantener el estado del sistema para realizar otra simulación en base a ese estado.
+    \item \textbf{Arquitectura sencilla}. Prescindir de un servicio de base de datos si no es necesario agiliza el desarrollo del proyecto y, por ende, la consecución de los objetivos planteados. Para lo que se quiere lograr no es necesario añadir tanta complejidad al sistema. 
+\end{itemize}

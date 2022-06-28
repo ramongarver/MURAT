@@ -2,9 +2,21 @@
     \label{chap:one}
 
 \section{Introducción}
+No hay más que echar la vista atrás, hacer memoria y darse cuenta de que el volumen de tráfico en las ciudades ha mantenido una tendencia \textit{in crescendo} durante las últimas décadas. 
+
+La modernización de la sociedad ligada a la mejora de las infraestructuras y a la globalización ha provocado el aumento de la cantidad de vehículos que posee la población. Debido a lo anterior, se ha incrementado la densidad de tráfico de forma generalizada. 
+
+Desde hace algún tiempo, los núcleos urbanos que poseen una densidad de tráfico relativamente alta se han visto afectados por diferentes problemas: aumento de accidentes, situaciones de congestión de tráfico recurrentes, aumento de la contaminación, disminución de la seguridad vial y otros muchos más que ponen en jaque al modelo de respeto a la población y su entorno. Con el objetivo de abordar y solucionar estos problemas se han establecido diversas estrategias y propuestas como, por ejemplo: promocionar el transporte público; promocionar los medios de transporte sostenibles, como el patinete eléctrico o la bicicleta; adaptar la velocidad de los vehículos; promover la compartición de vehículos; o establecer políticas de tráfico que mejoren el tránsito de vehículos, mediante el uso de un sistema para el control del tráfico.
+
+Concretamente, este trabajo se desarrolla en relación a la última de las anteriores mencionadas propuestas.
+
+En multitud de ciudades se realiza una mala gestión del tráfico, hecho que produce situaciones de congestión. Estas situaciones se traducen en esperas en los semáforos y largas colas de vehículos que aumentan el tiempo medio necesario para llegar desde un punto hasta otro la ciudad.
+
+Analizando de forma superficial la infraestructura real para el control del tráfico se pueden determinar diferentes partes bien diferenciadas. A partir de este análisis se puede diseñar una sistema autónoma para el control del tráfico basado en una arquitectura distribuida de agentes, la cual proporciona un alto grado de fiabilidad basado, principalmente, en la correcta comunicación y coordinación entre los diferentes agentes que componen el sistema evitando, de esta forma, los problemas relacionados con las colisiones entre vehículos.
+
 
 \section{Motivaciones}
-\epigraph{Elige un trabajo que te guste y no tendrás que trabajar ni un día de tu vida.}{\textit{Confucio}}
+\epigraph{\textit{``Elige un trabajo que te guste y no tendrás que trabajar ni un día de tu vida."}}{Confucio}
 
 A Confucio se le atribuye uno de los proverbios chinos más conocidos en relación al trabajo. En mi opinión, no le falta razón. Con esta filosofía se realizó la elección de este tema como trabajo de fin de grado.
 
@@ -12,16 +24,16 @@ Mi primer contacto con el desarrollo de agentes fue en la asignatura \textit{Int
 
 No obstante, no fue hasta el pasado semestre mientras cursaba la asignatura \textit{Desarrollo Basado en Agentes} cuando decidí seleccionar el tema del proyecto. Esta asignatura me aportó una visión mucho más global sobre este tipo de sistemas software. Además de la definición básica de agente como sistema autónomo situado en un entorno capaz de actuar para conseguir unos objetivos, aprendí cosas tan importantes como la comunicación, cooperación, coordinación y negociación entre agentes. Me fascinó y me fascina que, aunque hablemos de software, la comunicación y la interacción entre agentes estén intrínsecamente relacionadas con diferentes modelos sociales reales. Todo esto, combinado con un excelente planteamiento de la asignatura, por parte del profesor y tutor de TFG, Luis Castillo Vidal, basado en la consecución de objetivos y en la libertad para marcar objetivos propios en base a los diferentes retos me ha permitido adquirir un interés especial por todo lo relacionado con el mundo de los agentes.
     
-En definitiva, ¿qué mejor forma de afrontar un proyecto que trabajando sobre un tema en el que estoy interesado e intentando resolver un problema que afecta a una gran parte de la población?
+En definitiva, ¿qué mejor forma de afrontar un proyecto que trabajando sobre un tema en el que estoy interesado e intentando resolver un problema que afecta a gran parte de la población?
 
 \section{Objetivos}
 El sistema \acrshort{murat} pretende aumentar el flujo de tráfico que es capaz de pasar por un ciudad gracias a la optimización de los tiempos de los estados de los diferentes cruces de la ciudad.
 
 La consecución del objetivo principal implica la consecución de varios objetivos específicos. Estos objetivos específicos se plantean de forma incremental y permiten ir logrando avances para situaciones de cada vez mayor complejidad.
 
-En primer lugar y, con el objetivo de lograr una primera aproximación válida que cumpla el objetivo principal del proyecto se debe:
+En primer lugar y, con el objetivo de completar una primera aproximación válida que cumpla el objetivo principal del proyecto se debe:
 \begin{itemize}
-    \item \textbf{Representar un modelo de cruce simple}. En esta intersección se cruzan dos calles: el flujo de tráfico de la primera de ellas pasa por el cruce en sentido oeste a este; y el flujo de tráfico de la segunda de ellas de ellas pasa por el cruce en sentido note a sur. Cada una de las mencionadas calles está regulada por un semáforo de entrada al cruce.
+    \item \textbf{Representar un modelo de cruce simple}. En esta intersección se cruzan dos calles: el flujo de tráfico de la primera de ellas pasa por el cruce en sentido oeste a este; y el flujo de tráfico de la segunda de ellas de ellas pasa por el cruce en sentido norte a sur. Cada una de las mencionadas calles está regulada por un semáforo de entrada al cruce.
     \item \textbf{Simular el flujo de tráfico} en un \textbf{cruce simple} durante un intervalo determinado de tiempo.
     \item \textbf{Aumentar la cantidad de vehículos} que puede procesar un cruce aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
 \end{itemize}
@@ -30,7 +42,7 @@ Posteriormente, con el objetivo de aumentar la complejidad pudiendo representar 
 \begin{itemize}
     \item \textbf{Representar un modelo de cruce estándar}. En esta intersección se cruzan dos calles, sin embargo, a diferencia del modelo de cruce simple, el cruce estándar posee dos carriles por calle, uno en cada sentido: el flujo de tráfico de la primera de ellas pasa por el cruce en sentido oeste a este y este a oeste; y el flujo de tráfico de la segunda de ellas de ellas pasa por el cruce en sentido norte a sur y sur a norte.
     \item \textbf{Simular el flujo de tráfico} durante un intervalo determinado de tiempo en un \textbf{cruce estándar} y \textbf{aumentar la cantidad de vehículos} que procesa el cruce aplicando una \textbf{política} de \textbf{tiempos} de estados de cruces \textbf{variables}.
-    \item \textbf{Establecer intervalos pico} donde se añade un número más alto de vehículos a la simulación. Estos intervalos representan las horas de mayor concurrencia de vehículos en la realidad.
+    \item \textbf{Establecer intervalos pico} donde se añadan un número más alto de vehículos a la simulación. Estos intervalos representan las horas de mayor concurrencia de vehículos en la realidad.
 \end{itemize}
 
 Más tarde, con el objetivo de extender la simulación a más de un cruce, se debe:
