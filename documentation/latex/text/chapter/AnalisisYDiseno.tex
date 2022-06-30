@@ -46,7 +46,7 @@ A partir de lo anterior, en relación al primer punto, surge la siguiente pregun
     \end{itemize}
 \end{itemize}
 
-En este punto, en relación a la segunda cuestión, surge otra pregunta: \textit{¿cómo es añadido el tráfico al sistema?} El tráfico se añade a los tramos de calle que no tengan cruce de origen y tengan cruce de destino, es decir, los vehículos entran por los nodos raíz. Para saber el instante en el que añadir tráfico al sistema se utiliza una constante denominada ratio de entrada de tráfico al sistema. Si el tráfico entra, el tráfico tiene que salir, entonces: \textit{¿cómo sale el tráfico del sistema?} El tráfico sale del sistema por los tramos de calle que tienen cruce de origen pero no tienen cruce de destino, es decir, los vehículos salen por los nodos hoja. \newline
+En este punto, en relación a la segunda cuestión, surge otra pregunta: \textit{¿cómo es añadido el tráfico al sistema?} El tráfico se añade a los tramos de calle que no tengan cruce de origen y tengan cruce de destino, es decir, los vehículos entran por los nodos raíz. Para saber el instante en el que añadir tráfico al sistema se utiliza una constante denominada ratio de entrada de tráfico al sistema. Si el tráfico entra, el tráfico tiene que salir, entonces: \textit{¿cómo sale el tráfico del sistema?} El tráfico sale del sistema por los tramos de calle que tienen cruce de origen pero no tienen cruce de destino, es decir, los vehículos salen por los nodos hoja. En relación a la entrada del tráfico, hay periodos del día, es decir, periodos de la simulación, donde la afluencia de tráfico es mayor. A esto se le denomina horas punta y se traduce en una mayor adición de vehículos al sistema.\newline
 En relación al tráfico, también, es necesario preguntarse: \textit{¿qué vehículos van hacia qué tramo de calle en el cruce?} A priori, como no se sabe, se puede partir de un modelo equiprobable. En función de la capacidad de los tramos de calle girarán más o menos vehículos (si un tramo de calle tiene más capacidad se supone que es porque van a entrar más vehículos). En relación a lo anterior se establece la ratio de desvío, que es el porcentaje de vehículos que giran en los cruces a cada tramo de calle.
 
 Una vez se ha explicado todo lo relacionado a la representación de la realidad en el sistema, es necesario hablar sobre lo que se quiere conseguir con \acrshort{murat}. El principal objetivo es aumentar el número de vehículos que pueden procesarse en una simulación, pero \textit{¿cómo se puede conseguir el objetivo principal del sistema?} Optimizando los tiempos de los estados de los cruces, beneficiando aquellos que permitan el paso de vehículos desde tramos de calle saturados. Es decir, aumentando el tiempo de los estados mencionados y disminuyendo el tiempo de los estados cuyos tramos de calle tengan menos ocupación, respetando el límite mínimo de tiempo de duración de un estado.
@@ -189,15 +189,24 @@ El \textbf{sexto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_6
 \newpage
 \section{Sociedad de agentes}
 El sistema MURAT es una construcción software basada en una arquitectura multiagente. Esto implica que existen uno o más tipos de agentes con roles definidos y propósitos específicos. Asimismo, existen uno o más agentes de cada tipo. Estos agentes, para el cumplimiento de sus objetivos, se encuentran organizados en una sociedad.
-
-// TODO: Introducir sociedad de agentes
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DAgen-Sociedad_de_agentes.pdf}
     \caption{Sociedad de agentes del sistema MURAT}
     \label{fig:sociedad_de_agentes}
 \end{figure}
+Como se puede observar en la imagen, los agentes están organizados en una sociedad jerárquica. 
+\begin{itemize}
+    \item \textbf{Ciudad} (\textit{City}): Se encarga de obtener la información del estado de los cruces y generar los informes.
+    \item \textbf{Cruce} (\textit{Crossroad}): Se encargan de realizar la simulación, coordinar a los agentes \textit{Semáforo} e informar sobre el estado de la simulación al agente \textit{Ciudad}.
+    \item \textbf{Semáforo} (\textit{TrafficLight}): Se encargan de escuchar las órdenes de los agentes \textit{Cruce} y establecer el color de sus luces en función de las mencionadas órdenes.
+\end{itemize}
+
+Sin embargo, no todas las relaciones entre agentes son de tipo jerárquico:
+\begin{itemize}
+    \item Los agentes \textit{Semáforo} obedecen órdenes directas de los agentes \textit{Cruce}. Hasta que un agente \textit{Cruce} no ordene un cambio de estado a un agente \textit{Semáforo} el agente \textit{Semáforo} no cambiará de color. En esta relación se puede observar una fuerte jerarquización, los agentes \textit{Cruce} controlan a los agentes \textit{Semáforo}.
+    \item Los agentes \textit{Cruce} colaboran con el agente \textit{Ciudad} enviando los informes sobre el estado de la simulación en cada instante. El agente \textit{Ciudad} informa de que puede continuar la simulación una vez recibidos los informes de todos los agentes \textit{Cruce}. En esta relación se puede observar una estructura en red basada en la colaboración para la consecución de objetivos comunes. No obstante, el agente \textit{Ciudad} ordena a los agentes \textit{Cruce} que finalicen cuando ha terminado la simulación. Esto es una acción de control por parte del agente \textit{Ciudad} sobre el agente \textit{Cruce}; otra vez se puede apreciar una estructura jerárquica.
+\end{itemize}
 
 \subsection{Agente Semáforo (TrafficLight)}
 El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Sus capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
@@ -209,28 +218,126 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
         \item Se obtienen los datos del cruce al que pertenece.
         \item Se obtienen los datos del tramo de calle que regula.
     \end{itemize}
-    Una vez se ha cargado la información el semáforo cambia al siguiente estado.
-    \item \textbf{Escuchar al cruce} \footnotesize(LISTEN\_CROSSROAD)\normalsize: Estado en el que se escuchan mensajes para recibir mensajes provenientes del cruce. Mientras que el agente se encuentra en este estado permanece en una escucha continua de mensajes. Hay que tener en cuenta que el semáforo no puede saber por sí mismo si el estado que posee es correcto en relación al resto de sistema, únicamente lo puede saber cuando se lo dice el cruce.
+    Una vez se ha cargado la información, el agente \textit{Semáforo} cambia al siguiente estado.
+    \item \textbf{Escuchar al cruce} \footnotesize(LISTEN\_CROSSROAD)\normalsize: Estado en el que se escuchan mensajes para recibir mensajes provenientes del agente \textit{Cruce}. Mientras que el agente se encuentra en este estado permanece en una escucha continua de mensajes. Hay que tener en cuenta que el agente \textit{Semáforo} no sabe por sí mismo si el estado que posee es correcto en relación al resto de sistema, únicamente lo puede saber cuando se lo dice el agente \textit{Cruce}.
     \begin{itemize}
         \item Espera la inicialización por parte del agente \textit{Cruce}.
-        \item TODO...
+        \item Espera cualquier solicitud por parte del agente \textit{Cruce}.
+            \begin{itemize}
+                \item Cambiar de color.
+                \item Poner el color en rojo.
+                \item Poner el color en verde.
+                \item Finalizar.
+            \end{itemize}
     \end{itemize}
-    \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente Semáforo nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente Cruce.
+    \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente \textit{Semáforo} nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente \textit{Cruce}.
 \end{enumerate}
 
 \subsubsection{Diagrama de actividad del agente}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DAgen-DA-TrafficLight.pdf}
-    \caption{Diagrama de actividad del agente Semáforo}
+    \caption{Diagrama de actividad del agente \textit{Semáforo}}
     \label{fig:da_agente_semaforo}
 \end{figure}
 
-\subsection{Agente Cruce (Crossroad)}
-\subsubsection{Estados del agente}
+\subsubsection{Diagrama de secuencia del agente}
 
+\subsection{Agente Cruce (Crossroad)}
+// TODO:
+\subsubsection{Estados del agente}
+\begin{enumerate}
+    \item \textbf{Cargar datos} \footnotesize(LOAD\_DATA)\normalsize: Estado en el que se cargan los datos necesarios para el funcionamiento del agente.
+    \begin{itemize}
+        \item Se obtienen los datos del nombre de la ciudad.
+        \item Se obtienen los datos del modo de entrada del tráfico a la simulación.
+        \item Se obtienen los datos de si la política de optimización de tiempos está activa o no.
+        \item Se obtienen los datos generales de cada del cruce.
+        \item Se obtienen los datos de los estados del cruce.
+        \item Se obtienen los datos del estado inicial del cruce.
+        \item Se obtienen los datos de los semáforos del cruce.
+        \item Se obtienen los datos de los colores de semáforos para cada estado del cruce.
+        \item Se obtienen los datos de los tramos de calle conectados al cruce.
+        \item Se obtienen los datos de los tramos de cruce.
+        \item Se obtienen los datos de los tramos de cruce abiertos por cada semáforo en verde en cada estado.
+        \item Se obtienen los datos del tiempo de muestreo.
+        \item Se obtienen los datos del tiempo de inicio de la simulación.
+        \item Se obtienen los datos de los segundos totales de duración de la simulación.  \item Se inicializan diferentes estructuras de datos.
+    \end{itemize}
+    Una vez se ha cargado la información, el agente \textit{Cruce} cambia al siguiente estado.
+    \item \textbf{Inicializar semáforos} \footnotesize(INITIALIZE\_TRAFFIC\_LIGHTS)\normalsize: Estado en el que el agente inicializa a los agentes \textit{Semáforo}. Se envía un mensaje a cada semáforo para inicializarlo con en color que corresponda en función del estado inicial del cruce.
+    \item \textbf{Controlar el tráfico} \footnotesize(CONTROL\_TRAFFIC)\normalsize: Estado en el que el agente realiza todos los procesos relativos a la simulación.
+    \begin{itemize}
+        \item Almacena el estado estado actual del cruce.
+        \item Informa al agente \textit{Ciudad} del estado actual del cruce.
+        \item Comprueba si ha finalizado la simulación.
+        \item Comprueba si hay que cambiar de estado.
+        \item Mueve a los vehículos de un tramo de calle a otro tramo de calle. Hace que los vehículos pasen por el tramo de cruce.
+        \begin{itemize}
+            \item Mueve los vehículos fuera del sistema de tráfico o a otros cruces.
+            \item Recibe vehículos de otros agentes \textit{Cruce}.
+            \item Mueve los vehículos haciendo que crucen por un tramo de cruce.
+        \end{itemize}
+        \item Añade vehículos a la simulación.
+        \item Optimiza los tiempos de los estados en función de las condiciones de saturación de los tramos de calle.
+        \item Pasa al siguiente instante de la simulación.
+    \end{itemize}
+    Todos estos pasos son repetidos hasta que finaliza la simulación. En este momento es cuando el agente \textit{Ciudad} ordena a los agentes \textit{Cruce} que pasen al siguiente estado.
+    \item \textbf{Finalizar semáforos} \footnotesize(FINALIZE\_TRAFFIC\_LIGHTS)\normalsize: Estado en el que el agente finaliza a los agentes \textit{Semáforo}. Las órdenes de finalización son enviadas a los agentes \textit{Semáforo} una vez ha finalizado la simulación y se han enviado todos los informes de la misma al agente \textit{Ciudad}.
+    \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente \textit{Cruce} nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente \textit{City}.
+\end{enumerate}
+
+\subsubsection{Diagrama de actividad del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DA-Crossroad.pdf}
+    \caption{Diagrama de actividad del agente \textit{Cruce}}
+    \label{fig:da_agente_cruce}
+\end{figure}
+
+\subsubsection{Diagrama de secuencia del agente}
 
 \subsection{Agente Ciudad (City)}
+// TODO:
+
+\subsubsection{Estados del agente}
+\begin{enumerate}
+    \item \textbf{Cargar datos} \footnotesize(LOAD\_DATA)\normalsize: Estado en el que se cargan los datos necesarios para el funcionamiento del agente.
+    \begin{itemize}
+        \item Se obtienen los datos de los cruces de la ciudad.
+        \item Se obtienen los datos de los nombres de los cruces de la ciudad.
+        \item Se obtienen los datos de los nombres de las calles de la ciudad.
+        \item Se obtienen los datos del tiempo de muestreo.
+        \item Se obtienen los datos del tiempo de inicio de la simulación.
+        \item Se obtienen los datos del los segundos totales de duración de la simulación.
+        \item Se inicializan diferentes estructuras de datos.
+    \end{itemize}
+    Una vez se ha cargado la información, el agente \textit{Ciudad} cambia al siguiente estado.
+    \item \textbf{Escuchar informes de los cruces} \footnotesize(WAIT\_CROSSROADS\_REPORTS)\normalsize: Estado en el que se escuchan mensajes provenientes de los agentes \textit{Cruce} con el objetivo de recibir informes del estado local de la simulación en cada cruce. Por cada segundo de la simulación cada agente \textit{Cruce} envía un informe al agente \textit{Ciudad} sobre su estado local en la simulación. El agente \textit{Ciudad} no autoriza a los agentes \textit{Cruce} a que continúen la simulación hasta que no haya recibido todos los informes del instante correspondiente de la simulación.
+    \begin{itemize}
+        \item Espera mensajes con la performativa \textit{inform} provenientes del agente \textit{Cruce}.
+            \begin{itemize}
+                \item Actualiza la información del estado de la simulación.
+                \item Etiqueta el informe del agente \textit{Cruce} como recibido.
+                \item Autoriza a los agentes \textit{Cruce} a continuar la simulación si se han recibido todos los informes para el instante correspondiente.
+                \item Comprueba si ha finalizado la simulación.
+            \end{itemize}
+    \end{itemize}
+    \item \textbf{Generar informe de la simulación} \footnotesize(GENERATE\_SIMULATION\_ \newline REPORT)\normalsize: Estado en el que el agente genera un informe de la simulación en formato \textit{csv}. Para poder crear el informe se deben haber recibido previamente los informes de todos los cruces para cada instante de la simulación.
+    \item \textbf{Finalizar cruces} \footnotesize(FINALIZE\_CROSSROADS)\normalsize: Estado en el que el agente finaliza a los agentes \textit{Cruce}. Una vez se han recibido todos los informes de la simulación y se ha generado el informe de la misma se puede determinar que la simulación ha finalizado y, por tanto, que los agentes \textit{Cruce} deben ser apagados.
+    \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. El agente \textit{Ciudad} es el único agente en apagarse por decisión propia; siguiendo el flujo del software, a este estado solo se puede llegar tras haber recibido todos los informes de simulación por parte de los agentes \textit{Cruce}, haber generado el informe de la simulación y haber finalizado a los agentes \textit{Cruce}.
+\end{enumerate}
+
+\subsubsection{Diagrama de actividad del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DA-City.pdf}
+    \caption{Diagrama de actividad del agente \textit{City}}
+    \label{fig:da_agente_ciudad}
+\end{figure}
+
+
+\subsubsection{Diagrama de secuencia del agente}
 
 \renewcommand{\labelitemi}{$\bullet$}
 \renewcommand{\labelitemii}{$\circ$}
@@ -400,7 +507,7 @@ Atributos:
 Finalmente, se ha decidido almacenar la información de los escenarios en un objeto de tipo \acrshort{json} basado en las tablas anteriormente descritas. 
 
 \subsubsection{Análisis del almacenamiento del escenario correspondiente al cruce simple en un objeto de tipo JSON}
-En primer lugar, se puede observar información relativa a la ciudad (o escenario): su nombre y una breve descripción.
+En primer lugar, se puede observar información relativa a la ciudad: nombre de la ciudad y una breve descripción de la misma.
 \lstinputlisting[language=json, linerange={1-5}]{text/data/CITY1.json}
 
 Inmediatamente después, se definen las configuraciones de la ciudad. En este caso existen dos configuraciones. 
