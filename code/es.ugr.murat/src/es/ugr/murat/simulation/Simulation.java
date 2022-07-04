@@ -503,8 +503,8 @@ public class Simulation {
     public String getCityConfigurationMode() {
         return cityConfiguration.get(cityConfigurationId).getMode();
     }
-    // Obtenemos el total de segundos de la simulación | (totalSimulationSeconds)
         // Simulation
+    // Obtenemos el total de segundos de la simulación | (totalSimulationSeconds)
     public Integer getSimulationSeconds() {
         LocalTime initialTime = cityConfiguration.get(cityConfigurationId).getInitialTime();
         LocalTime finalTime = cityConfiguration.get(cityConfigurationId).getFinalTime();
