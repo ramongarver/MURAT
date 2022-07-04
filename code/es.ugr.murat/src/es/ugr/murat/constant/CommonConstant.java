@@ -26,6 +26,7 @@ public class CommonConstant {
     public static final String VEHICLES_OUT_OF_SYSTEM = "VehiclesOutOfSystem";
     public static final String VEHICLES_OUT_TO_ANOTHER_CROSSROAD = "VehiclesOutToAnotherCrossroad";
 
+    public static final String TICKS_TOTAL = "TicksTotal";
     public static final String TICKS_AVERAGE_PER_SAMPLE_OUT = "TAvOut";
     public static final String TICKS_AVERAGE_CUMULATIVE_OUT = "TAvOutCumulative";
     public static final String TICKS_AVERAGE_PER_SAMPLE_OUT_OF_SYSTEM = "TAvOutSys";
