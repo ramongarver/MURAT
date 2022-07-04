@@ -44,7 +44,7 @@
       "crossroadId": 1,
       "name": "C1",
       "minimumStateTime": 20,
-      "cycleTime": 90,
+      "cycleTime": 165,
       "trafficLight": [
         {
           "trafficLightId": 1,

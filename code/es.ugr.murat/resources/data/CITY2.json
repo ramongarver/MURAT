@@ -1,7 +1,7 @@
 {
   "city": {
     "name": "CITY2",
-    "description": "Simple 3 crossroads"
+    "description": "Simple crossroads matrix 2x1"
   },
   "cityConfiguration": [
     {
