@@ -102,6 +102,7 @@ public class TrafficLightAgent extends MURATBaseAgent {
                 // Finalizamos el agente
                 } else if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) {
                     status = TrafficLightConstant.EXIT;
+                    // this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), MessageConstant.FINALIZE); TODO
                 // Manejamos mensajes no conocidos
                 } else {
                     Logger.info(ActionConstant.MESSAGE_UNKNOWN_RECEIVED, this.getClass().getSimpleName(), this.getLocalName());
