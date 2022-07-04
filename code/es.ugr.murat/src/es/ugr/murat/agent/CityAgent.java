@@ -52,6 +52,7 @@ public class CityAgent extends MURATBaseAgent {
     // Simulación | Contadores de vehículos
     private Double totalVehiclesIn; // Número total de vehículos que han entrado en la simulación
     private Double totalVehiclesOut; // Número total de vehículos que han salido de la simulación
+    private Double totalTicksToExit; // Número de ticks acumulados que los vehículos han tardado en salir de la simulación
 
 
     //*************** Ciclo de vida del agente ***************//
@@ -75,6 +76,7 @@ public class CityAgent extends MURATBaseAgent {
 
         totalVehiclesIn = 0.0;
         totalVehiclesOut = 0.0;
+        totalTicksToExit = 0.0;
 
         Logger.info(ActionConstant.LAUNCHED_AGENT, this.getClass().getSimpleName(), this.getLocalName());
     }
@@ -165,8 +167,12 @@ public class CityAgent extends MURATBaseAgent {
             roadStretchesNames.forEach((roadStretchName) -> {
                 columnNamesValue.put(roadStretchName, 0.0);
             });
+            columnNamesValue.put(CommonConstant.VEHICLES_TOTAL, 0.0);
+            columnNamesValue.put(CommonConstant.VEHICLES_TOTAL_AVERAGE, 0.0);
             columnNamesValue.put(CommonConstant.VEHICLES_IN, 0.0);
             columnNamesValue.put(CommonConstant.VEHICLES_OUT, 0.0);
+            columnNamesValue.put(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT, 0.0);
+            columnNamesValue.put(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT, 0.0);
 
             // Ordenamos el mapa por orden alfabético
             Map<String, Double> columnNamesValueSorted = columnNamesValue.entrySet()
@@ -234,11 +240,15 @@ public class CityAgent extends MURATBaseAgent {
                             Double value = Double.parseDouble(columnNameJsonObject.getValue().asString().replace(",", "."));
                             ticksColumnNamesValue.get(currentTick).put(columnName, value);
                             this.updateVehiclesInOut(crossroadName, columnName, currentTick, value);
+                            this.updateTicksValues(crossroadName, columnName, currentTick, value);
                         });
-                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_TOTAL, totalVehiclesIn - totalVehiclesOut);
-                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_TOTAL_AVERAGE, this.getTotalVehiclesAverage(currentTick));
                         ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_IN, totalVehiclesIn);
                         ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_OUT, totalVehiclesOut);
+                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_TOTAL, totalVehiclesIn - totalVehiclesOut);
+                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.VEHICLES_TOTAL_AVERAGE, this.getTotalVehiclesAverage(currentTick));
+                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.TICKS_TOTAL, totalTicksToExit);
+                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT, this.getTicksAveragePerSample(currentTick));
+                        ticksColumnNamesValue.get(currentTick).put(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT, this.getTicksAverageCumulative(currentTick));
 
                         // Etiquetamos el report como recibido para el tick actual y el cruce remitente del mismo
                         ticksCrossroadsReceivedReport.get(currentTick).put(crossroadName, true);
@@ -323,6 +333,13 @@ public class CityAgent extends MURATBaseAgent {
             totalVehiclesOut += value - previousValue;
         }
     }
+    // Actualizamos el contador de ticks acumulados que los vehículos han tardado en salir de la simulación
+    private void updateTicksValues(String crossroadName, String columnName, Integer currentTick, Double value) {
+        if (columnName.equals(this.getColumnName(crossroadName, CommonConstant.TICKS_TOTAL))) {
+            Double previousValue = currentTick == 0 ? 0.0 : ticksColumnNamesValue.get(currentTick - 1).get(this.getColumnName(crossroadName, CommonConstant.TICKS_TOTAL));
+            totalTicksToExit += value - previousValue;
+        }
+    }
     // Obtenemos la media de los vehículos que hay durante los ticks de una muestra de tiempo
     private Double getTotalVehiclesAverage(Integer currentTick) {
         Double totalVehiclesAverage = 0.0;
@@ -330,8 +347,24 @@ public class CityAgent extends MURATBaseAgent {
         for (int i = 0; i < totalTicks; i++) {
             totalVehiclesAverage += ticksColumnNamesValue.get(currentTick - i).get(CommonConstant.VEHICLES_TOTAL);
         }
-        totalVehiclesAverage = totalTicks == 0 ? 0.0 : totalVehiclesAverage / totalTicks;
+        totalVehiclesAverage = totalVehiclesAverage / sampleTime;
         return totalVehiclesAverage;
+    }
+    // Obtenemos la media de ticks que han tardado en salir los vehículos que han salido durante el intervalo correspondiente al tiempo de muestreo
+    private Double getTicksAveragePerSample(Integer currentTick) {
+        Integer previousTick = Math.max((currentTick - sampleTime), 0);
+        Double previousTotalTicksToExit = ticksColumnNamesValue.get(previousTick).get(CommonConstant.TICKS_TOTAL);
+        Double currentTotalTicksToExit = ticksColumnNamesValue.get(currentTick).get(CommonConstant.TICKS_TOTAL);
+        Double sampleTicks = currentTotalTicksToExit - previousTotalTicksToExit;
+        Double previousVehiclesOut = ticksColumnNamesValue.get(previousTick).get(CommonConstant.VEHICLES_OUT);
+        Double currentVehiclesOut = ticksColumnNamesValue.get(currentTick).get(CommonConstant.VEHICLES_OUT);
+        Double sampleVehicles = currentVehiclesOut - previousVehiclesOut;
+        return sampleVehicles == 0.0 ? 0 : sampleTicks / sampleVehicles;
+    }
+    // Obtenemos la media acumulada de ticks que han tardado en salir los vehículos de la simulación
+    private Double getTicksAverageCumulative(Integer currentTick) {
+        Double totalTicksToExit = ticksColumnNamesValue.get(currentTick).get(CommonConstant.TICKS_TOTAL);
+        return totalVehiclesOut == 0.0 ? 0.0 : totalTicksToExit / totalVehiclesOut;
     }
         // Control del estado de la simulación
     // Evaluamos si se han recibido todos los reports por parte de los cruces para el tick actual
@@ -386,10 +419,12 @@ public class CityAgent extends MURATBaseAgent {
         List<String> headers = new ArrayList<>();
         headers.add(CommonConstant.TIME);
         headers.addAll(roadStretchesNames);
-        headers.add(CommonConstant.VEHICLES_TOTAL);
-        headers.add(CommonConstant.VEHICLES_TOTAL_AVERAGE);
         headers.add(CommonConstant.VEHICLES_IN);
         headers.add(CommonConstant.VEHICLES_OUT);
+        headers.add(CommonConstant.VEHICLES_TOTAL);
+        headers.add(CommonConstant.VEHICLES_TOTAL_AVERAGE);
+        headers.add(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT);
+        headers.add(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT);
         for (Map.Entry<Integer, CrossroadModel> crossroad : crossroads.entrySet()) {
             String crossroadName = crossroad.getValue().getName();
             headers.add(this.getColumnName(crossroadName, CommonConstant.STATE));

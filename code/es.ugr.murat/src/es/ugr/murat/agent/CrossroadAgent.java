@@ -436,17 +436,19 @@ public class CrossroadAgent extends MURATBaseAgent {
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_OF_SYSTEM), String.format("%s", totalVehiclesOutOfSystem));
         tickDataJsonObject.add(this.getColumnName(CommonConstant.VEHICLES_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesOutToAnotherCrossroad));
         // Añadimos información sobre el tiempo que los vehículos han tardado en salir del cruce
+            // Número total de ticks que han tardado todos los vehículos
+        tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_TOTAL), String.format("%s", totalTicksToExit));
         // Media de ticks de los vehículos que salen del cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutPerTick)));
-        // Media de ticks acumulada de los vehículos que salen del cruce
+            // Media de ticks acumulada de los vehículos que salen del cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT), String.format("%s", totalVehiclesOut == 0 ? 0 : totalTicksToExit / totalVehiclesOut));
-        // Media de ticks de los vehículos que salen del sistema por el cruce durante la última muestra
+            // Media de ticks de los vehículos que salen del sistema por el cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_OF_SYSTEM), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutOfSystemPerTick)));
-        // Media de ticks acumulada de los vehículos que salen del sistema por el cruce
+            // Media de ticks acumulada de los vehículos que salen del sistema por el cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_OF_SYSTEM), String.format("%s", totalVehiclesOutOfSystem == 0 ? 0 : totalTicksToExitOutOfSystem / totalVehiclesOutOfSystem));
-        // Media de ticks de los vehículos que salen desde el cruce hacia otro cruce durante la última muestra
+            // Media de ticks de los vehículos que salen desde el cruce hacia otro cruce durante la última muestra
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_PER_SAMPLE_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", this.getTicksAveragePerSample(currentTicks, totalVehiclesOutToAnotherCrossroadPerTick)));
-        // Media de ticks acumulada de los vehículos que salen desde el cruce hacia otro cruce
+            // Media de ticks acumulada de los vehículos que salen desde el cruce hacia otro cruce
         tickDataJsonObject.add(this.getColumnName(CommonConstant.TICKS_AVERAGE_CUMULATIVE_OUT_TO_ANOTHER_CROSSROAD), String.format("%s", totalVehiclesOutToAnotherCrossroad == 0 ? 0 : totalTicksToExitToAnotherCrossroad / totalVehiclesOutToAnotherCrossroad));
         reportJsonObject.add(currentTicks.toString(), tickDataJsonObject);
 
@@ -539,8 +541,6 @@ public class CrossroadAgent extends MURATBaseAgent {
                 this.sendACLMessage(ACLMessage.REQUEST, this.getAID(), new AID(CrossroadConstant.AGENT_NAME + roadStretchOutModel.getCrossroadDestinationId(), AID.ISLOCALNAME), transferredVehicles);
                 MessageTemplate messageTemplate = MessageTemplate.MatchContent(transferredVehicles);
                 this.listenMessages(messageTemplate);
-                // Preguntamos a otros cruces cuantos vehículos podemos enviar a los tramos de calle
-                // Contestamos a otros cruces cuantos vehículos pueden enviar a los tramos de calle
             }
         }
 
@@ -695,6 +695,7 @@ public class CrossroadAgent extends MURATBaseAgent {
                 // Finalizamos el agente
                 if (MessageConstant.FINALIZE.equals(incomingMessage.getContent())) { // Si el mensaje es de finalización
                     status = CrossroadConstant.FINALIZE_TRAFFIC_LIGHTS;
+                    // this.sendACLMessage(ACLMessage.INFORM, this.getAID(), incomingMessage.getSender(), incomingMessage.getContent());
                 } else if (incomingMessage.getContent().startsWith(MessageConstant.TRANSFERRED_VEHICLES)) { // Si el mensaje es de transferencia de vehículos
                     String transferredVehiclesMessage = incomingMessage.getContent().replace(MessageConstant.TRANSFERRED_VEHICLES + " ", "");
                     String roadStretchName = transferredVehiclesMessage.split(" ")[0]; // Obtenemos el tramo de calle
@@ -928,8 +929,8 @@ public class CrossroadAgent extends MURATBaseAgent {
     }
     // Obtenemos la media de ticks que han tardado en salir los vehículos que han salido durante el intervalo correspondiente al tiempo de muestreo
     private Double getTicksAveragePerSample(Integer currentTick, Map<Integer, Integer> totalVehiclesPerTick) {
-        Integer previousSampleTick = Math.max((currentTick - sampleTime), 0);
-        Double previousVehicles = Double.valueOf(totalVehiclesPerTick.get(previousSampleTick));
+        Integer previousTick = Math.max((currentTick - sampleTime), 0);
+        Double previousVehicles = Double.valueOf(totalVehiclesPerTick.get(previousTick));
         Double currentVehicles = Double.valueOf(totalVehiclesPerTick.get(currentTick));
         return sampleTime != 0 ? (currentVehicles - previousVehicles) / sampleTime : 0;
     }
