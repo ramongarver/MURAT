@@ -29,3 +29,7 @@ hs_err_pid*
 # JADE files #
 MTPs*.txt
 APDescription.txt
+
+# IntelliJ
+out/
+
