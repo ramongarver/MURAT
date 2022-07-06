@@ -150,7 +150,7 @@ public class Simulation {
             policies.add(SimulationConstant.VARIABLE_TIME_POLICY);
             String[] policiesArray = policies.toArray(new String[0]);
             String selectedPolicy = (String)
-                    JOptionPane.showInputDialog(null, SimulationConstant.SELECT_POLICY, SimulationConstant.CONFIGURATION,
+                    JOptionPane.showInputDialog(null, SimulationConstant.SELECT_POLICY, SimulationConstant.POLICY,
                             JOptionPane.QUESTION_MESSAGE, null, policiesArray, configurationsArray[0]);
             optimizeStateTimesPolicy = SimulationConstant.VARIABLE_TIME_POLICY.equals(selectedPolicy);
 
