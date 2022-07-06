@@ -1,9 +1,28 @@
 \chapter{Análisis y diseño}
     \label{chap:four}
 
+\renewcommand{\labelitemi}{$\bullet$}
+\renewcommand{\labelitemii}{$\circ$}
+\renewcommand{\labelitemiii}{$\Rightarrow$}
+
 \section{¿Qué es un agente?}
+A lo largo de las últimas décadas, la definición de agente se ha ido completando y adaptando para con la evolución. 
+\newline La primera definición se construye en base a las principales características de \textbf{autonomía} e \textbf{inteligencia}. De este periodo son las arquitecturas deliberativas y reactivas en base a las cuales estaban construidos agentes sencillos de acción-reacción. de  de la \textit{inteligencia}. 
+\newline Posteriormente, con la extensión de internet y las posibilidades que este ofrece, los agentes evolucionan a un modelo \textbf{comunicativo}, manteniendo las características ya conocidas. En este punto, aparecen agentes móviles que se comunican gracias a implementación de estándares.
+\newline Más tarde, se dota a los agentes de una \textbf{dimensión social}. A partir de aquí, los agentes se modelan teniendo en cuenta modelos sociales reales con mecanismos de interacción, toma de decisiones, posesión de sentimientos, aprendizaje, etc.
+
+Un \textbf{agente} es un sistema computacional establecido en un entorno y con la capacidad de actuar de forma autónoma para la consecución de sus propios objetivos.
+
+Un \textbf{sistema multiagente} es un conjunto de agentes que interactúan entre sí con el fin de conseguir objetivos propios y/o comunes, para lo cual, entre otras, necesitan realizar acciones comunicativas, cooperativas, de coordinación y de negociación.
+\newline \cite{dba2122, intelligent_agents}
+
+\newpage
 \subsection{Estructura de un agente}
+TODO
+
 \subsection{Comunicación entre agentes}
+Los agentes pueden comunicarse de forma transparente independientemente de si viven en el mismo contenedor, en diferentes contenedores pertenecientes a la misma plataforma o en diferentes plataformas. La comunicación se basa en un paradigma de paso de mensajes asíncrono. El formato de los mensajes está definido por el lenguaje \acrfull{acl} definido por la \acrfull{fipa}, una organización internacional que emitió un conjunto de especificaciones para la interoperabilidad de los agentes. Un mensaje ACL contiene una serie de campos que incluyen:
+TODO
 
 
 \newpage
@@ -20,7 +39,7 @@ Además de dividir en pequeñas tareas, es necesario definir un conjunto de simp
     \item \textbf{Los semáforos únicamente regulan la entrada al cruce, no la salida}. No existen semáforos que no estén dedicados exclusivamente a regular la entrada de tráfico a un cruce.
     \item \textbf{Los vehículos tardan un instante en pasar el cruce}. Los vehículos tardan un segundo en ir desde un tramo de calle origen hasta otro tramo de calle destino a través del cruce, es decir, tardan un segundo en recorrer un tramo de cruce.
     \item \textbf{No existen aparcamientos, es decir, todo vehículo que entra al sistema sale de él}. En el sistema entran y salen vehículos. Ningún vehículo puede permanecer en el sistema al final de una simulación a no ser que no le haya dado tiempo a ir desde la entrada hasta una salida.
-    \item \textbf{No existen peatones ni ningún tipo de infraestructura asociada a los mismos}. Los peatones no se contemplan en el sistema \acrshort{murat}, para el sistema no existen.
+    \item \textbf{No existen ni peatones ni metro ni ningún tipo de infraestructura asociada a los mismos}. Los peatones no se contemplan en el sistema \acrshort{murat}, para el sistema no existen.
 \end{itemize}
 
 Teniendo en cuenta las simplificaciones planteadas, se va a obtener la información funcional necesaria para construir el sistema a través de diferentes preguntas.
@@ -186,8 +205,10 @@ El \textbf{sexto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_6
     \label{fig:cruce_estandar_estado_6}
 \end{figure}
 
+
 \newpage
 \section{Sociedad de agentes}
+    \label{section:sociedad_de_agentes}
 El sistema MURAT es una construcción software basada en una arquitectura multiagente. Esto implica que existen uno o más tipos de agentes con roles definidos y propósitos específicos. Asimismo, existen uno o más agentes de cada tipo. Estos agentes, para el cumplimiento de sus objetivos, se encuentran organizados en una sociedad.
 \begin{figure}[H]
     \centering
@@ -208,6 +229,9 @@ Sin embargo, no todas las relaciones entre agentes son de tipo jerárquico:
     \item Los agentes \textit{Cruce} colaboran con el agente \textit{Ciudad} enviando los informes sobre el estado de la simulación en cada instante. El agente \textit{Ciudad} informa de que puede continuar la simulación una vez recibidos los informes de todos los agentes \textit{Cruce}. En esta relación se puede observar una estructura en red basada en la colaboración para la consecución de objetivos comunes. No obstante, el agente \textit{Ciudad} ordena a los agentes \textit{Cruce} que finalicen cuando ha terminado la simulación. Esto es una acción de control por parte del agente \textit{Ciudad} sobre el agente \textit{Cruce}; otra vez se puede apreciar una estructura jerárquica.
 \end{itemize}
 
+Los agentes tienen acceso a los datos que necesitan para su correcto funcionamiento. Gran parte de la información de carga del modelo del entorno está almacenada en estructuras de datos de la clase \textit{Simulation}. A esta información acceden los agentes a través de determinadas funciones definidas en la propia clase; este conjunto de funciones actuaría como una interfaz, haciendo las veces de una \acrshort{api}. Cuando es necesario, por ejemplo, para los cambios de color de los semáforos o la transferencia de vehículos, se intercambia la información necesaria a través de paso de mensajes.
+
+%%% ------------------------ Agente SEMÁFORO ------------------------ %%%
 \subsection{Agente Semáforo (TrafficLight)}
 El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Sus capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
 
@@ -233,6 +257,22 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
     \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente \textit{Semáforo} nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente \textit{Cruce}.
 \end{enumerate}
 
+\subsubsection{Diagrama de secuencia del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DS-TrafficLight.pdf}
+    \caption{Diagrama de secuencia del agente \textit{Semáforo}}
+    \label{fig:ds_agente_semaforo}
+\end{figure}
+
+\subsubsection{Diagrama de clases del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.35\linewidth]{text/image/DAgen-DC-TrafficLight.pdf}
+    \caption{Diagrama de clases del agente \textit{Semáforo}}
+    \label{fig:dc_agente_semaforo}
+\end{figure}
+
 \subsubsection{Diagrama de actividad del agente}
 \begin{figure}[H]
     \centering
@@ -240,11 +280,12 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
     \caption{Diagrama de actividad del agente \textit{Semáforo}}
     \label{fig:da_agente_semaforo}
 \end{figure}
+%%% --------------------------------------------------------------- %%%
 
-\subsubsection{Diagrama de secuencia del agente}
-
+%%% ------------------------ Agente CRUCE ------------------------ %%%
 \subsection{Agente Cruce (Crossroad)}
-// TODO:
+El agente \textit{Cruce} es el agente más complejo de la sociedad. Este agente es el encargado de controlar la simulación y comunicarse con el resto de agentes. Ordena los cambios de luz a los agentes \textit{Semáforo}, informa de su estado al agente \textit{Ciudad} y se comunica con otros agentes \textit{Cruce} para recibir y/o enviar vehículos.
+
 \subsubsection{Estados del agente}
 \begin{enumerate}
     \item \textbf{Cargar datos} \footnotesize(LOAD\_DATA)\normalsize: Estado en el que se cargan los datos necesarios para el funcionamiento del agente.
@@ -287,6 +328,25 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
     \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente \textit{Cruce} nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente \textit{City}.
 \end{enumerate}
 
+\newpage
+\subsubsection{Diagrama de secuencia del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DS-Crossroad.pdf}
+    \caption{Diagrama de secuencia del agente \textit{Cruce}}
+    \label{fig:ds_agente_cruce}
+\end{figure}
+
+\newpage
+\subsubsection{Diagrama de clases del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.50\linewidth]{text/image/DAgen-DC-Crossroad.pdf}
+    \caption{Diagrama de clases del agente \textit{Cruce}}
+    \label{fig:dc_agente_cruce}
+\end{figure}
+
+\newpage
 \subsubsection{Diagrama de actividad del agente}
 \begin{figure}[H]
     \centering
@@ -294,11 +354,11 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
     \caption{Diagrama de actividad del agente \textit{Cruce}}
     \label{fig:da_agente_cruce}
 \end{figure}
+%%% --------------------------------------------------------------- %%%
 
-\subsubsection{Diagrama de secuencia del agente}
-
+%%% ------------------------ Agente CIUDAD ------------------------ %%%
 \subsection{Agente Ciudad (City)}
-// TODO:
+El agente \textit{Ciudad} es el agente encargado de recibir la información del estado de los agentes \textit{Cruce} en cada instante de la simulación y generar los informes correspondientes. Este agente es único en el sistema. Se comunica con todos y cada uno de los agentes \textit{Cruce}.
 
 \subsubsection{Estados del agente}
 \begin{enumerate}
@@ -323,25 +383,44 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
                 \item Comprueba si ha finalizado la simulación.
             \end{itemize}
     \end{itemize}
-    \item \textbf{Generar informe de la simulación} \footnotesize(GENERATE\_SIMULATION\_ \newline REPORT)\normalsize: Estado en el que el agente genera un informe de la simulación en formato \textit{csv}. Para poder crear el informe se deben haber recibido previamente los informes de todos los cruces para cada instante de la simulación.
+    \item \textbf{Generar informe de la simulación} \footnotesize(GENERATE\_SIMULATION\_ \newline REPORT)\normalsize: Estado en el que el agente genera un informe de la simulación en formato \textit{\acrshort{csv}}. Para poder crear el informe se deben haber recibido previamente los informes de todos los cruces para cada instante de la simulación.
     \item \textbf{Finalizar cruces} \footnotesize(FINALIZE\_CROSSROADS)\normalsize: Estado en el que el agente finaliza a los agentes \textit{Cruce}. Una vez se han recibido todos los informes de la simulación y se ha generado el informe de la misma se puede determinar que la simulación ha finalizado y, por tanto, que los agentes \textit{Cruce} deben ser apagados.
     \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. El agente \textit{Ciudad} es el único agente en apagarse por decisión propia; siguiendo el flujo del software, a este estado solo se puede llegar tras haber recibido todos los informes de simulación por parte de los agentes \textit{Cruce}, haber generado el informe de la simulación y haber finalizado a los agentes \textit{Cruce}.
 \end{enumerate}
+
+\subsubsection{Diagrama de secuencia del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{text/image/DAgen-DS-City.pdf}
+    \caption{Diagrama de secuencia del agente \textit{Ciudad}}
+    \label{fig:ds_agente_ciudad}
+\end{figure}
+
+\newpage
+\subsubsection{Diagrama de clases del agente}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.60\linewidth]{text/image/DAgen-DC-City.pdf}
+    \caption{Diagrama de clases del agente \textit{Ciudad}}
+    \label{fig:dc_agente_ciudad}
+\end{figure}
 
 \subsubsection{Diagrama de actividad del agente}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DAgen-DA-City.pdf}
-    \caption{Diagrama de actividad del agente \textit{City}}
+    \caption{Diagrama de actividad del agente \textit{Ciudad}}
     \label{fig:da_agente_ciudad}
 \end{figure}
+%%% --------------------------------------------------------------- %%%
 
-
-\subsubsection{Diagrama de secuencia del agente}
-
-\renewcommand{\labelitemi}{$\bullet$}
-\renewcommand{\labelitemii}{$\circ$}
-\renewcommand{\labelitemiii}{$\Rightarrow$}
+\subsection{Diagrama de clases de los agentes}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DAgen-DC.pdf}
+    \caption{Diagrama de clases de los agentes}
+    \label{fig:dc_agentes}
+\end{figure}
 
 \newpage
 \section{Modelo de datos de representación de la realidad}
