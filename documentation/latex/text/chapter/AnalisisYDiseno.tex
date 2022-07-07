@@ -7,26 +7,50 @@
 
 \section{¿Qué es un agente?}
 A lo largo de las últimas décadas, la definición de agente se ha ido completando y adaptando para con la evolución. 
-\newline La primera definición se construye en base a las principales características de \textbf{autonomía} e \textbf{inteligencia}. De este periodo son las arquitecturas deliberativas y reactivas en base a las cuales estaban construidos agentes sencillos de acción-reacción. de  de la \textit{inteligencia}. 
+\newline La primera definición se construye en base a las principales características de \textbf{autonomía} e \textbf{inteligencia}. De este periodo son las arquitecturas deliberativas y reactivas en base a las cuales estaban construidos agentes sencillos de acción-reacción.
 \newline Posteriormente, con la extensión de internet y las posibilidades que este ofrece, los agentes evolucionan a un modelo \textbf{comunicativo}, manteniendo las características ya conocidas. En este punto, aparecen agentes móviles que se comunican gracias a implementación de estándares.
-\newline Más tarde, se dota a los agentes de una \textbf{dimensión social}. A partir de aquí, los agentes se modelan teniendo en cuenta modelos sociales reales con mecanismos de interacción, toma de decisiones, posesión de sentimientos, aprendizaje, etc.
+\newline Más tarde, se dota a los agentes de una \textbf{dimensión social}. A partir de aquí, los agentes se crean teniendo en cuenta modelos sociales reales con mecanismos de interacción, toma de decisiones, posesión de sentimientos, aprendizaje, etc.
 
 Un \textbf{agente} es un sistema computacional establecido en un entorno y con la capacidad de actuar de forma autónoma para la consecución de sus propios objetivos.
 
-Un \textbf{sistema multiagente} es un conjunto de agentes que interactúan entre sí con el fin de conseguir objetivos propios y/o comunes, para lo cual, entre otras, necesitan realizar acciones comunicativas, cooperativas, de coordinación y de negociación.
+Un \textbf{sistema multiagente} es un conjunto de agentes que interactúan entre sí con el fin de conseguir objetivos propios y/o comunes, para lo cual, entre otras cosas, necesitan realizar acciones comunicativas, cooperativas, de coordinación y de negociación.
 \newline \cite{dba2122, intelligent_agents}
 
 \newpage
 \subsection{Estructura de un agente}
-TODO
+Los agentes inteligentes poseen un ciclo de vida. Un ciclo de vida de un agente implementado usando el framework \acrshort{jade}, de forma simplificada, está compuesto por la siguientes fases: creación, realización de acciones y destrucción.
+\begin{enumerate}
+    \item \textbf{Inicialización del agente}, método \lstinline{setup()}. Se crean e inicializan todos los atributos necesarios para el correcto funcionamiento del agente.
+    \item \textbf{Realización de acciones}, método \lstinline{execute()}. Se ejecutan determinadas acciones mientras el agente esté activo. De forma resumida, esta fase se estructura como un bucle condicional basado en una condición de finalización. Las acciones se repiten mientras el bucle no finalice, es decir, mientras que la condición de finalización no se cumpla.
+    \item \textbf{Finalización del agente}, método \lstinline{takeDown()}. Se finaliza la ejecución. Terminan todos los procesos relativos a la ejecución (vida) del agente.
+\end{enumerate}
 
 \subsection{Comunicación entre agentes}
-Los agentes pueden comunicarse de forma transparente independientemente de si viven en el mismo contenedor, en diferentes contenedores pertenecientes a la misma plataforma o en diferentes plataformas. La comunicación se basa en un paradigma de paso de mensajes asíncrono. El formato de los mensajes está definido por el lenguaje \acrfull{acl} definido por la \acrfull{fipa}, una organización internacional que emitió un conjunto de especificaciones para la interoperabilidad de los agentes. Un mensaje ACL contiene una serie de campos que incluyen:
-TODO
+En \acrshort{jade}, los agentes pueden comunicarse de forma transparente independientemente de si viven en el mismo contenedor, en diferentes contenedores pertenecientes a la misma plataforma o en diferentes plataformas. La comunicación se basa en un paradigma de paso de mensajes asíncrono. El formato de los mensajes está definido por el lenguaje \acrfull{acl} definido por la \acrfull{fipa}, una organización internacional que emitió un conjunto de especificaciones para la interoperabilidad de los agentes.
 
+Un mensaje \acrshort{acl} está constituido por una serie de parámetros: sender, receiver, content, reply\_with, in\_reply\_to, encoding, language, ontology, reply\_by, protocol, conversation\_id y performative, entre los cuales:
+\begin{itemize}
+    \item \textbf{Sender}: el identificador del agente que envía el mensaje.
+    \item \textbf{Receiver}: los identificadores de los agentes que reciben el mensaje (el mensaje puede ser recibido por uno o varios agentes).
+    \item \textbf{Content}: el contenido del mensaje. Es una cadena, por lo tanto, se pueden enviar mensajes codificados de diferente forma (para lo cual sería necesario indicarlo en el parámetro \textit{encoding}).
+    \item \textbf{Conversation-id}: el identificador de la conversación entre los agentes.
+    \item \textbf{Performative}: el tipo de acto comunicativo, es decir, el tipo de acción que se realiza (la interpretación que se le da).
+\end{itemize}
+ Existen diferentes tipos de actos comunicativos, es decir, de performativas: accept-proposal, agree, cancel, cfp, confirm, disconfirm, failure, refuse, reject-proposal, request, request-when, request-whenever, subscribe, inform, inform-if, inform-ref, not-understood, propose, query-if y query-ref, entre las cuales:
+ \begin{itemize}
+     \item \textbf{REQUEST}: El \textit{sender} pide a los \textit{receivers} que ejecuten una acción. Entre las performativas posibles para las respuestas asociadas al envío de un mensaje con esta performativa se encuentran: inform, refuse, agree, failure y not-understood.
+     \item \textbf{SUBSCRIBE}: El \textit{sender} se suscribe al \textit{receiver} para con los cambios del valor de un objeto. Se aplica el patrón \textit{observer}. Entre las performativas posibles para las respuestas asociadas al envío de un mensaje con esta performativa se encuentran: inform y refuse.
+     \item \textbf{INFORM}: El \textit{sender} informa de algo a los \textit{receivers}. Tiene multitud de implicaciones y, generalmente, se utiliza en mensajes de respuesta.
+ \end{itemize}
+ 
+
+\cite{dba2122, fipa}
 
 \newpage
 \section{Planteamiento del problema}
+%
+% ¿POr qué es importante controlar mejor el tráfico? ¿Qué problemas implica? ¿Cómo están resueltas en la literatura? ¿Cómo pretendes abordarla tu? ¿ Por qué? ¿Cómo vas a evaluar las soluciones que propones? ¿Por qué?
+%
     \label{section:problem}
 La construcción de un sistema multiagente para el control del tráfico es algo complicado, sin embargo, no es necesario abordar todos las casuísticas que se plantean con respecto a este tema desde un principio. Con las tecnologías que se tienen en el momento, es seguro que existen un gran cantidad de formas diferentes de abordar este reto.
 
@@ -59,8 +83,8 @@ A partir de lo anterior, en relación al primer punto, surge la siguiente pregun
         \item \textbf{Cruce}: Es una intersección de varias calles. Al cruce llegan tramos de calle y del cruce salen tramos de calle. Contiene semáforos que habilitan o no tramos de cruce para pasar de un lado a otro del cruce. En el sistema es un agente.
         \begin{itemize}
             \item \textbf{Semáforo}: Regula el tráfico de vehículos proveniente de un tramo de calle de entrada a un cruce. En el sistema es un agente.
-            \item \textbf{Tramo de cruce}: Es cada uno de los recorridos que puede hacer un vehículo para pasar un cruce. Está definido por un tramo de calle de origen y un tramo de calle destino. En la figura \ref{fig:cruce_simple_estado_1} es un tramo de calle RS3-RS1.
-            \item \textbf{Estado}: Define los colores de los semáforos y habilita determinados tramos de cruce. En las figuras \ref{fig:cruce_simple_estado_1} y \ref{fig:cruce_simple_estado_2} se pueden ver dos estados para el mismo cruce. 
+            \item \textbf{Tramo de cruce}: Es cada uno de los recorridos que puede hacer un vehículo para pasar un cruce. Está definido por un tramo de calle de origen y un tramo de calle destino. En la figura \ref{fig:cruce_simple_estados_1y2} es un tramo de calle RS3-RS1.
+            \item \textbf{Estado}: Define los colores de los semáforos y habilita determinados tramos de cruce. En la figura \ref{fig:cruce_simple_estados_1y2} se pueden ver dos estados para el mismo cruce. 
         \end{itemize}
     \end{itemize}
 \end{itemize}
@@ -72,6 +96,7 @@ Una vez se ha explicado todo lo relacionado a la representación de la realidad 
 
 \newpage
 \subsection{Cruce simple}
+    \label{subsection:cruce_simple}
 Lo que se puede apreciar en la figura \ref{fig:cruce_simple_topologia} es lo que se ha denominado como cruce simple. En este cruce se produce una intersección vial de dos calles: 
 \begin{itemize}
     \item el flujo de tráfico de la primera de ellas, regulado por el semáforo \textbf{TL2} y representada por \textbf{RS3} y \textbf{RS1}, pasa por el cruce en sentido oeste a este; 
@@ -79,7 +104,7 @@ Lo que se puede apreciar en la figura \ref{fig:cruce_simple_topologia} es lo que
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Topologia.pdf}
+    \includegraphics[width=0.75\linewidth]{text/image/DCruc-CS-Topologia.pdf}
     \caption{Topología del cruce simple}
     \label{fig:cruce_simple_topologia}
 \end{figure}
@@ -87,32 +112,28 @@ Lo que se puede apreciar en la figura \ref{fig:cruce_simple_topologia} es lo que
 \newpage
 El cruce simple posee dos estados diferentes en función del color de los semáforos, los cuales habilitan o bloquean el tránsito de vehículos desde unos tramos de calle hasta otros.
 
-El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_simple_estado_1}:
+El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_simple_estados_1y2}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS4}, es decir, habilita los tramos de cruce \textbf{RS2-RS1} y \textbf{RS2-RS4};
     \item y bloquea el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS4}, es decir, bloquea los tramos de cruce \textbf{RS3-RS1} y \textbf{RS3-RS4}.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado1.pdf}
-    \caption{Cruce simple en estado 1}
-    \label{fig:cruce_simple_estado_1}
-\end{figure}
 
-El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_simple_estado_2}:
+El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_simple_estados_1y2}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS3} hasta el tramo de calle \textbf{RS4}, es decir, habilita los tramos de cruce \textbf{RS3-RS1} y \textbf{RS3-RS4};
     \item y bloquea el tránsito de vehículos desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS1} y desde el tramo de calle \textbf{RS2} hasta el tramo de calle \textbf{RS4}, es decir, bloquea los tramos de cruce \textbf{RS2-RS1} y \textbf{RS2-RS4}.
 \end{itemize}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estado2.pdf}
-    \caption{Cruce simple en estado 2}
-    \label{fig:cruce_simple_estado_2}
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CS-Estados1y2.pdf}
+    \caption{Cruce simple en estados 1 y 2}
+    \label{fig:cruce_simple_estados_1y2}
 \end{figure}
 
 \newpage
 \subsection{Cruce estándar}
+    \label{subsection:cruce_estandar}
 Lo que se puede apreciar en la figura \ref{fig:cruce_estandar_topologia} es lo que se ha denominado como cruce estándar. Como se puede observar, el cruce estándar posee una mayor complejidad, teniendo tramos de calle con flujo de coches en diferentes sentidos y varios carriles. En este cruce, también, se produce una intersección vial de dos calles: 
 \begin{itemize}
     \item el flujo de tráfico de la primera de ellas, regulado por los semáforos \textbf{TL1} (entrada al cruce desde el este por \textbf{RS1}) y \textbf{TL3} (entrada al cruce desde el oeste por \textbf{RS5}); 
@@ -121,88 +142,68 @@ Lo que se puede apreciar en la figura \ref{fig:cruce_estandar_topologia} es lo q
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Topologia.pdf}
+    \includegraphics[width=0.75\linewidth]{text/image/DCruc-CE-Topologia.pdf}
     \caption{Topología del cruce estándar}
     \label{fig:cruce_estandar_topologia}
 \end{figure}
 
+\newpage
 El cruce estándar posee seis estados diferentes en función del color de los semáforos, los cuales habilitan o bloquean el tránsito de vehículos desde unos tramos de calle hasta otros.
 
-El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_1}:
+El \textbf{primer estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_1y2}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta los tramos de calle \textbf{RS4} y \textbf{RS6} y desde el tramo de calle \textbf{RS7} hasta los tramos de calle \textbf{RS2} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS3-RS4}, \textbf{RS3-RS6}, \textbf{RS7-RS2} y \textbf{RS7-RS8};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1} y \textbf{RS5}.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado1.pdf}
-    \caption{Cruce estándar en estado 1}
-    \label{fig:cruce_estandar_estado_1}
-\end{figure}
 
-\newpage
-El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_2}:
+El \textbf{segundo estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_1y2}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS3} hasta los tramos de calle \textbf{RS4}, \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS3-RS4}, \textbf{RS3-RS6} y \textbf{RS3-RS8};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS5} y \textbf{RS7}.
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado2.pdf}
-    \caption{Cruce estándar en estado 2}
-    \label{fig:cruce_estandar_estado_2}
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estados1y2.pdf}
+    \caption{Cruce estándar en estados 1 y 2}
+    \label{fig:cruce_estandar_estados_1y2}
 \end{figure}
 
 \newpage
-El \textbf{tercer estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_3}:
+El \textbf{tercer estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_3y4}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS7} hasta los tramos de calle \textbf{RS2}, \textbf{RS4} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS7-RS2}, \textbf{RS7-RS4} y \textbf{RS7-RS8};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS3} y \textbf{RS5}.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado3.pdf}
-    \caption{Cruce estándar en estado 3}
-    \label{fig:cruce_estandar_estado_3}
-\end{figure}
 
-\newpage
-El \textbf{cuarto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_4}:
+El \textbf{cuarto estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_3y4}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS1} hasta los tramos de calle \textbf{RS2} y \textbf{RS4} y desde el tramo de calle \textbf{RS5} hasta los tramos de calle \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS1-RS2}, \textbf{RS1-RS4}, \textbf{RS5-RS6} y \textbf{RS5-RS8};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS3} y \textbf{RS7}.
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado4.pdf}
-    \caption{Cruce estándar en estado 4}
-    \label{fig:cruce_estandar_estado_4}
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estados3y4.pdf}
+    \caption{Cruce estándar en estados 3 y 4}
+    \label{fig:cruce_estandar_estados_3y4}
 \end{figure}
 
 \newpage
-El \textbf{quinto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_5}:
+El \textbf{quinto estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_5y6}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS1} hasta los tramos de calle \textbf{RS2}, \textbf{RS4} y \textbf{RS6}, es decir, habilita los tramos de cruce \textbf{RS1-RS2}, \textbf{RS1-RS4} y \textbf{RS1-RS6};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS3}, \textbf{RS5} y \textbf{RS7}.
 \end{itemize}
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado5.pdf}
-    \caption{Cruce estándar en estado 5}
-    \label{fig:cruce_estandar_estado_5}
-\end{figure}
 
-\newpage
-El \textbf{sexto estado}, expuesto en la figura \ref{fig:cruce_estandar_estado_6}:
+El \textbf{sexto estado}, expuesto en la figura \ref{fig:cruce_estandar_estados_5y6}:
 \begin{itemize}
     \item habilita el tránsito de vehículos desde el tramo de calle \textbf{RS5} hasta los tramos de calle \textbf{RS2}, \textbf{RS6} y \textbf{RS8}, es decir, habilita los tramos de cruce \textbf{RS5-RS2}, \textbf{RS5-RS6} y \textbf{RS5-RS8};
     \item y bloquea el tránsito de vehículos desde los tramos de calle \textbf{RS1}, \textbf{RS3} y \textbf{RS7}.
 \end{itemize}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estado6.pdf}
-    \caption{Cruce estándar en estado 6}
-    \label{fig:cruce_estandar_estado_6}
+    \includegraphics[width=1\linewidth]{text/image/DCruc-CE-Estados5y6.pdf}
+    \caption{Cruce estándar en estados 5 y 6}
+    \label{fig:cruce_estandar_estados_5y6}
 \end{figure}
 
 
@@ -217,6 +218,9 @@ El sistema MURAT es una construcción software basada en una arquitectura multia
     \label{fig:sociedad_de_agentes}
 \end{figure}
 Como se puede observar en la imagen, los agentes están organizados en una sociedad jerárquica. 
+%
+% ¿Por qué has elegid esta estructura y no otra?
+%
 \begin{itemize}
     \item \textbf{Ciudad} (\textit{City}): Se encarga de obtener la información del estado de los cruces y generar los informes.
     \item \textbf{Cruce} (\textit{Crossroad}): Se encargan de realizar la simulación, coordinar a los agentes \textit{Semáforo} e informar sobre el estado de la simulación al agente \textit{Ciudad}.
@@ -330,6 +334,10 @@ El agente \textit{Cruce} es el agente más complejo de la sociedad. Este agente 
 
 \newpage
 \subsubsection{Diagrama de secuencia del agente}
+%
+% ¿Qué es esto? ¿PAra qué sirve? Yo sí lo sé XD pero el que lea esto no 
+%
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DAgen-DS-Crossroad.pdf}
@@ -426,6 +434,16 @@ El agente \textit{Ciudad} es el agente encargado de recibir la información del 
 \section{Modelo de datos de representación de la realidad}
 En esta sección se expone el modelo de datos diseñado con el objetivo de realizar una representación precisa de la información del mundo real. Dicho modelo de datos es el nexo de unión entre las diferentes topologías de ciudades reales y sus correspondientes representaciones en el sistema MURAT. Este modelo de datos ha sido planteado de tal manera que permita representar desde una hasta varias ciudades, las cuales pueden poseer diferente complejidad.
 
+\newpage
+\subsection{Diagrama del modelo entidad-relación (E/R)}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DE_R.pdf}
+    \caption{Diagrama E/R del modelo de datos propuesto}
+    \label{fig:de_r}
+\end{figure}
+
+\newpage
 \subsection{Representación en tablas}
 La representación se realiza a través de un modelo basado en tablas, con un total de diez tablas:
 
@@ -467,7 +485,7 @@ En esta tabla se almacena la información de los estados iniciales de cada cruce
 Atributos:
 \begin{itemize}
     \item \textbf{Id de la ciudad} (\textit{city\_id}): identificador de la ciudad.
-    \item \textbf{Id de la configuración} (\textit{configuration\_id}): identificador de la configuración.
+    \item \textbf{Id de la configuración} (\textit{city\_configuration\_id}): identificador de la configuración.
     \item \textbf{Id del cruce} (\textit{crossroad\_id}): identificador del cruce.
     \item \textbf{Id del estado inicial} (\textit{initial\_state\_id}): identificador del estado inicial.
 \end{itemize}
@@ -533,7 +551,7 @@ Atributos:
     \item \textbf{Id de la ciudad} (\textit{city\_id}): identificador de la ciudad.
     \item \textbf{Id del cruce de origen} (\textit{crossroad\_origin\_id}): identificador del cruce de origen.
     \item \textbf{Id del cruce de destino} (\textit{crossroad\_destination\_id}): identificador del cruce de destino.
-    \item \textbf{Dirección} (\textit{crossroad\_origin\_id}): dirección desde el cruce de origen hasta el cruce de destino expresada como dirección cardinal: N, NE, E, SE, S, SW, W o NW.
+    \item \textbf{Dirección} (\textit{direction}): dirección desde el cruce de origen hasta el cruce de destino expresada como dirección cardinal: N, NE, E, SE, S, SW, W o NW.
     \item \textbf{Nombre} (\textit{name}): nombre del tramo de calle.
     \item \textbf{Longitud} (\textit{length}): longitud del tramo de calle expresada en metros.
     \item \textbf{Carriles} (\textit{lanes}): número de carriles del tramo de calle.
@@ -552,8 +570,8 @@ Atributos calculados:
         \item Si existe el \textbf{cruce de origen} y existe el \textbf{cruce destino} se trata de un tramo de calle interno (\textbf{INNER}), es decir, un tramo de calle por el los vehículos pasan de un cruce a otro.
     \end{itemize}
 \end{itemize}
-\textbf{Clave primaria}: \{\textit{city\_id}, \{\textit{origin\_crossroad\_id}, \textit{destionation\_crossroad\_id}\}. \\
-\textbf{Claves foráneas}: Simples ya añadidas, \{\textit{origin\_crossroad\_id}\} de (\textit{crossroad\_id}) y \{\textit{destination\_crossroad\_id}\} de (\textit{crossroad\_id}).
+\textbf{Clave primaria}: \{\textit{city\_id}, \{\textit{crossroad\_origin\_id}, \textit{crossroad\_destionation\_id}\}. \\
+\textbf{Claves foráneas}: Simples ya añadidas, \{\textit{crossroad\_origin\_id}\} de (\textit{crossroad\_id}) y \{\textit{crossroad\_destination\_id}\} de (\textit{crossroad\_id}).
 
 \subsubsection{Tabla - Tramo de cruce (\textit{crossroad\_stretch})}
 En esta tabla se almacena la información de los tramos de cruce de cada uno de los cruces de cada ciudad. Los vehículos, a través del cruce, tienen que ir desde un tramo de calle hasta otro tramo de calle. Esta ruta es a lo que se le llama tramo de cruce. Esta tabla se asemeja a un router que para cada tramo de calle de origen enruta los vehículos a uno o varios tramos de calle de destino. \\\\
@@ -566,8 +584,8 @@ Atributos:
     \item \textbf{Nombre} (\textit{name}): nombre del tramo de cruce. Está formado por la concatenación del nombre del tramo de calle de origen, el separador <<->> y el nombre del tramo de calle de destino.
     \item \textbf{Porcentaje de coches que van de origen a destino}\\ (\textit{cars\_percentage\_from\_origin\_to\_destination}): porcentaje de vehículos interesados en ir desde el tramo de calle de origen hasta el tramo de calle de destino. Desde un tramo de calle de origen se puede ir hacia uno o varios diferentes tramos de calle destino. Cada uno de estos tramos de cruce tendrá un porcentaje de vehículos interesados. La suma de los porcentajes de vehículos cuyos tramos de cruce tienen el mismo origen deben sumar 100\%. Es como decir qué porcentaje de vehículos están interesados en ir desde un origen hasta cada uno de sus destinos. Si desde un origen solo se puede ir hasta un destino, el porcentaje de vehículos interesados es del 100\%. Si desde un origen se pueden ir hacia dos destinos: el primero de ellos una calle principal, muy grande; y el segundo de ellos una calle secundaria, más pequeña; sería una situación racional que el 85\% estuvieran interesados en ir hacia el primer destino y el 15\% restante hacia el segundo destino. 
 \end{itemize}
-\textbf{Clave primaria}: \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{origin\_road\_stretch\_name}, \textit{destination\_road\_stretch\_name}\}. \\
-\textbf{Claves foráneas}: Simples ya añadidas, \{\textit{city\_id}, \textit{crossroad\_id}\} de (\textit{crossroad}), \{\textit{origin\_road\_stretch\_name}\} de (\textit{road\_stretch.road\_stretch\_name}) \newline y \{\textit{destination\_road\_stretch\_name}\} de (\textit{road\_stretch.road\_stretch\_name}).
+\textbf{Clave primaria}: \{\{\textit{city\_id}, \textit{crossroad\_id}\}, \textit{road\_stretch\_origin\_name}, \newline \textit{road\_stretch\_destination\_name}\}. \\
+\textbf{Claves foráneas}: Simples ya añadidas, \{\textit{city\_id}, \textit{crossroad\_id}\} de (\textit{crossroad}), \{\textit{road\_stretch\_origin\_name}\} de (\textit{road\_stretch.road\_stretch\_name}) \newline y \{\textit{road\_stretch\_destination\_name}\} de (\textit{road\_stretch.road\_stretch\_name}).
 
 \subsubsection{Tabla - Rutas de tramos de cruce (\textit{crossroad\_stretch\_routes})}
 En esta tabla se almacena la información de los tramos de cruce que habilita cada uno de los semáforos en verde para cada estado de cada uno de los cruces de cada ciudad. Que un semáforo esté en verde significa que los vehículos puedan pasar desde un tramo de calle origen hasta uno o varios tramos de calle destino. Esta tabla es la encargada de almacenar esa información. \\\\

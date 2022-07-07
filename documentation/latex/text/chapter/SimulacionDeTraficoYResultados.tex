@@ -6,11 +6,12 @@
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CSimple-Topologia.pdf}
     \caption{Topología del cruce simple}
-    \label{fig:cruce_simple_topologia}
+    \label{fig:cruce_simple_topologia_esc}
 \end{figure}
 
 \newpage
 \section{Ciudad 2. Matriz de cruces simples 2x1}
+    \label{section:cruce_simple2x1}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CSimple2x1-Topologia.pdf}
@@ -42,11 +43,12 @@
     \centering
     \includegraphics[width=1\linewidth]{text/image/DCruc-CEstandar-Topologia.pdf}
     \caption{Topología del cruce estándar}
-    \label{fig:cruce_estandar_topologia}
+    \label{fig:cruce_estandar_topologia_esc}
 \end{figure}
 
 \newpage
 \section{Ciudad 6. Cruce complejo real}
+    \label{section:cruce_real}
 El cruce de la Avenida de la Constitución con la Avenida Doctor Olóriz y Avenida Andaluces es el escenario real que se ha representado. Es una de las intersecciones más problemáticas y con más tráfico de la ciudad de Granada.
 \subsection{Marcación del cruce real}
 \begin{figure}[H]
@@ -73,7 +75,108 @@ Tras haber pasado el marcado del cruce real a el tipo modelo que se está utiliz
     \label{chap:seven}
     
 \section{Resultados de la simulación de tráfico}
-TODO
+    \label{section:resultados}
+    
+\subsubsection{Adición de tráfico al sistema en diferentes modos}
+    \label{subsubsection:adicion_trafico}
+Los ejemplos de adición de vehículos se han realizado en base al escenario representado en la figura \ref{fig:cruce_estandar_topologia_esc} con tres configuraciones idénticas con la única variación del modo de adición de vehículos.
+
+
+Para el modo lineal de adición de tráfico, tal y como se puede observar en la figura \ref{fig:adicion_trafico_lineal}, entra al sistema de tráfico la misma cantidad de vehículos durante toda la simulación.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.81\linewidth]{text/image/Linear.png}
+    \caption{Adición de tráfico al sistema en modo lineal (\textit{LINEAR})}
+    \label{fig:adicion_trafico_lineal}
+\end{figure}
+
+Para el modo de pico único de adición de tráfico, como se puede apreciar en la figura \ref{fig:adicion_trafico_single_peak}, durante toda la simulación entra al sistema de tráfico la misma cantidad de vehículos a excepción de en un intervalo pico determinado, donde entra una cantidad
+mucho mayor. Este pico de tráfico sucede entre las ocho y las nueve de la mañana.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/SinglePeak.png}
+    \caption{Adición de tráfico al sistema en modo pico único (\textit{SINGLE\_PEAK})}
+    \label{fig:adicion_trafico_single_peak}
+\end{figure}
+
+\newpage
+Para el modo de doble pico de adición de tráfico, tal y como se puede percibir en la figura \ref{fig:adicion_trafico_double_peak}, durante toda la simulación es añadida al sistema de tráfico la misma cantidad de vehículos a excepción de en un intervalo pico determinado, donde entra una cantidad mucho mayor. Estos picos de tráfico suceden entre: las ocho y las nueve de la mañana; y las dos y las tres de la tarde.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/DoublePeak.png}
+    \caption{Adición de tráfico al sistema en modo doble pico (\textit{DOUBLE\_PEAK})}
+    \label{fig:adicion_trafico_double_peak}
+\end{figure}
+
+\newpage
+Comparando los tres modos de adición de vehículos, se puede observar que cuantos más intervalos pico existan en la simulación mayor cantidad de vehículos es añadida durante el transcurso de la misma.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{text/image/TrafficAdition.png}
+    \caption{Comparativa de adición de tráfico al sistema en los tres modos disponibles}
+    \label{fig:adicion_trafico_comparativa}
+\end{figure}
+
+Para la simulación con modo de entrada de tráfico \textbf{lineal} se han añadido al sistema de tráfico la cantidad de \textbf{51840} vehículos. Es el modo en el que menos vehículos se han añadido.
+
+Para la simulación con modo de entrada de tráfico de \textbf{pico único} se han añadido al sistema de tráfico la cantidad de \textbf{69263} vehículos. Un \textbf{33,61\%} más que en el modo \textbf{lineal}.
+
+Para la simulación con modo de entrada de tráfico de \textbf{doble pico} se han añadido al sistema de tráfico la cantidad de \textbf{86686} vehículos. Un \textbf{67,22\%} más que en el modo \textbf{lineal} y un \textbf{25,15\%} más que en el modo de \textbf{pico único}. Es el modo en el que más vehículos se han añadido.
+
+Como conclusión, se puede afirmar que existe la posibilidad de añadir grandes cantidades de vehículos al sistema en intervalos determinados, lo cual es muy útil para generar situaciones de congestión.
+
+\newpage
+\subsubsection{Tráfico procesado por la simulación}
+Las gráficas que se muestran en esta sección han sido obtenidas a partir de dos simulaciones realizadas, una con política de tiempos fijos y otra con política de tiempos variables, en base al escenario representado en la figura \ref{fig:cruce_simple2x1_topologia}.
+
+Como se puede observar en la figura \ref{fig:vehicles_in_city2}, la adición de tráfico al sistema se ha realizado en modo doble pico. Dicha gráfica muestra el valor acumulado de vehículos que han entrado al sistema durante cada una de las simulaciones.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{text/image/SIMvehiclesInCITY2-CONFIG2.png}
+    \caption{Vehículos acumulados que han entrado al sistema}
+    \label{fig:vehicles_in_city2}
+\end{figure}
+\begin{itemize}
+    \item Con la política de \textbf{tiempos fijos} han entrado al sistema \textbf{46284} vehículos.
+    \item Con la política de \textbf{tiempos variables} han entrado al sistema \textbf{51403} vehículos.
+\end{itemize}
+Aplicando una política de tiempos variables, el sistema de tráfico ha sido capaz de absorber alrededor de un \textbf{11,06\%} más de vehículos.
+
+
+Como se puede observar en la figura \ref{fig:vehicles_out_city2}, la gráfica de vehículos que salen del sistema es prácticamente igual a la de los vehículos que entran. Dicha gráfica muestra el valor acumulado de vehículos que han sido procesados por el sistema durante cada una de las simulaciones. Los valores obtenidos evidencian que la mayoría de los vehículos que entran, salen del sistema.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\linewidth]{text/image/SIMvehiclesOutCITY2-CONFIG2.png}
+    \caption{Vehículos acumulados que han salido del sistema}
+    \label{fig:vehicles_out_city2}
+\end{figure}
+\begin{itemize}
+    \item Con la política de \textbf{tiempos fijos} el sistema ha procesado \textbf{46248} vehículos.
+    \item Con la política de \textbf{tiempos variables} el sistema ha procesado \textbf{51357} vehículos.
+\end{itemize}
+Aplicando una política de tiempos variables, el sistema de tráfico ha sido capaz de procesar alrededor de un \textbf{11,05\%} más de vehículos.
+
+Al final de la simulación quedan en el sistema: aplicando la política de tiempos fijos, 36 vehículos (0,077\% del total) que han entrado pero a los que no les ha dado tiempo a salir; aplicando la política de tiempos variables, 46 vehículos (0,089\% del total) que han entrado pero a los que no les ha dado tiempo a salir.
+
+Analizando las figuras \ref{fig:vehicles_in_city2} y \ref{fig:vehicles_out_city2} se puede apreciar que las mejoras empiezan a producirse a partir del primer intervalo pico, lo cual es lógico, debido a que es el primer intervalo en el que se empiezan a producir condiciones de congestión en los cruces. Cuando no hay condiciones de congestión la entrada y salida de vehículos al sistema es similar, esto es debido a que se pueden absorber y procesar vehículos de forma normal. En el segundo intervalo pico se puede ver que sucede algo similar a lo que sucede en el primero, se producen situaciones de congestión, ergo se optimizan los tiempos y se pueden absorber y generar más vehículos.
+
+La figura \ref{fig:vehicles_total_city2} muestra los vehículos totales en el sistema en cada instante de cada una de las simulaciones. Al igual que sucedía en los gráficos ya explicados, los valores de vehículos totales de la simulación con política de tiempos fijos (color naranja) son similares a los de la simulación con política de tiempos variables (color amarillo) hasta el inicio de la primera hora pico. Esto sucede porque hasta dicho momento no se aplica la optimización de tiempos de estados. En el momento en el se aplica la optimización de tiempos se puede apreciar que el número de vehículos totales aumenta en la simulación cuya política es de tiempos variables con respecto a la simulación cuya política es de tiempos fijos. Se puede ver claramente como durante el resto de la simulación, tras haber habido situaciones de congestión, hay más vehículos en la simulación con la política de tiempos variables. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.84\linewidth]{text/image/SIMtotalVehiclesCITY2-CONFIG2.png}
+    \caption{Vehículos totales en cada instante de las simulaciones}
+    \label{fig:vehicles_total_city2}
+\end{figure}
+
+En el gráfico de la figura \ref{fig:ticks_exit_city2} se puede ver el tiempo medio acumulado que tardan los vehículos en salir de la simulación. Como se puede observar, justo al inicio de la gráfica hay un aumento considerable de tiempo medio, que hace que se sitúe en un valor de alrededor de 60 segundos. Al inicio de la simulación no hay ningún vehículo en el sistema. Los vehículos empiezan a ser añadidos poco a poco en todos los tramos de calle de entrada al sistema. Esto produce que algunos vehículos salgan de forma casi inmediata porque el estado inicial del cruce les beneficie y otros vehículos tengan que esperar detrás de un semáforo en rojo. Lo anterior produce que el valor medio de tiempo que tarda un vehículo en salir se sitúe alrededor del ya mencionado.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.84\linewidth]{text/image/SIMaverageTicksToExitTendenciaCITY2-CONFIG2.png}
+    \caption{Tiempo medio acumulado que tarda un vehículo en salir del sistema}
+    \label{fig:ticks_exit_city2}
+\end{figure}
+A partir de la estabilización inicial, el valor se mantiene más o menos constante hasta que llega el primer intervalo pico. Al añadirse tantos vehículos al sistema, el tiempo que tarda de media un vehículo desde que entra hasta que sale del mismo aumenta. La razón es sencilla, esto es debido a que la cola de vehículos para entrar a los cruces es más larga y, por lo tanto, el tiempo de espera es mayor. Una vez finaliza el la hora pico, el tiempo medio disminuye poco a poco conforme se va desalojando el sistema. Evidentemente, en la simulación cuya política es de tiempos variables, al procesar un mayor número de vehículos, las colas son más largas y el tiempo medio que tarda un vehículo en salir del sistema es mayor.
 
 \newpage
 \section{Resultados de seguimiento del proyecto}
@@ -180,7 +283,7 @@ De manera similar al sprint anterior, se puede ver que en este sprint se realiz�
 
 \newpage
 \paragraph{Sprint 8 (del 05/07 al 08/07)}
-Este sprint posee una duración menor a las dos semanas habituales de sprints anteriores. Esto es debido a que es el último sprint del proyecto, el conocido como sprint de finalización. En este sprint el trabajo realizado va en relación a los últimos preparativos, correcciones y mejoras necesarios para cerrar y entregar el proyecto.
+Este sprint posee una duración menor a las dos semanas habituales de sprints anteriores. Esto es debido a que es el último sprint del proyecto, el conocido como sprint de finalización. En este sprint el trabajo realizado va en relación a los últimos preparativos, correcciones y mejoras necesarios para cerrar y entregar el proyecto. Como se puede observar, se ha dedicado una cantidad mayor de horas que las que había planificadas.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/BurndownChart8.pdf}
