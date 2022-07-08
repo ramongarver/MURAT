@@ -7,18 +7,17 @@
 
 \section{¿Qué es un agente?}
 A lo largo de las últimas décadas, la definición de agente se ha ido completando y adaptando para con la evolución. 
-\newline La primera definición se construye en base a las principales características de \textbf{autonomía} e \textbf{inteligencia}. De este periodo son las arquitecturas deliberativas y reactivas en base a las cuales estaban construidos agentes sencillos de acción-reacción.
+\newline La primera definición se construye en base a las principales características de \textbf{autonomía} e \textbf{inteligencia}. De este periodo son las arquitecturas deliberativas y reactivas en base a las cuales estaban construidos agentes sencillos de acción-reacción. \cite{intelligent_agents}
 \newline Posteriormente, con la extensión de internet y las posibilidades que este ofrece, los agentes evolucionan a un modelo \textbf{comunicativo}, manteniendo las características ya conocidas. En este punto, aparecen agentes móviles que se comunican gracias a implementación de estándares.
-\newline Más tarde, se dota a los agentes de una \textbf{dimensión social}. A partir de aquí, los agentes se crean teniendo en cuenta modelos sociales reales con mecanismos de interacción, toma de decisiones, posesión de sentimientos, aprendizaje, etc.
+\newline Más tarde, se dota a los agentes de una \textbf{dimensión social}. A partir de aquí, los agentes se crean teniendo en cuenta modelos sociales reales con mecanismos de interacción, toma de decisiones, posesión de sentimientos, aprendizaje, etc. \cite{dba2122}
 
-Un \textbf{agente} es un sistema computacional establecido en un entorno y con la capacidad de actuar de forma autónoma para la consecución de sus propios objetivos.
+Un \textbf{agente} es un sistema computacional establecido en un entorno y con la capacidad de actuar de forma autónoma para la consecución de sus propios objetivos. \cite{intelligent_agents, agentdevelopment}
 
-Un \textbf{sistema multiagente} es un conjunto de agentes que interactúan entre sí con el fin de conseguir objetivos propios y/o comunes, para lo cual, entre otras cosas, necesitan realizar acciones comunicativas, cooperativas, de coordinación y de negociación.
-\newline \cite{dba2122, intelligent_agents}
+Un \textbf{sistema multiagente} es un conjunto de agentes que interactúan entre sí con el fin de conseguir objetivos propios y/o comunes, para lo cual, entre otras cosas, necesitan realizar acciones comunicativas, cooperativas, de coordinación y de negociación. \cite{wooldridge2009introduction, dba2122}
 
 \newpage
 \subsection{Estructura de un agente}
-Los agentes inteligentes poseen un ciclo de vida. Un ciclo de vida de un agente implementado usando el framework \acrshort{jade}, de forma simplificada, está compuesto por la siguientes fases: creación, realización de acciones y destrucción.
+Los agentes inteligentes poseen un ciclo de vida. Un ciclo de vida de un agente implementado usando el \gls{framework} \acrshort{jade}, de forma simplificada, está compuesto por la siguientes fases: creación, realización de acciones y destrucción. \cite{jade}
 \begin{enumerate}
     \item \textbf{Inicialización del agente}, método \lstinline{setup()}. Se crean e inicializan todos los atributos necesarios para el correcto funcionamiento del agente.
     \item \textbf{Realización de acciones}, método \lstinline{execute()}. Se ejecutan determinadas acciones mientras el agente esté activo. De forma resumida, esta fase se estructura como un bucle condicional basado en una condición de finalización. Las acciones se repiten mientras el bucle no finalice, es decir, mientras que la condición de finalización no se cumpla.
@@ -26,9 +25,9 @@ Los agentes inteligentes poseen un ciclo de vida. Un ciclo de vida de un agente 
 \end{enumerate}
 
 \subsection{Comunicación entre agentes}
-En \acrshort{jade}, los agentes pueden comunicarse de forma transparente independientemente de si viven en el mismo contenedor, en diferentes contenedores pertenecientes a la misma plataforma o en diferentes plataformas. La comunicación se basa en un paradigma de paso de mensajes asíncrono. El formato de los mensajes está definido por el lenguaje \acrfull{acl} definido por la \acrfull{fipa}, una organización internacional que emitió un conjunto de especificaciones para la interoperabilidad de los agentes.
+En \acrshort{jade}, los agentes pueden comunicarse de forma transparente independientemente de si viven en el mismo contenedor, en diferentes contenedores pertenecientes a la misma plataforma o en diferentes plataformas. La comunicación se basa en un paradigma de paso de mensajes asíncrono. El formato de los mensajes está definido por el lenguaje \acrfull{acl} definido por la \acrfull{fipa}, una organización internacional que emitió un conjunto de especificaciones para la interoperabilidad de los agentes. \cite{jade, fipa}
 
-Un mensaje \acrshort{acl} está constituido por una serie de parámetros: sender, receiver, content, reply\_with, in\_reply\_to, encoding, language, ontology, reply\_by, protocol, conversation\_id y performative, entre los cuales:
+Un mensaje \acrshort{acl} está constituido por una serie de parámetros: sender, receiver, content, reply\_with, in\_reply\_to, encoding, language, ontology, reply\_by, protocol, conversation\_id y performative,  \cite{fipa, dba2122} entre los cuales:
 \begin{itemize}
     \item \textbf{Sender}: el identificador del agente que envía el mensaje.
     \item \textbf{Receiver}: los identificadores de los agentes que reciben el mensaje (el mensaje puede ser recibido por uno o varios agentes).
@@ -36,21 +35,22 @@ Un mensaje \acrshort{acl} está constituido por una serie de parámetros: sender
     \item \textbf{Conversation-id}: el identificador de la conversación entre los agentes.
     \item \textbf{Performative}: el tipo de acto comunicativo, es decir, el tipo de acción que se realiza (la interpretación que se le da).
 \end{itemize}
- Existen diferentes tipos de actos comunicativos, es decir, de performativas: accept-proposal, agree, cancel, cfp, confirm, disconfirm, failure, refuse, reject-proposal, request, request-when, request-whenever, subscribe, inform, inform-if, inform-ref, not-understood, propose, query-if y query-ref, entre las cuales:
+ Existen diferentes tipos de actos comunicativos, es decir, de performativas: accept-proposal, agree, cancel, cfp, confirm, disconfirm, failure, refuse, reject-proposal, request, request-when, request-whenever, subscribe, inform, inform-if, inform-ref, not-understood, propose, query-if y query-ref, \cite{fipa, dba2122} entre las cuales:
  \begin{itemize}
      \item \textbf{REQUEST}: El \textit{sender} pide a los \textit{receivers} que ejecuten una acción. Entre las performativas posibles para las respuestas asociadas al envío de un mensaje con esta performativa se encuentran: inform, refuse, agree, failure y not-understood.
      \item \textbf{SUBSCRIBE}: El \textit{sender} se suscribe al \textit{receiver} para con los cambios del valor de un objeto. Se aplica el patrón \textit{observer}. Entre las performativas posibles para las respuestas asociadas al envío de un mensaje con esta performativa se encuentran: inform y refuse.
      \item \textbf{INFORM}: El \textit{sender} informa de algo a los \textit{receivers}. Tiene multitud de implicaciones y, generalmente, se utiliza en mensajes de respuesta.
  \end{itemize}
- 
-
-\cite{dba2122, fipa}
 
 \newpage
 \section{Planteamiento del problema}
-%
-% ¿POr qué es importante controlar mejor el tráfico? ¿Qué problemas implica? ¿Cómo están resueltas en la literatura? ¿Cómo pretendes abordarla tu? ¿ Por qué? ¿Cómo vas a evaluar las soluciones que propones? ¿Por qué?
-%
+En los días que acontecen, la gestión del tráfico es una de las cuestiones importantes en ciudades pequeñas y medianas, en cuanto al desplazamiento de los transeúntes en la vida diaria se refiere. Desde hace algunas décadas los vehículos se han convertido en un medio indispensable para poder llegar al lugar de trabajo. Esto ha provocado que los flujos de tráfico aumenten. Lo anterior, combinado con una tendencia creciente en la densidad de población en las ciudades, hace que cada día sea más difícil gestionar el tráfico de las ciudades de la forma más óptima. El aumento de tráfico genera problemas que: hace que se produzcan atascos en las ciudades, provocan que los ciudadanos no puedan llegar a sus lugares en tiempo, hace que proliferen los accidentes, acentúa la contaminación, etc. Para solucionar algunos de estos problemas, sobre todo los relativos a las situaciones de congestión de tráfico y accidentes, se puede construir un sistema que, atendiendo a diferentes parámetros de percepción del entorno:
+\begin{itemize}
+    \item maximice el número de vehículos que circulan por esa ciudad, optimizando los tiempos de duración de los semáforos en los cruces de la misma;
+    \item y evite situaciones de colisión de vehículos, a través de una gestión correcta del color de las luces de los semáforos, es decir, definiendo unos estados para los cruces donde no se produzcan situaciones de colisión y gestionando los cambios de estado de forma correcta.
+\end{itemize}
+
+
     \label{section:problem}
 La construcción de un sistema multiagente para el control del tráfico es algo complicado, sin embargo, no es necesario abordar todos las casuísticas que se plantean con respecto a este tema desde un principio. Con las tecnologías que se tienen en el momento, es seguro que existen un gran cantidad de formas diferentes de abordar este reto.
 
@@ -217,10 +217,9 @@ El sistema MURAT es una construcción software basada en una arquitectura multia
     \caption{Sociedad de agentes del sistema MURAT}
     \label{fig:sociedad_de_agentes}
 \end{figure}
-Como se puede observar en la imagen, los agentes están organizados en una sociedad jerárquica. 
-%
-% ¿Por qué has elegid esta estructura y no otra?
-%
+Como se puede observar en la imagen, los agentes están organizados en una sociedad jerárquica. Se ha elegido este tipo de sociedad porque se pretender construir una arquitectura en la que existan agentes que controlen y ordenen a otros agentes y, de la misma forma, agentes subordinados que obedezcan. Además, se pretende que la arquitectura sea lo más sencilla posible, es decir, que posea los agentes necesarios para la consecución de los objetivos. Una arquitectura alternativa, por ejemplo, con un agente topólogo al que consultar información centralizada podría generar un problema de disponibilidad. Si el agente se saturara o se corrompiera, el sistema dejaría de funcionar. Por lo anterior, habría que tratar temas de equilibrios de carga y redundancia, lo que aumentaría mucho más la complejidad, algo que no interesa en este proyecto.
+
+Los agentes que conforman la sociedad jerárquica son los siguientes:
 \begin{itemize}
     \item \textbf{Ciudad} (\textit{City}): Se encarga de obtener la información del estado de los cruces y generar los informes.
     \item \textbf{Cruce} (\textit{Crossroad}): Se encargan de realizar la simulación, coordinar a los agentes \textit{Semáforo} e informar sobre el estado de la simulación al agente \textit{Ciudad}.
@@ -236,6 +235,7 @@ Sin embargo, no todas las relaciones entre agentes son de tipo jerárquico:
 Los agentes tienen acceso a los datos que necesitan para su correcto funcionamiento. Gran parte de la información de carga del modelo del entorno está almacenada en estructuras de datos de la clase \textit{Simulation}. A esta información acceden los agentes a través de determinadas funciones definidas en la propia clase; este conjunto de funciones actuaría como una interfaz, haciendo las veces de una \acrshort{api}. Cuando es necesario, por ejemplo, para los cambios de color de los semáforos o la transferencia de vehículos, se intercambia la información necesaria a través de paso de mensajes.
 
 %%% ------------------------ Agente SEMÁFORO ------------------------ %%%
+\newpage
 \subsection{Agente Semáforo (TrafficLight)}
 El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuentra en la posición menos privilegiada de la jerarquía. Opera a merced del único agente \textit{Cruce} que se encarga de él. Sus capacidades son: cambiar su luz de rojo a verde o de verde a rojo; y poner la luz del color que haya ordenado el agente \textit{Cruce}. 
 
@@ -261,7 +261,18 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
     \item \textbf{Salir} \footnotesize(EXIT)\normalsize: Estado en el que el agente finaliza su ejecución. Un agente \textit{Semáforo} nunca se podrá apagar si no es por orden del agente superior de la sociedad jerárquica a la que pertenece; siguiendo el flujo del software, a este estado solo se puede llegar tras la orden del agente \textit{Cruce}.
 \end{enumerate}
 
+\newpage
 \subsubsection{Diagrama de secuencia del agente}
+Los diagramas de secuencia de agentes sirven para explicar el modelo de interacción de los agentes. Una de las partes más importantes en un sistema multiagente, como ya se ha comentado, es la interacción que se produce entre los agentes que lo constituyen. 
+
+El agente \textit{Semáforo} escucha para la recepción de mensajes de tipo \textit{REQUEST}. Estos mensajes son enviados por el agente \textit{Cruce}. Pueden tener diferentes objetivos:
+\begin{itemize}
+    \item Poner la luz semáforo en color rojo o color verde; o cambiar el color que tenga la luz del semáforo en el momento de la recepción del mensaje.
+    \item Finalizar el agente \textit{Semáforo}.
+\end{itemize}
+Tras realizar la acción pertinente, el agente \textit{Semáforo} envía al agente \textit{Cruce} un mensaje de tipo \textit{INFORM} indicando su realización.
+
+Todo esto se realiza por cada cruce para todos sus semáforos.
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{text/image/DAgen-DS-TrafficLight.pdf}
@@ -287,6 +298,7 @@ El agente \textit{Semáforo} es el agente más simple de la sociedad. Se encuent
 %%% --------------------------------------------------------------- %%%
 
 %%% ------------------------ Agente CRUCE ------------------------ %%%
+\newpage
 \subsection{Agente Cruce (Crossroad)}
 El agente \textit{Cruce} es el agente más complejo de la sociedad. Este agente es el encargado de controlar la simulación y comunicarse con el resto de agentes. Ordena los cambios de luz a los agentes \textit{Semáforo}, informa de su estado al agente \textit{Ciudad} y se comunica con otros agentes \textit{Cruce} para recibir y/o enviar vehículos.
 
@@ -334,9 +346,22 @@ El agente \textit{Cruce} es el agente más complejo de la sociedad. Este agente 
 
 \newpage
 \subsubsection{Diagrama de secuencia del agente}
-%
-% ¿Qué es esto? ¿PAra qué sirve? Yo sí lo sé XD pero el que lea esto no 
-%
+Este diagrama de secuencia, correspondiente al agente \textit{Cruce}, explica el modelo de interacción de agentes completo.
+
+El agente \textit{Cruce}, una vez ha iniciado su ciclo de vida, habiendo cargado la información previamente, establece el estado inicial de sus agentes \textit{Semáforo}. Para ello, envía un mensaje de tipo \textit{REQUEST} a cada uno de estos agentes, ordenando que pongan la luz del semáforo en el color correspondiente. Los agentes \textit{Semáforo} envían al agente \textit{Cruce} un mensaje de tipo \textit{INFORM} indicando la realización de la acción.
+
+Posteriormente, cada uno de los agentes \textit{Cruce} recibe un mensaje de tipo \textit{SUBSCRIBE} proveniente del agente \textit{Ciudad}, a través del cual este agente solicita que les sean enviados los informes de la simulación cuando estén disponibles. Los agentes \textit{Cruce} envían al agente \textit{Ciudad} un mensaje de tipo \textit{INFORM} indicando que se ha realizado correctamente la suscripción.
+
+En este punto, comienza el ciclo iterativo de la simulación, que dura hasta que finaliza la misma. 
+\newline Cada uno de los agentes \textit{Cruce} envía el informe del instante de la simulación, a través de un mensaje de tipo \textit{INFORM}, al agente \textit{Ciudad}. Una vez el agente \textit{Ciudad} ha recibido todos los informes para el instante correspondiente de la simulación, contesta a todos los agentes \textit{Cruce} con un mensaje de tipo \textit{INFORM} indicando que se han recibido todos los informes, ergo pueden continuar con la simulación.
+\newline Si alguno de los agentes \textit{Semáforo} tiene que cambiar de estado, el agente cruce correspondiente le envía un mensaje de tipo \textit{REQUEST}. Tras realizar el cambio del color de la luz, los agentes \textit{Semáforo} correspondientes envían un mensaje de tipo \textit{INFORM} indicando que se ha realizado correctamente la acción.
+\newline En este momento, el agente \textit{Cruce} se comunica con los agentes \textit{Cruce} a los que tiene que enviar vehículos. Envía mensajes de tipo \textit{REQUEST} indicando que los agentes de tipo \textit{Cruce} de destino deben recibir los vehículos. En el contenido de estos mensajes se envían los vehículos, identificados por el segundo en el que entraron en la simulación. Una vez recibidos los vehículos en los agentes \textit{Cruce} destino, estos envían un mensaje de tipo \textit{INFORM} al agente \textit{Cruce} correspondiente indicando que se han transferido los vehículos correctamente.
+\newline Tras lo anterior, el agente \textit{Cruce} espera recibir vehículos de otros agentes \textit{Cruce}. Para ello recibe tantos mensajes de tipo \textit{REQUEST}, cuyo contenido son los vehículos transferidos, como agentes \textit{Cruce} están conectados y envían vehículos a dicho agente. Una vez recibidos los vehículos se informa de la recepción con un mensaje de tipo \textit{INFORM}.
+
+Una vez finaliza la simulación, cada agente \textit{Cruce} espera su mensaje de finalización, de tipo \textit{REQUEST}, por parte del agente \textit{Ciudad}. Una vez recibido, se informa al agente \textit{Ciudad} con un mensaje de tipo \textit{INFORM}.
+
+Por último, se envía mensaje de finalización, de tipo \textit{REQUEST}, a cada uno de los agentes \textit{Semáforo} del cruce. Tras ser recibida la solicitud de finalización por los agentes \textit{Semáforo}, estos informan al agente \textit{Cruce} con un mensaje de tipo \textit{INFORM}. 
+
 
 \begin{figure}[H]
     \centering
@@ -397,6 +422,11 @@ El agente \textit{Ciudad} es el agente encargado de recibir la información del 
 \end{enumerate}
 
 \subsubsection{Diagrama de secuencia del agente}
+El agente \textit{Ciudad} se suscribe a los informes de cada uno de los agentes \textit{Cruce} a través del envío de un mensaje del tipo \textit{SUBSCRIBE}. Los agentes \textit{Cruce} responden al agente \textit{Ciudad} con un mensaje de tipo \textit{INFORM} indicando que se ha recibido la suscripción.
+
+Para cada instante de la simulación, cada uno de los agentes \textit{Cruce} envía un mensaje de tipo \textit{INFORM} al agente \textit{Ciudad} con el informe de ese instante de la simulación. Una vez todos los informes han sido recibidos por el agente \textit{Ciudad}, este envía un mensaje de tipo \textit{INFORM} a los agentes \textit{Cruce} informando de que pueden pasar a la siguiente iteración de la simulación.
+
+Cuando el agente \textit{Ciudad} ha recibido todos los informes de los agentes \textit{Cruce} para todos los instantes de la simulación, ordena a estos agentes \textit{Cruce}, a través de un mensaje de tipo \textit{REQUEST}, que finalicen. Una vez los agentes \textit{Cruce} han recibido la orden, envían al agente \textit{Ciudad} un mensaje de tipo \textit{INFORM} indicando su realización.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\linewidth]{text/image/DAgen-DS-City.pdf}
