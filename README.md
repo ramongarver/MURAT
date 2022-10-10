@@ -1,4 +1,4 @@
-# MURAT
+# :traffic_light: MURAT :vertical_traffic_light:
 MURAT (Multiagent URbAn Traffic control) is a multi-agent system to control traffic in an urban area. This distributed system use several agents to manage traffic through traffic lights.
 
 A fundamental part of the MURAT system is to provide a high degree of reliability based mainly on correct communication and coordination between the different agents that make up the system. This avoids problems of collisions between vehicles due to traffic lights that are wrongly set to green at intersections. In addition, it allows optimisation of traffic light timing to process a greater flow of traffic in different scenarios.
